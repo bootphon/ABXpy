@@ -478,4 +478,8 @@ if __name__ == '__main__': # detects whether the script was called from command-
     task = Task(args.database, args.on, args.across, args.by, args.filt, args.reg, args.verbose)         
     
     if not(args.stats_only):
-        task.generate_triplets(args.output, args.sample) # generate triplets and unique pairs   
+        task.generate_triplets(args.output, args.sample) # generate triplets and unique pairs
+    else: 
+        import pprint
+        pprint.pprint(task.stats)# display some stats
+            
