@@ -9,7 +9,7 @@ if not(package_path in sys.path):
 import h5py
 import numpy as np
 import pandas as pd
-import ABXpy.database as database
+import ABXpy.database.database as database
 import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.h5tools.h52np as h52np
 import ABXpy.h5tools.h5_handler as h5_handler
@@ -454,7 +454,7 @@ if __name__ == '__main__': # detects whether the script was called from command-
     
     # using lists as default value in the parser might be dangerous ? probably not as long as it is not used more than once ?
     # parser (the usage string is specified explicitly because the default does not show that the mandatory arguments must come before the mandatory ones; otherwise parsing is not possible beacause optional arguments can have various numbers of inputs)
-    parser = argparse.ArgumentParser(usage="%(prog)s database [output] -o ON [-a ACROSS [ACROSS ...]] [-b BY [BY ...]] [-f FILT [FILT ...]] [-r REG [REG ...]] [-n N_CPU] [-s] [-h]", description ='ABX task specification')
+    parser = argparse.ArgumentParser(usage="%(prog)s database [output] -o ON [-a ACROSS [ACROSS ...]] [-b BY [BY ...]] [-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT_OR_PROPORTION] [--stats-only] [-h] [-v VERBOSE_LEVEL]", description ='ABX task specification')
     message = 'must be defined by the database you are using (e.g. speaker or phonemes, if your database contains columns defining these attributes)'
     # I/O files    
     g1 = parser.add_argument_group('I/O files')
