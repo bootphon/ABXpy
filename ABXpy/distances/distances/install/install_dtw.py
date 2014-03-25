@@ -25,8 +25,6 @@ if __name__ == '__main__': # detects whether the script was called from command-
     
     import argparse
     
-    # using lists as default value in the parser might be dangerous ? probably not as long as it is not used more than once ?
-    # parser (the usage string is specified explicitly because the default does not show that the mandatory arguments must come before the mandatory ones; otherwise parsing is not possible beacause optional arguments can have various numbers of inputs)
     parser = argparse.ArgumentParser()
     parser.add_argument('python', nargs='?', default=None, help='optional: python executable to be used')
     args = parser.parse_args()  
