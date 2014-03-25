@@ -15,8 +15,9 @@ def install_dtw(python):
     script_folder = os.path.dirname(os.path.realpath(__file__))
     bin_folder = os.path.dirname(script_folder)
     tmp_folder = os.path.join(script_folder, 'tmp')
+    install_script = os.path.join(script_folder, 'compile_dtw.py')
     # create .c and .so
-    subprocess.call("%s compile_dtw.py build_ext --build-lib %s --build-temp %s" % (python, bin_folder, tmp_folder), shell=True)
+    subprocess.call("%s %s build_ext --build-lib %s --build-temp %s" % (python, install_script, bin_folder, tmp_folder), shell=True)
     # clean-up tmp
     subprocess.call("rm -Rf %s" % tmp_folder, shell=True)
 
