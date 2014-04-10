@@ -345,7 +345,8 @@ class Task(object):
                                 i2 = 2*ind+1
                                 pairs = np.empty(shape=(2*n,1), dtype=pair_key_type) # would need to amend np2h5 and h52np to remove the second dim...
                                 #FIXME change the encoding (and type_fitting) so that A,B and B,A have the same code ... (take a=min(a,b), b=max(a,b))
-                                pairs[i1,0] = triplets[:,0]+(max_ind+1)*triplets[:,2] # AX
+                                #FIXME but allow a flag to control the behavior to be able to enforce A,X and B,X order when using assymetrical distance functions
+				pairs[i1,0] = triplets[:,0]+(max_ind+1)*triplets[:,2] # AX
                                 pairs[i2,0] = triplets[:,1]+(max_ind+1)*triplets[:,2] # BX
                                 #FIXME do a unique here already? Do not store the inverse mapping ? (could sort triplets on pair1, complete pair1, sort on pair2, complete pair 2 and shuffle ?)
                                 out.write(pairs)
