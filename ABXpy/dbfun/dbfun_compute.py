@@ -26,6 +26,9 @@ class DBfun_Compute(dbfun.DBfun):
         else:
             self.script = definition
         self.parse()
+        #FIXME allow users to specify the content of n_outputs and/or output_names from command-line (currently it will always be 1, None...)
+        self.n_outputs = 1
+        self.output_names = None
 
     
     # slow but not likely to be critical       
@@ -125,10 +128,11 @@ class DBfun_Compute(dbfun.DBfun):
                 self.aux_functions.append(dbfun_lookuptable.DBfun_LookupTable(f, indexed=False))
         return tree
 
-            
-    def get_indexes(self):
-        return [], {}
-        
+    
+    #FIXME if there is any sense in having indexed outputs for dbfun_compute, implement it
+    def output_specs(self):
+        return self.n_outputs, self.output_names, {}      
+
                 
     # function for evaluating the column function given data for the context 
     # context is a dictionary with just the right name/content associations

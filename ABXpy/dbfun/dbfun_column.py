@@ -13,6 +13,7 @@ class DBfun_Column(dbfun.DBfun):
     
     def __init__(self, name, db=None, column=None, indexed=True):        
         self.input_names = [name]
+        self.n_outputs = 1
         if indexed:
             index = list(set(db[column]))
             index.sort()
@@ -21,12 +22,12 @@ class DBfun_Column(dbfun.DBfun):
             self.index = []
             
             
-    def get_indexes(self):
+    def output_specs(self):
         if self.index:
             indexes = {self.input_names[0]: self.index}
         else:
             indexes = {}
-        return self.input_names, indexes
+        return self.n_outputs, self.input_names, indexes
         
                 
     # function for evaluating the column function given data for the context 

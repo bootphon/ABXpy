@@ -77,30 +77,34 @@ class RegressorManager(side_operations_manager.SideOperationsManager):
 
     #FIXME implement ABX regressors
     def set_ABX_regressors(self, on_across_by_values, db, triplets): raise ValueError('ABX regressors not implemented')
-        
-    #FIXME current implem (here and also in dbfun.get_indexes), does not allow index sharing...
-    #FIXME can there be name conflicts with this implem ?
-    def get_regressor_info(self): # implem a bit redundant
+
+   
+    #FIXME current implem (here and also in dbfun.output_specs), does not allow index sharing...
+    def get_regressor_info(self):
         names = []
         indexes = {}
-        self.fetch_regressor_info('by')
-        self.fetch_regressor_info('on_across_by')
-        self.fetch_regressor_info('A')
-        self.fetch_regressor_info('B')
-        self.fetch_regressor_info('X')     
-        self.fetch_regressor_info('ABX')
-        for db_fun in self.by + self.on_across_by + self.A + self.B + self.X + self.ABX:
-            o_names, o_indexes = db_fun.get_indexes()
-            names = names+o_names
-            for key, index in o_indexes.iteritems():
+        reg_id = 0
+        reg_id = self.fetch_regressor_info('by', reg_id)
+        reg_id = self.fetch_regressor_info('on_across_by', reg_id)
+        reg_id = self.fetch_regressor_info('A', reg_id)
+        reg_id = self.fetch_regressor_info('B', reg_id)
+        reg_id = self.fetch_regressor_info('X', reg_id)     
+        reg_id = self.fetch_regressor_info('ABX', reg_id)
+        for field in ['by', 'on_across_by', 'A', 'B', 'X', 'ABX']:            
+            names = names + getattr(self, field+'_names')
+            for key, index in getattr(self, field+'_indexes').iteritems():
                 indexes[key] = index
         return names, indexes
         
-        
-    def fetch_regressor_info(self, field):
+ 
+    def fetch_regressor_info(self, field, reg_id):
         setattr(self, field+'_names', [])
         setattr(self, field+'_indexes', [])
         for db_fun in getattr(self, field):
-            o_names, o_indexes = db_fun.get_indexes()
+            nb_o, o_names, o_indexes = db_fun.ouput_specs()
+            if o_names is None: # give arbitrary names
+                o_names = ['reg_' + str(reg_id+n) for n in range(nb_o)]
+                reg_id = reg_id+nb_o
             getattr(self, field+'_names').append(o_names)
             getattr(self, field+'_indexes').append(o_indexes)
+        return reg_id

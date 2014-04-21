@@ -245,12 +245,12 @@ class DBfun_LookupTable(dbfun.DBfun):
             self.load()
  
            
-    def get_indexes(self):
+    def output_specs(self):
         indexes = {}
         if self.indexed:
             for o in self.indexed_outputs: 
                 indexes[o] = numpy.array(self.indexes[o])
-        return self.output_names, indexes
+        return len(self.output_names), self.output_names, indexes
          
     
     # function for evaluating the DB_Function given data for the context 

@@ -20,10 +20,34 @@ import ABXpy.sideop.regressor_manager as regressor_manager
 import ABXpy.sampling.sampler as sampler
 import ABXpy.misc.progress_display as progress_display
 
+#FIXME many of the fixmes should be presented as feature requests in a github instead of fixmes
 
-#FIXME implementing file locking, md5 hash and path for integrity checks and logging warnings using the standard logging library of python + a verbose stuff
+#FIXME filter out empty  'on-across-by' blocks and empty 'by' blocks as soon as possible (i.e. when computing stats)
+#FIXME generate unique_pairs in separate file
+#FIXME find a better scheme for naming 'by' datasets in HDF5 files (to remove the current warning)
 #FIXME efficiently dealing with case where there is no across
+#FIXME correct ACROSS semantics: ACROSS stuff_1, stuff_2 means that:
+#   (stuff_1_A must be different from stuff_1_X) and (stuff_2_A must be different from stuff_2_X) 
+# not that:
+#   (stuff_1_A must be different from stuff_1_X) or (stuff_2_A must be different from stuff_2_X)
+#FIXME syntax to specify names for side-ops when computing them on the fly or at the very least number of output (default is one)
+#FIXME implementing file locking, md5 hash and path for integrity checks and logging warnings using the standard logging library of python + a verbose stuff
+#FIXME putting metadata in h5files + pretty print it
 #FIXME dataset size for task file seems too big when filtering so as to get only 3 different talkers ???
+#FIXME allow specifying regressors and filters from within python using somthing like (which should be integrated with the existing dbfun stuff):
+# class ABX_context(object):
+#		def __init__(self, db):
+			# init fields with None
+#	context = ABX_context(db_file)
+#def new_filter(context):
+#	return [True for e in context.talker_A]  
+#FIXME allow other ways of providing the hierarchical db (directly in pandas format, etc.)
+
+""" "More complicated FIXMES """
+#FIXME taking by datasets as the basic unit was a mistake, because cases where there many small by datasets happen. Find a way to group them when needed both in the computations and in the h5 files
+#FIXME allow by sampling customization depending on the analyzes to be carried out
+
+
 
 # defines an ABX task for a given database
 class Task(object):
@@ -224,7 +248,7 @@ class Task(object):
             iB = indices
             iX = indices
             
-        if with_regressors
+        if with_regressors:
             if self.regressors.ABX: # instantiate ABX regressors here
                 self.regressors.set_ABX_regressors(on_across_by_values, db, triplets)
             
@@ -322,6 +346,7 @@ class Task(object):
         self.generate_pairs(output)
         
 
+    #FIXME clean this function (maybe do a few well-separated sub-functions for getting the pairs and unique them)
     def generate_pairs(self, output=None):                        
                         
         #FIXME change this to a random file name to avoid overwriting problems  

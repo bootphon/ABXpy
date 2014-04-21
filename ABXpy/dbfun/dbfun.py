@@ -20,6 +20,6 @@ class DBfun(object):
         # e.g. set(input_names) == set(input_dict.keys())
         # or each element in inputs_dict is an array with the same number of lines (and possibly different types and number of columns)
 
-    # should return an ordered list of output names (when possible otherwise empty list) + a dictionary {output_name: index} containing all indexed outputs
-    def get_indexes(self):
+    # should return at least the number of outputs and if possible an ordered list of output names + a dictionary {output_name: index} containing all indexed outputs and their indexes
+    def output_specs(self):
         pass
