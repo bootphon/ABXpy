@@ -61,7 +61,7 @@ class Task(object):
         if not across:
             db['#across'] = range(len(db))
             across = ['#across']
-        # note that this additional column are not in the db_hierarchy, but I don't think this is problematic
+        # note that this additional columns are not in the db_hierarchy, but I don't think this is problematic
             
         self.filters = filter_manager.FilterManager(db_hierarchy, on, across, by, filters)
         self.regressors = regressor_manager.RegressorManager(db, db_hierarchy, on, across, by, regressors)
@@ -152,7 +152,7 @@ class Task(object):
                         block_sizes.append(n_A*n_B*n_X)
                     else:
                         # count exact number of triplets, could be further optimized because it isn't necessary to do the whole triplet generation, in particular in the case where there are no ABX filters              
-                        triplets = self.on_across_triplets(by, on, across, block, on_across_by_values)                             
+                        triplets = self.on_across_triplets(by, on, across, block, on_across_by_values, with_regressors=False)                             
                         n_triplets = n_triplets+triplets.shape[0] 
                         block_sizes.append(triplets.shape[0])    
                 else:
@@ -166,7 +166,7 @@ class Task(object):
             
     
     # generate all possible triplets for the 'on'/'across' values of A specified by a given block
-    def on_across_triplets(self, by, on, across, on_across_block, on_across_by_values):            
+    def on_across_triplets(self, by, on, across, on_across_block, on_across_by_values, with_regressors=True):            
 
         # find all possible A, B, X where A and X have the 'on' feature of the block and A and B have the 'across' feature of the block
         A = np.array(on_across_block, dtype=self.types[by]) 
@@ -186,10 +186,11 @@ class Task(object):
         if self.filters.X:
             X = self.filters.X_filter(on_across_by_values, db, X)
 
-        # instantiate A, B, X regressors here        
-        self.regressors.set_A_regressors(on_across_by_values, db, A)
-        self.regressors.set_B_regressors(on_across_by_values, db, B)
-        self.regressors.set_X_regressors(on_across_by_values, db, X)       
+        # instantiate A, B, X regressors here  
+        if with_regressors:      
+            self.regressors.set_A_regressors(on_across_by_values, db, A)
+            self.regressors.set_B_regressors(on_across_by_values, db, B)
+            self.regressors.set_X_regressors(on_across_by_values, db, X)       
 
         # A, B, X can then be combined efficiently in a full (or randomly sampled) factorial design
         size = len(A)*len(B)*len(X) 
@@ -223,34 +224,37 @@ class Task(object):
             iB = indices
             iX = indices
             
-        if self.regressors.ABX: # instantiate ABX regressors here
-            self.regressors.set_ABX_regressors(on_across_by_values, db, triplets)
+        if with_regressors
+            if self.regressors.ABX: # instantiate ABX regressors here
+                self.regressors.set_ABX_regressors(on_across_by_values, db, triplets)
             
-        # self.regressors.XXX contains either (for by and on_across_by)
-        #   [[scalar_output_1_dbfun_1, scalar_output_2_dbfun_1,...], [scalar_output_1_dbfun_2, ...], ...] 
-        # or:
-        #   [[np_array_output_1_dbfun_1, np_array_output_2_dbfun_1,...], [np_array_output_1_dbfun_2, ...], ...]        
-        #FIXME change manager API so that self.regressors.A contains the data and not the list of dbfun_s ?         
-        regressors = {} 
-        scalar_names = self.regressors.by_names + self.regressors.on_across_by_names
-        scalar_regressors = self.regressors.by_regressors + self.regressors.on_across_by_regressors
-        for names, regs in zip(scalar_names, scalar_regressors):
-            for name, reg in zip(names, regs):
-                regressors[name] = np.tile(np.array(reg), (size,1))
-        for names, regs in zip(self.regressors.A_names, self.regressors.A_regressors):
-            for name, reg in zip(names, regs):
-                regressors[name] = reg[iA,:]
-        for names, regs in zip(self.regressors.B_names, self.regressors.B_regressors):
-            for name, reg in zip(names, regs):
-                regressors[name] = reg[iB,:]
-        for names, regs in zip(self.regressors.X_names, self.regressors.X_regressors):
-            for name, reg in zip(names, regs):
-                regressors[name] = reg[iX,:]
-        #FIXME implement this
-        #for names, regs in zip(self.regressors.ABX_names, self.regressors.ABX_regressors):
-        #    for name, reg in zip(names, regs):
-        #        regressors[name] = reg[indices,:]
-        return triplets, regressors
+            # self.regressors.XXX contains either (for by and on_across_by)
+            #   [[scalar_output_1_dbfun_1, scalar_output_2_dbfun_1,...], [scalar_output_1_dbfun_2, ...], ...] 
+            # or:
+            #   [[np_array_output_1_dbfun_1, np_array_output_2_dbfun_1,...], [np_array_output_1_dbfun_2, ...], ...]        
+            #FIXME change manager API so that self.regressors.A contains the data and not the list of dbfun_s ?         
+            regressors = {} 
+            scalar_names = self.regressors.by_names + self.regressors.on_across_by_names
+            scalar_regressors = self.regressors.by_regressors + self.regressors.on_across_by_regressors
+            for names, regs in zip(scalar_names, scalar_regressors):
+                for name, reg in zip(names, regs):
+                    regressors[name] = np.tile(np.array(reg), (size,1))
+            for names, regs in zip(self.regressors.A_names, self.regressors.A_regressors):
+                for name, reg in zip(names, regs):
+                    regressors[name] = reg[iA,:]
+            for names, regs in zip(self.regressors.B_names, self.regressors.B_regressors):
+                for name, reg in zip(names, regs):
+                    regressors[name] = reg[iB,:]
+            for names, regs in zip(self.regressors.X_names, self.regressors.X_regressors):
+                for name, reg in zip(names, regs):
+                    regressors[name] = reg[iX,:]
+            #FIXME implement this
+            #for names, regs in zip(self.regressors.ABX_names, self.regressors.ABX_regressors):
+            #    for name, reg in zip(names, regs):
+            #        regressors[name] = reg[indices,:]
+            return triplets, regressors
+        else:
+            return triplets
 
       
     # generate all possible triplets for the whole task + associated pairs
@@ -346,7 +350,7 @@ class Task(object):
                                 pairs = np.empty(shape=(2*n,1), dtype=pair_key_type) # would need to amend np2h5 and h52np to remove the second dim...
                                 #FIXME change the encoding (and type_fitting) so that A,B and B,A have the same code ... (take a=min(a,b), b=max(a,b))
                                 #FIXME but allow a flag to control the behavior to be able to enforce A,X and B,X order when using assymetrical distance functions
-				pairs[i1,0] = triplets[:,0]+(max_ind+1)*triplets[:,2] # AX
+                                pairs[i1,0] = triplets[:,0]+(max_ind+1)*triplets[:,2] # AX
                                 pairs[i2,0] = triplets[:,1]+(max_ind+1)*triplets[:,2] # BX
                                 #FIXME do a unique here already? Do not store the inverse mapping ? (could sort triplets on pair1, complete pair1, sort on pair2, complete pair 2 and shuffle ?)
                                 out.write(pairs)
@@ -481,6 +485,14 @@ if __name__ == '__main__': # detects whether the script was called from command-
     if not(args.stats_only):
         task.generate_triplets(args.output, args.sample) # generate triplets and unique pairs
     else: 
+        #FIXME: make this efficient...
         import pprint
-        pprint.pprint(task.stats)# display some stats
+        pprint.pprint(task.stats) # display some stats
+        #if args.output is None:
+        #    sys.stdout.write(str(task.stats))
+        #else:
+        #    with open(args.output, 'a') as h:
+        #        h.write(task.stats)
+        #import pickle   
+        #pickle.dump(task.stats, open(args.output))
             

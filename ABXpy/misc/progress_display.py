@@ -5,7 +5,7 @@ Created on Tue Jan  7 18:11:16 2014
 @author: Thomas Schatz
 """
 
-import sys, collections
+import os, sys, collections
 
 class ProgressDisplay(object):
     
@@ -14,7 +14,10 @@ class ProgressDisplay(object):
        self.total = collections.OrderedDict()
        self.count = collections.OrderedDict()
        self.init = True 
-       
+       if os.isatty(sys.stdin.fileno()): #FIXME the goal of this is to determine whether using \033[<n>A will move the standard output n lines backwards, but I'm not sure this is somthing that would work on all tty devices ... might rather be a VT100 feature, but not sure how to detect if the stdio is a VT100 from python ...
+           self.is_tty = True
+       else:
+           self.is_tty = False       
 
     def add(self, name, message, total):
         self.message[name] = message
@@ -22,11 +25,13 @@ class ProgressDisplay(object):
         self.count[name] = 0
         
     def update(self, name, amount):
-        self.count[name] = self.count[name]+amount
-        
+        self.count[name] = self.count[name]+amount        
         
     def display(self):
-        m = "\033[<%d>A" % len(self.message) # move back up several lines (in bash)
+        if self.is_tty:
+            m = "\033[<%d>A" % len(self.message) # move back up several lines (in bash)
+        else:
+            m = ""
         if self.init:
             m = ""
             self.init = False

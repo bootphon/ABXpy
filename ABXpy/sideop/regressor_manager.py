@@ -74,7 +74,7 @@ class RegressorManager(side_operations_manager.SideOperationsManager):
     def set_A_regressors(self, on_across_by_values, db, indices): self.A_regressors = [result for result in self.evaluate_A(on_across_by_values, db, indices)]
     def set_B_regressors(self, on_across_by_values, db, indices): self.B_regressors = [result for result in self.evaluate_B(on_across_by_values, db, indices)]
     def set_X_regressors(self, on_across_by_values, db, indices): self.X_regressors = [result for result in self.evaluate_X(on_across_by_values, db, indices)]
-         
+
     #FIXME implement ABX regressors
     def set_ABX_regressors(self, on_across_by_values, db, triplets): raise ValueError('ABX regressors not implemented')
         

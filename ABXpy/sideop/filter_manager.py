@@ -53,9 +53,9 @@ class FilterManager(side_operations_manager.SideOperationsManager):
           
     def on_across_by_filter(self, on_across_by_values): return singleton_filter(self.evaluate_on_across_by(on_across_by_values))     
         
-    def A_filter(self, on_across_by_values, db, indices): return vectorial_filter(lambda context: self.evaluate_A(on_across_by_values, db, context), indices)
-    def B_filter(self, on_across_by_values, by_key, db, indices): return vectorial_filter(lambda context: self.evaluate_B(on_across_by_values, db, context), indices)
-    def X_filter(self, on_across_by_values, by_key, db, indices): return vectorial_filter(lambda context: self.evaluate_X(on_across_by_values, db, context), indices)
+    def A_filter(self, on_across_by_values, db, indices): return vectorial_filter(lambda context: self.evaluate_A(on_across_by_values, db, indices, context), indices)
+    def B_filter(self, on_across_by_values, db, indices): return vectorial_filter(lambda context: self.evaluate_B(on_across_by_values, db, indices, context), indices)
+    def X_filter(self, on_across_by_values, db, indices): return vectorial_filter(lambda context: self.evaluate_X(on_across_by_values, db, indices, context), indices)
          
     #FIXME implement ABX_filter
     def ABX_filter(self, on_across_by_values, db, triplets): raise ValueError('ABX filters not implemented')
