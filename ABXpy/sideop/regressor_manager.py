@@ -91,9 +91,10 @@ class RegressorManager(side_operations_manager.SideOperationsManager):
         reg_id = self.fetch_regressor_info('X', reg_id)     
         reg_id = self.fetch_regressor_info('ABX', reg_id)
         for field in ['by', 'on_across_by', 'A', 'B', 'X', 'ABX']:            
-            names = names + getattr(self, field+'_names')
-            for key, index in getattr(self, field+'_indexes').iteritems():
-                indexes[key] = index
+            names = names + [name for name_list in getattr(self, field+'_names') for name in name_list]
+            for dictionary in getattr(self, field+'_indexes'):
+                for key, index in dictionary.iteritems():
+                    indexes[key] = index
         return names, indexes
         
  
@@ -101,7 +102,7 @@ class RegressorManager(side_operations_manager.SideOperationsManager):
         setattr(self, field+'_names', [])
         setattr(self, field+'_indexes', [])
         for db_fun in getattr(self, field):
-            nb_o, o_names, o_indexes = db_fun.ouput_specs()
+            nb_o, o_names, o_indexes = db_fun.output_specs()
             if o_names is None: # give arbitrary names
                 o_names = ['reg_' + str(reg_id+n) for n in range(nb_o)]
                 reg_id = reg_id+nb_o
