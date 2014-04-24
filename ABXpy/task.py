@@ -265,13 +265,13 @@ class Task(object):
                     regressors[name] = np.tile(np.array(reg), (size,1))
             for names, regs in zip(self.regressors.A_names, self.regressors.A_regressors):
                 for name, reg in zip(names, regs):
-                    regressors[name] = reg[iA,:]
+                    regressors[name] = reg[iA]
             for names, regs in zip(self.regressors.B_names, self.regressors.B_regressors):
                 for name, reg in zip(names, regs):
-                    regressors[name] = reg[iB,:]
+                    regressors[name] = reg[iB]
             for names, regs in zip(self.regressors.X_names, self.regressors.X_regressors):
                 for name, reg in zip(names, regs):
-                    regressors[name] = reg[iX,:]
+                    regressors[name] = reg[iX]
             #FIXME implement this
             #for names, regs in zip(self.regressors.ABX_names, self.regressors.ABX_regressors):
             #    for name, reg in zip(names, regs):
