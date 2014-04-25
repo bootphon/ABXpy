@@ -22,6 +22,7 @@ import ABXpy.misc.progress_display as progress_display
 
 #FIXME many of the fixmes should be presented as feature requests in a github instead of fixmes
 
+#FIXME get a memory and speed efficient mechanism for storing a task on disk and loading it back (pickling doesn't work well) 
 #FIXME filter out empty  'on-across-by' blocks and empty 'by' blocks as soon as possible (i.e. when computing stats)
 #FIXME generate unique_pairs in separate file
 #FIXME find a better scheme for naming 'by' datasets in HDF5 files (to remove the current warning)
@@ -53,6 +54,8 @@ import ABXpy.misc.progress_display as progress_display
 class Task(object):
 
     def __init__(self, db_name, on, across=None, by=None, filters=None, regressors=None, verbose=0):
+        self.verbose = verbose
+       
         if across is None: across = []
         if by is None: by = []
         if filters is None: filters = []
@@ -95,8 +98,17 @@ class Task(object):
         self.feat_dbs = {}
         self.on_blocks = {}
         self.across_blocks = {}
-        self.on_across_blocks = {}
-        for by_key, by_frame in db.groupby(by):
+        self.on_across_blocks = {}       
+        by_groups = db.groupby(by)
+        
+        if self.verbose > 0:
+            display = progress_display.ProgressDisplay()
+            display.add('block', 'Preprocessing by block', len(by_groups))
+
+        for by_key, by_frame in by_groups:
+            if self.verbose > 0:
+                display.update('block', 1)
+                display.display()
             by_values = dict(by_frame.iloc[0]) # allow to get by values as well as values of other variables that are determined by these                      
             # apply 'by' filters
             if self.filters.by_filter(by_values):
@@ -114,7 +126,6 @@ class Task(object):
                 self.on_across_blocks[by_key] = self.by_dbs[by_key].groupby(on + across)
 
         # store parameters
-        self.verbose = verbose
         self.database = db_name
         self.db = db
         self.db_hierarchy = db_hierarchy
@@ -143,7 +154,15 @@ class Task(object):
         self.stats['approximate_nb_triplets'] = approximate and self.stats['approximate']
         self.stats['nb_by_levels'] = len(self.by_dbs)
         self.by_stats = {}
+        
+        if self.verbose > 0:
+            display = progress_display.ProgressDisplay()
+            display.add('block', 'Computing statistics for by block', self.stats['nb_by_levels'])
+        
         for by in self.by_dbs:
+            if self.verbose > 0:
+                display.update('block', 1)
+                display.display()
             stats = {}
             stats['nb_items'] = len(self.by_dbs[by])
             stats['on_levels'] = self.on_blocks[by].size()
@@ -169,6 +188,7 @@ class Task(object):
             for block_key, count in stats['on_across_levels'].iteritems():
                 if self.verbose > 0:
                     display.update('block', 1)
+                    display.display()
                 block = self.on_across_blocks[by].groups[block_key]
                 on_across_by_values = dict(db.ix[block[0]])
                 on, across = on_across_from_key(block_key)
@@ -192,6 +212,7 @@ class Task(object):
                         block_sizes[block_key] = triplets.shape[0]  
                 else:
                     block_sizes[block_key] = 0
+                    
                     
             stats['block_sizes'] = block_sizes                        
             stats['nb_triplets'] = n_triplets
@@ -456,31 +477,43 @@ class Task(object):
 
     # number of triplets when triplets with same on, across, by are counted as one
     #FIXME current implementation won't work with A, B, X or ABX filters
+    #FIXME lots of code in this function is repicated from on_across_triplets, generate_triplets and/or compute_stats: the maximum possible should be factored out, including the loop over by, loop over on_across iteration structure
     def compute_nb_levels(self):
         if self.filters.A or self.filters.B or self.filters.X or self.filters.ABX:
-            raise ValueError('Current implementation do not support A, B, X, or ABX filters')
+            raise ValueError('Current implementation do not support computing nb_levels in th presence of A, B, X, or ABX filters')
+        if self.verbose > 0:
+            display = progress_display.ProgressDisplay()
+            display.add('block', 'Computing nb_levels for by block', self.stats['nb_by_levels'])
         nb_levels= {}
-        for by in self.by_dbs:            
-            n = 0
-            db = self.by_dbs[by]           
+        for by, db in self.by_dbs.iteritems():
+            if self.verbose > 0:
+                display.update('block', 1)
+                display.display()
+            n = 0          
             # iterate over on/across blocks
-            for block_key, n_block in self.by_stats[by]['on_across_levels'][by].iteritems():
+            for block_key, n_block in self.by_stats[by]['on_across_levels'].iteritems():
+                block = self.on_across_blocks[by].groups[block_key]
+                on_across_by_values = dict(db.ix[block[0]])
                 on, across = on_across_from_key(block_key)
-                if self.filters.on_across_by_filter(on, across, by):
+                if self.filters.on_across_by_filter(on_across_by_values):
                     # find all possible A, B, X where A and X have the 'on' feature of the block and A and B have the 'across' feature of the block
                     on_across_block = self.on_across_blocks[by].groups[block_key]               
-                    A = np.array(on_across_block, dtype=self.types[by]) 
-                    B = self.across_blocks[by].groups[across]
+                    A = np.array(on_across_block, dtype=self.types[by])                     
                     X = self.on_blocks[by].groups[on]
-                    # remove B with the same 'on' than A and X with the same 'across' than A, here it can be shown that it amounts to removing all elements of A from B and X 
-                    B = np.array(list(set(B).difference(A)), dtype=self.types[by])
-                    X = np.array(list(set(X).difference(A)), dtype=self.types[by])                       
+                    if self.across == ['#across']: #FIXME quick fix to process case whith no across, but better done in a separate loop ...        
+                        B = np.array(list(set(self.by_dbs[by].index).difference(X)), dtype=self.types[by])# in this case A is a singleton and B can be anything in the by block that doesn't have the same 'on' as A       
+                    else:
+                        B = self.across_blocks[by].groups[across]
+                        # remove B with the same 'on' than A 
+                        B = np.array(list(set(B).difference(A)), dtype=self.types[by])
+                    # remove X with the same 'across' than A
+                    X = np.array(list(set(X).difference(A)), dtype=self.types[by])                    
                     n_level_B = len(db.iloc[B].groupby(self.on + self.across).groups)
                     n_level_X = len(db.iloc[X].groupby(self.on + self.across).groups)                
                     n = n + n_level_B*n_level_X           
             nb_levels[by] = n
         self.stats['nb_levels'] = nb_levels
-       
+                    
          
     def print_stats(self, filename=None, summarized=True):
         if filename is None:
