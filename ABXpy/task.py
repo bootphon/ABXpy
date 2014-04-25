@@ -135,58 +135,73 @@ class Task(object):
     
          
     # the nb of ABX triplets is exact in most cases and in all cases if approximate is set to False
+    # the other statistics can be only approximate in the case where there are A, B, X or ABX filters
     def compute_statistics(self, approximate=False):
         
-        stats = {}
-        stats['approximate'] = approximate and (self.filters.A or self.filters.B or self.filters.X or self.filters.ABX)
-        stats['by_levels'] = len(self.by_dbs)
-        stats['by_on_levels'] = {key: block.size() for key, block in self.on_blocks.iteritems()}
-        stats['by_across_levels'] = {key: block.size() for key, block in self.across_blocks.iteritems()}
-        stats['by_on_across_levels'] = {key: block.size() for key, block in self.on_across_blocks.iteritems()}
-        stats['n_triplets'] = {}
-        stats['across_pairs'] = {}
-        stats['on_pairs'] = {}
-
-        if self.verbose > 0:
-            self.n_blocks = sum(map(len, stats['by_on_across_levels'].values()))
-            display = progress_display.ProgressDisplay()
-            display.add('block', 'Computing statistics for by/on/across block', self.n_blocks)
+        self.stats = {}
+        self.stats['approximate'] = bool(self.filters.A or self.filters.B or self.filters.X or self.filters.ABX) 
+        self.stats['approximate_nb_triplets'] = approximate and self.stats['approximate']
+        self.stats['nb_by_levels'] = len(self.by_dbs)
+        self.by_stats = {}
+        for by in self.by_dbs:
+            stats = {}
+            stats['nb_items'] = len(self.by_dbs[by])
+            stats['on_levels'] = self.on_blocks[by].size()
+            stats['nb_on_levels'] = len(stats['on_levels'])
+            stats['across_levels'] = self.across_blocks[by].size()
+            stats['nb_across_levels'] = len(stats['across_levels'])
+            stats['on_across_levels'] = self.on_across_blocks[by].size()
+            stats['nb_on_across_levels'] = len(stats['on_across_levels'])  
+            self.by_stats[by] = stats         
+        self.stats['nb_blocks'] = sum([stats['nb_on_across_levels'] for stats in self.by_stats.values()])
         
-        block_sizes = [] # used for progress_display in generate triplets
+        if self.verbose > 0:
+            display = progress_display.ProgressDisplay()
+            display.add('block', 'Computing statistics for by/on/across block', self.stats['nb_blocks'])
+        
         for by, db in self.by_dbs.iteritems():
+            stats = self.by_stats[by]
+            block_sizes = {}
             n_triplets = 0 
             n_across = 0
             n_on = 0
-                        
             # iterate over on/across blocks
-            for block_key, n_block in stats['by_on_across_levels'][by].iteritems():
+            for block_key, count in stats['on_across_levels'].iteritems():
                 if self.verbose > 0:
                     display.update('block', 1)
-                block = self.on_across_blocks[by].groups[block_key] #FIXME: inefficient ? + next line is ugly -> use ix instead of iloc to be able to use the index directly ? fix also other occurences
-                on_across_by_values = dict(db.iloc[np.where(db.index == block[0])[0][0]]) # allow to get on, across, by values as well as values of other variables that are determined by these         
+                block = self.on_across_blocks[by].groups[block_key]
+                on_across_by_values = dict(db.ix[block[0]])
                 on, across = on_across_from_key(block_key)
                 if self.filters.on_across_by_filter(on_across_by_values):
-                    n_A = n_block
-                    n_B = stats['by_across_levels'][by][across]-n_A
-                    n_X = stats['by_on_levels'][by][on]-n_A                 
+                    n_A = count
+                    n_X = stats['on_levels'][on]
+                    if self.across == ['#across']: #FIXME quick fix to process case whith no across, but better done in a separate loop ...        
+                        n_B = stats['nb_items']-n_X
+                    else:
+                        n_B = stats['across_levels'][across]-n_A
+                    n_X = n_X-n_A
                     n_across = n_across + n_A*n_B
                     n_on = n_on + n_A*n_X                
                     if approximate or not(self.filters.A or self.filters.B or self.filters.X or self.filters.ABX):
                         n_triplets = n_triplets + n_A*n_B*n_X
-                        block_sizes.append(n_A*n_B*n_X)
+                        block_sizes[block_key] = n_A*n_B*n_X
                     else:
                         # count exact number of triplets, could be further optimized because it isn't necessary to do the whole triplet generation, in particular in the case where there are no ABX filters              
                         triplets = self.on_across_triplets(by, on, across, block, on_across_by_values, with_regressors=False)                             
                         n_triplets = n_triplets+triplets.shape[0] 
-                        block_sizes.append(triplets.shape[0])    
+                        block_sizes[block_key] = triplets.shape[0]  
                 else:
-                    block_sizes.append(0)                        
-            stats['n_triplets'][by] = n_triplets
-            stats['across_pairs'][by] = n_across
-            stats['on_pairs'][by] = n_on
+                    block_sizes[block_key] = 0
+                    
+            stats['block_sizes'] = block_sizes                        
+            stats['nb_triplets'] = n_triplets
+            stats['nb_across_pairs'] = n_across
+            stats['nb_on_pairs'] = n_on
+        self.stats['nb_triplets'] = sum([stats['nb_triplets'] for stats in self.by_stats.values()])
+        #FIXME: remove empty by blocks then remove empty on_across_by blocks here
+        # also reset self.n_blocks appropriately
+        self.n_blocks = self.stats['nb_blocks']
         
-        stats['block_sizes'] = block_sizes
-        self.stats = stats
             
     
     # generate all possible triplets for the 'on'/'across' values of A specified by a given block
@@ -194,10 +209,14 @@ class Task(object):
 
         # find all possible A, B, X where A and X have the 'on' feature of the block and A and B have the 'across' feature of the block
         A = np.array(on_across_block, dtype=self.types[by]) 
-        B = self.across_blocks[by].groups[across]
         X = self.on_blocks[by].groups[on]
-        # remove B with the same 'on' than A and X with the same 'across' than A, here it can be shown that it amounts to removing all elements of A from B and X 
-        B = np.array(list(set(B).difference(A)), dtype=self.types[by])
+        if self.across == ['#across']: #FIXME quick fix to process case whith no across, but better done in a separate loop ...        
+            B = np.array(list(set(self.by_dbs[by].index).difference(X)), dtype=self.types[by])# in this case A is a singleton and B can be anything in the by block that doesn't have the same 'on' as A       
+        else:
+            B = self.across_blocks[by].groups[across]
+            # remove B with the same 'on' than A 
+            B = np.array(list(set(B).difference(A)), dtype=self.types[by])
+        # remove X with the same 'across' than A
         X = np.array(list(set(X).difference(A)), dtype=self.types[by])
         
         # apply singleton filters
@@ -283,6 +302,7 @@ class Task(object):
       
     # generate all possible triplets for the whole task + associated pairs
     #FIXME add a mechanism to allow the specification of a random seed in a way that would produce reliably the same triplets on different machines (means cross-platform random number generator + having its state so as to be sure that no other random number generation calls to it are altering the sequence)
+    #FIXME in case of sampling, get rid of blocks with no samples ?
     def generate_triplets(self, output=None, sample=None):
           
         #FIXME change this to a random file name to avoid overwriting problems  
@@ -293,11 +313,11 @@ class Task(object):
         
         #FIXME use an object that guarantees that the stream will not be perturbed by external codes calls to np.random
         # set up sampling if any
-        self.total_n_triplets = sum(self.stats['n_triplets'].values())
+        self.total_n_triplets = self.stats['nb_triplets']
         if sample is not None:
             self.sampling=True
-            if self.stats['approximate']:
-                raise ValueError('Cannot sample if task statistics are computed approximately')
+            if self.stats['approximate_nb_triplets']:
+                raise ValueError('Cannot sample if number of triplets is computed approximately')
             np.random.seed() #FIXME for now just something as random a possible                        
             if sample < 1: # proportion of triplets to be sampled
                 sample = np.uint64(round(sample*self.total_n_triplets))
@@ -308,7 +328,6 @@ class Task(object):
             self.n_triplets = self.total_n_triplets
         
         if self.verbose > 0:
-            if not(hasattr(self, 'n_blocks')): self.n_blocks = sum(map(len, self.stats['by_on_across_levels'].values()))
             display = progress_display.ProgressDisplay() 
             display.add('block', 'Computing triplets for by/on/across block',  self.n_blocks)
             display.add('triplets', 'Triplets considered:', self.total_n_triplets) 
@@ -321,9 +340,9 @@ class Task(object):
                 datasets, indexes = self.regressors.get_regressor_info()
                 with h5io.H5IO(filename=output, datasets=datasets, indexes=indexes, group='/regressors/'+str(by)+'/') as out_regs:  
                     if sample is not None: 
-                        n_rows = np.uint64(round(sample*(self.stats['n_triplets'][by]/np.float(self.total_n_triplets))))
+                        n_rows = np.uint64(round(sample*(self.by_stats[by]['nb_triplets']/np.float(self.total_n_triplets))))
                     else:
-                        n_rows = self.stats['n_triplets'][by]
+                        n_rows = self.by_stats[by]['nb_triplets']
                     out = fh.add_dataset(group='triplets', dataset=str(by), n_rows=n_rows, n_columns=3, item_type=self.types[by], fixed_size=False) # not fixed_size datasets are necessary only when sampling is performed               
                     by_values = dict(db.iloc[0]) # allow to get by values as well as values of other variables that are determined by these            
                     self.regressors.set_by_regressors(by_values) # instantiate by regressors here
@@ -331,7 +350,7 @@ class Task(object):
                     for block_key, block in self.on_across_blocks[by].groups.iteritems():
                         if self.verbose > 0:
                             display.update('block', 1)
-                        on_across_by_values = dict(db.iloc[np.where(db.index == block[0])[0][0]]) # allow to get on, across, by values as well as values of other variables that are determined by these
+                        on_across_by_values = dict(db.ix[block[0]]) # allow to get on, across, by values as well as values of other variables that are determined by these
                         if self.filters.on_across_by_filter(on_across_by_values):
                             self.regressors.set_on_across_by_regressors(on_across_by_values) # instantiate on_across_by regressors here                
                             on, across = on_across_from_key(block_key)                            
@@ -340,7 +359,7 @@ class Task(object):
                             out_regs.write(regressors, indexed=True)
                             if self.verbose > 0:                        
                                 display.update('sampled_triplets', triplets.shape[0])
-                                display.update('triplets', self.stats['block_sizes'][display.count['block'] - 1])
+                                display.update('triplets', self.by_stats[by]['block_sizes'][block_key])
                         if self.verbose > 0:
                             display.display()    
         self.generate_pairs(output)
@@ -355,10 +374,12 @@ class Task(object):
             (basename, _) = os.path.splitext(self.database)
             output = basename + '.abx'        
         # list all pairs
+        all_empty = True
         for by, db in self.by_dbs.iteritems():
             with h5py.File(output) as fh: #FIXME maybe care about this case earlier ?
                 not_empty = fh['/triplets/' + str(by)].size
             if not_empty:
+                all_empty = False
                 max_ind = np.max(db.index.values)
                 pair_key_type = type_fitting.fit_integer_type((max_ind+1)**2-1, is_signed=False)
                 with h52np.H52NP(output) as f_in:
@@ -428,38 +449,65 @@ class Task(object):
                 store.append('/feat_dbs/' + str(by), self.feat_dbs[by], expectedrows=len(self.feat_dbs[by])) # use append to make use of table format, which is better at handling strings without much space (fixed-size format) 
                 store.close()
                 #FIXME generate inverse mapping to triplets (1 and 2) ?
-        with h5py.File(output) as fh:
-            del fh['/pairs/']
+        if not(all_empty):
+            with h5py.File(output) as fh:
+                del fh['/pairs/']
 
 
-# number of triplets when triplets with same on, across, by are counted as one
-#FIXME current implementation won't work with A, B, X or ABX filters
-def compute_nb_levels(self):
-    if self.filters.A or self.filters.B or self.filters.X or self.filters.ABX:
-        raise ValueError('Current implementation do not support A, B, X, or ABX filters')
-    nb_levels= {}
-    for by in self.by_dbs:            
-        n = 0
-        db = self.by_dbs[by]           
-        # iterate over on/across blocks
-        for block_key, n_block in self.stats['by_on_across_levels'][by].iteritems():
-            on, across = on_across_from_key(block_key)
-            if self.filters.on_across_by_filter(on, across, by):
-                # find all possible A, B, X where A and X have the 'on' feature of the block and A and B have the 'across' feature of the block
-                on_across_block = self.on_across_blocks[by].groups[block_key]               
-                A = np.array(on_across_block, dtype=self.types[by]) 
-                B = self.across_blocks[by].groups[across]
-                X = self.on_blocks[by].groups[on]
-                # remove B with the same 'on' than A and X with the same 'across' than A, here it can be shown that it amounts to removing all elements of A from B and X 
-                B = np.array(list(set(B).difference(A)), dtype=self.types[by])
-                X = np.array(list(set(X).difference(A)), dtype=self.types[by])                       
-                n_level_B = len(db.iloc[B].groupby(self.on + self.across).groups)
-                n_level_X = len(db.iloc[X].groupby(self.on + self.across).groups)                
-                n = n + n_level_B*n_level_X           
-        nb_levels[by] = n
-    self.stats['nb_levels'] = nb_levels
-        
+    # number of triplets when triplets with same on, across, by are counted as one
+    #FIXME current implementation won't work with A, B, X or ABX filters
+    def compute_nb_levels(self):
+        if self.filters.A or self.filters.B or self.filters.X or self.filters.ABX:
+            raise ValueError('Current implementation do not support A, B, X, or ABX filters')
+        nb_levels= {}
+        for by in self.by_dbs:            
+            n = 0
+            db = self.by_dbs[by]           
+            # iterate over on/across blocks
+            for block_key, n_block in self.by_stats[by]['on_across_levels'][by].iteritems():
+                on, across = on_across_from_key(block_key)
+                if self.filters.on_across_by_filter(on, across, by):
+                    # find all possible A, B, X where A and X have the 'on' feature of the block and A and B have the 'across' feature of the block
+                    on_across_block = self.on_across_blocks[by].groups[block_key]               
+                    A = np.array(on_across_block, dtype=self.types[by]) 
+                    B = self.across_blocks[by].groups[across]
+                    X = self.on_blocks[by].groups[on]
+                    # remove B with the same 'on' than A and X with the same 'across' than A, here it can be shown that it amounts to removing all elements of A from B and X 
+                    B = np.array(list(set(B).difference(A)), dtype=self.types[by])
+                    X = np.array(list(set(X).difference(A)), dtype=self.types[by])                       
+                    n_level_B = len(db.iloc[B].groupby(self.on + self.across).groups)
+                    n_level_X = len(db.iloc[X].groupby(self.on + self.across).groups)                
+                    n = n + n_level_B*n_level_X           
+            nb_levels[by] = n
+        self.stats['nb_levels'] = nb_levels
+       
+         
+    def print_stats(self, filename=None, summarized=True):
+        if filename is None:
+            self.print_stats_to_stream(sys.stdout, summarized)
+        else:
+            with open(filename, 'w') as h:
+                self.print_stats_to_stream(h, summarized)
 
+    def print_stats_to_stream(self, stream, summarized):
+        import pprint
+        stream.write('\n\n###### Global stats ######\n\n')
+        pprint.pprint(self.stats, stream)
+        stream.write('\n\n###### by blocks stats ######\n\n')
+        if not(summarized):
+            for by, stats in self.by_stats.iteritems():
+                stream.write('### by level: %s ###\n' % str(by))
+                pprint.pprint(stats, stream)
+        else:
+            for by, stats in self.by_stats.iteritems():
+                stream.write('### by level: %s ###\n' % str(by))
+                stream.write('nb_triplets: %d\n' % stats['nb_triplets'])
+                stream.write('nb_across_pairs: %d\n' % stats['nb_across_pairs'])
+                stream.write('nb_on_pairs: %d\n' % stats['nb_on_pairs'])
+                stream.write('nb_on_levels: %d\n' % stats['nb_on_levels'])
+                stream.write('nb_across_levels: %d\n' % stats['nb_across_levels'])
+                stream.write('nb_on_across_levels: %d\n' % stats['nb_on_across_levels'])         
+            
      
 # utility function necessary because of current inconsistencies in panda: you can't seem to index a dataframe with a tuple with only one element, even though tuple with more than one element are fine
 def on_across_from_key(key):
@@ -510,14 +558,6 @@ if __name__ == '__main__': # detects whether the script was called from command-
     if not(args.stats_only):
         task.generate_triplets(args.output, args.sample) # generate triplets and unique pairs
     else: 
-        #FIXME: make this efficient...
-        import pprint
-        pprint.pprint(task.stats) # display some stats
-        #if args.output is None:
-        #    sys.stdout.write(str(task.stats))
-        #else:
-        #    with open(args.output, 'a') as h:
-        #        h.write(task.stats)
-        #import pickle   
-        #pickle.dump(task.stats, open(args.output))
+        task.output_stats()
+        
             
