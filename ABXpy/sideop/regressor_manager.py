@@ -23,10 +23,12 @@ class RegressorManager(side_operations_manager.SideOperationsManager):
         side_operations_manager.SideOperationsManager.__init__(self, db_hierarchy, on, across, by)  
         # add column functions for the default regressors: on_AB, on_X, across_AX(s), across_B(s) (but not the by(s))      
         default_regressors = [on[0] + '_1', on[0] + '_2']
-        for col in self.across_cols:
-            default_regressors.append(col+'_1')
-            default_regressors.append(col+'_2')
+        if not(self.across_cols == set(["#across"])): # check if no across were specified
+            for col in self.across_cols:
+                default_regressors.append(col+'_1')
+                default_regressors.append(col+'_2')
         #FIXME add default regressors only if they are not already specified ?
+        #FIXME do we really need to add the columns deriving from the original on and across?
         regressors = regressors + default_regressors
         
         for reg in regressors: # reg can be: the name of a column of the database (possibly extended), the name of lookup file, the name of a script, a script under the form of a string (that doesnt end by .dbfun...)

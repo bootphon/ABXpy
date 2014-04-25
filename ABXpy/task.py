@@ -484,7 +484,6 @@ class Task(object):
         if self.verbose > 0:
             display = progress_display.ProgressDisplay()
             display.add('block', 'Computing nb_levels for by block', self.stats['nb_by_levels'])
-        nb_levels= {}
         for by, db in self.by_dbs.iteritems():
             if self.verbose > 0:
                 display.update('block', 1)
@@ -508,12 +507,17 @@ class Task(object):
                         B = np.array(list(set(B).difference(A)), dtype=self.types[by])
                     # remove X with the same 'across' than A
                     X = np.array(list(set(X).difference(A)), dtype=self.types[by])                    
-                    n_level_B = len(db.iloc[B].groupby(self.on + self.across).groups)
-                    n_level_X = len(db.iloc[X].groupby(self.on + self.across).groups)                
-                    n = n + n_level_B*n_level_X           
-            nb_levels[by] = n
-        self.stats['nb_levels'] = nb_levels
-                    
+                    if B.size > 0 and X.size > 0:      
+                        if self.across == ["#across"]: # case were there was no across specified is different
+                            grouping = self.on 
+                        else:  
+                            grouping = self.on + self.across      
+                        n_level_B = len(db.iloc[B].groupby(grouping).groups)
+                        n_level_X = len(db.iloc[X].groupby(grouping).groups)                
+                        n = n + n_level_B*n_level_X    
+            self.by_stats[by]['nb_levels'] = n
+        self.stats['nb_levels'] = sum([stats['nb_levels'] for stats in self.by_stats.values()])
+        
          
     def print_stats(self, filename=None, summarized=True):
         if filename is None:
@@ -535,6 +539,7 @@ class Task(object):
             for by, stats in self.by_stats.iteritems():
                 stream.write('### by level: %s ###\n' % str(by))
                 stream.write('nb_triplets: %d\n' % stats['nb_triplets'])
+                stream.write('nb_levels: %d\n' % stats['nb_levels'])
                 stream.write('nb_across_pairs: %d\n' % stats['nb_across_pairs'])
                 stream.write('nb_on_pairs: %d\n' % stats['nb_on_pairs'])
                 stream.write('nb_on_levels: %d\n' % stats['nb_on_levels'])
@@ -558,7 +563,6 @@ Example call:
     task.py ./test.token --on word --across talker --by length --write_triplets  
 """
 #FIXME maybe some problems if wanting to pass some code directly on the command-line if it contains something like s = "'a'==1 and 'b'==2" ? but not a big deal ?
-
 if __name__ == '__main__': # detects whether the script was called from command-line
     
     import argparse
@@ -592,5 +596,5 @@ if __name__ == '__main__': # detects whether the script was called from command-
         task.generate_triplets(args.output, args.sample) # generate triplets and unique pairs
     else: 
         task.print_stats()
-        
+       
             
