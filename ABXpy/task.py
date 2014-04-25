@@ -558,6 +558,6 @@ if __name__ == '__main__': # detects whether the script was called from command-
     if not(args.stats_only):
         task.generate_triplets(args.output, args.sample) # generate triplets and unique pairs
     else: 
-        task.output_stats()
+        task.print_stats()
         
             
