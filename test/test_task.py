@@ -31,7 +31,6 @@ def test_basic():
     try:
         task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2', filters=None, regressors=None)
         stats = task.stats
-        print stats
         assert stats['nb_blocks'] == 8
         assert stats['nb_triplets'] == 8
         assert stats['nb_by_levels'] == 2
@@ -47,14 +46,38 @@ def test_basic():
         pairs_block1 = f.get('unique_pairs/1')
         assert (set(pairs) == set(pairs_block0[:,0]))
         assert (set(pairs) == set(pairs_block1[:,0]))
+#    except Exception as error:
+#        pytest.fail("Could not execute task code: " + error.message)
+    finally:
+        try:
+            os.remove('data.abx')
+            os.remove('data.item')
+        except:
+            pass
+#        pass
+            
+def test_multiple_across():
+    items.generate_testitems(2,3,name='data.item')
+    try:
+        task = ABXpy.task.Task('data.item', 'c0', ['c1', 'c2'], None, filters=None, regressors=None)
+        stats = task.stats
+        assert stats['nb_blocks'] == 8
+        assert stats['nb_triplets'] == 8
+        assert stats['nb_by_levels'] == 1
+        task.generate_triplets()
+        f = h5py.File('data.abx', 'r')
+        triplets_block = f.get('triplets/0')
+        triplets = np.array([[0,1,6], [1,0,7], [2,3,4], [3,2,5], [4,5,2], [5,4,3], [6,7,0], [7,6,1]])
+        assert tables_equivalent(triplets, triplets_block)
     except Exception as error:
         pytest.fail("Could not execute task code: " + error.message)
     finally:
         try:
             os.remove('data.abx')
+            os.remove('data.item')
         except:
             pass
-#        pass
         
         
 test_basic()
+test_multiple_across()

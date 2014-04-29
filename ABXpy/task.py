@@ -70,6 +70,7 @@ class Task(object):
             by = [by]
             
         self.nbargs = [len(on), len(across)] #FIXME this a an ugly quickfix, quite cheap
+        self.sampling = False #FIXME initial value for compute stats, i dont know if this is true
         	
         # open database
         db, db_hierarchy, feat_db = database.load(db_name, features_info=True)
@@ -198,11 +199,12 @@ class Task(object):
             n_across = 0
             n_on = 0
             # iterate over on/across blocks
-            for block_key, count in stats['on_across_levels'].iteritems():
+            for count, (block_key, block) in enumerate(self.on_across_blocks[by].groups.iteritems()):
+#            for block_key, block in self.on_across_blocks[by].groups.iteritems():
                 if self.verbose > 0:
                     display.update('block', 1)
                     display.display()
-                block = self.on_across_blocks[by].groups[block_key]
+#                block = self.on_across_blocks[by].groups[block_key]
                 on_across_by_values = dict(db.ix[block[0]])
                 on, across = on_across_from_key(self,block_key)
                 if self.filters.on_across_by_filter(on_across_by_values):
@@ -215,7 +217,7 @@ class Task(object):
                     n_X = n_X-n_A
                     n_across = n_across + n_A*n_B
                     n_on = n_on + n_A*n_X                
-                    if approximate or not(self.filters.A or self.filters.B or self.filters.X or self.filters.ABX):
+                    if False:#FIXME: change to : approximate or not(self.filters.A or self.filters.B or self.filters.X or self.filters.ABX):
                         n_triplets = n_triplets + n_A*n_B*n_X
                         block_sizes[block_key] = n_A*n_B*n_X
                     else:
@@ -240,7 +242,6 @@ class Task(object):
     
     # generate all possible triplets for the 'on'/'across' values of A specified by a given block
     def on_across_triplets(self, by, on, across, on_across_block, on_across_by_values, with_regressors=True):            
-
         # find all possible A, B, X where A and X have the 'on' feature of the block and A and B have the 'across' feature of the block 
         A = np.array(on_across_block, dtype=self.types[by]) 
         on_set = set(self.on_blocks[by].groups[on])
@@ -281,7 +282,7 @@ class Task(object):
         if size > 0:
             ind_type = type_fitting.fit_integer_type(size, is_signed=False)
             # if sampling in the absence of triplets filters, do it here
-            if self.sampling and not(self.filters.ABX):
+            if False:# self.sampling and not(self.filters.ABX):
                 indices = self.sampler.sample(size, dtype=ind_type)
             else:
                 indices = np.arange(size, dtype=ind_type)
@@ -393,7 +394,7 @@ class Task(object):
                         on_across_by_values = dict(db.ix[block[0]]) # allow to get on, across, by values as well as values of other variables that are determined by these
                         if self.filters.on_across_by_filter(on_across_by_values):
                             self.regressors.set_on_across_by_regressors(on_across_by_values) # instantiate on_across_by regressors here                
-                            on, across = on_across_from_key(self.nbargs, block_key)                            
+                            on, across = on_across_from_key(self, block_key)                            
                             triplets, regressors = self.on_across_triplets(by, on, across, block, on_across_by_values)
                             out.write(triplets)
                             out_regs.write(regressors, indexed=True)
@@ -512,7 +513,7 @@ class Task(object):
             for block_key, n_block in self.by_stats[by]['on_across_levels'].iteritems():
                 block = self.on_across_blocks[by].groups[block_key]
                 on_across_by_values = dict(db.ix[block[0]])
-                on, across = on_across_from_key(block_key)
+                on, across = on_across_from_key(self, block_key)
                 if self.filters.on_across_by_filter(on_across_by_values):
                     # find all possible A, B, X where A and X have the 'on' feature of the block and A and B have the 'across' feature of the block
                     on_across_block = self.on_across_blocks[by].groups[block_key]               
