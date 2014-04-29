@@ -31,7 +31,7 @@ def test_basic():
     try:
         task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2', filters=None, regressors=None)
         stats = task.stats
-        assert stats['nb_blocks'] == 8
+        assert stats['nb_blocks'] == 8, "incorrect stats: number of blocks"
         assert stats['nb_triplets'] == 8
         assert stats['nb_by_levels'] == 2
         task.generate_triplets()
@@ -39,13 +39,13 @@ def test_basic():
         triplets_block0 = f.get('triplets/0')
         triplets_block1 = f.get('triplets/1')
         triplets = np.array([[0,1,2], [1,0,3], [2,3,0], [3,2,1]])
-        assert tables_equivalent(triplets, triplets_block0)
-        assert tables_equivalent(triplets, triplets_block1)
+        assert tables_equivalent(triplets, triplets_block0), "triplets incorrectly generated"
+        assert tables_equivalent(triplets, triplets_block1), "triplets incorrectly generated"
         pairs = [2,6,7,3,8,12,13,9]
         pairs_block0 = f.get('unique_pairs/0')
         pairs_block1 = f.get('unique_pairs/1')
-        assert (set(pairs) == set(pairs_block0[:,0]))
-        assert (set(pairs) == set(pairs_block1[:,0]))
+        assert (set(pairs) == set(pairs_block0[:,0])), "pairs incorrectly generated"
+        assert (set(pairs) == set(pairs_block1[:,0])), "pairs incorrectly generated"
 #    except Exception as error:
 #        pytest.fail("Could not execute task code: " + error.message)
     finally:

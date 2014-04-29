@@ -199,11 +199,16 @@ class Task(object):
             n_across = 0
             n_on = 0
             # iterate over on/across blocks
-            for count, (block_key, block) in enumerate(self.on_across_blocks[by].groups.iteritems()):
-#            for block_key, block in self.on_across_blocks[by].groups.iteritems():
+            for block_key, count in stats['on_across_levels'].iteritems():
                 if self.verbose > 0:
                     display.update('block', 1)
                     display.display()
+                block = self.on_across_blocks[by].groups[block_key]
+#            for count, (block_key, block) in enumerate(self.on_across_blocks[by].groups.iteritems()):
+##            for block_key, block in self.on_across_blocks[by].groups.iteritems():
+#                if self.verbose > 0:
+#                    display.update('block', 1)
+#                    display.display()
 #                block = self.on_across_blocks[by].groups[block_key]
                 on_across_by_values = dict(db.ix[block[0]])
                 on, across = on_across_from_key(self,block_key)
@@ -217,7 +222,7 @@ class Task(object):
                     n_X = n_X-n_A
                     n_across = n_across + n_A*n_B
                     n_on = n_on + n_A*n_X                
-                    if False:#FIXME: change to : approximate or not(self.filters.A or self.filters.B or self.filters.X or self.filters.ABX):
+                    if (approximate or not(self.filters.A or self.filters.B or self.filters.X or self.filters.ABX)) and type(across) != tuple:
                         n_triplets = n_triplets + n_A*n_B*n_X
                         block_sizes[block_key] = n_A*n_B*n_X
                     else:
