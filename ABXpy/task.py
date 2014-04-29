@@ -1,5 +1,4 @@
 
-
 # make sure the rest of the ABXpy package is accessible
 import os, sys
 package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -44,10 +43,11 @@ import ABXpy.misc.progress_display as progress_display
 #	return [True for e in context.talker_A]  
 #FIXME allow other ways of providing the hierarchical db (directly in pandas format, etc.)
 
+
+
 """ "More complicated FIXMES """
 #FIXME taking by datasets as the basic unit was a mistake, because cases where there many small by datasets happen. Find a way to group them when needed both in the computations and in the h5 files
 #FIXME allow by sampling customization depending on the analyzes to be carried out
-
 
 
 # defines an ABX task for a given database
@@ -62,12 +62,14 @@ class Task(object):
         if regressors is None: regressors = []
 
         # check parameters        
-        assert isinstance(on, basestring), 'ON attribute must be specified by a string' 
-        on = [on]
+        if isinstance(on, basestring):#, 'ON attribute must be specified by a string' 
+            on = [on]
         if isinstance(across, basestring):
             across = [across]
         if isinstance(by, basestring):
             by = [by]
+            
+        self.nbargs = [len(on), len(across)] #FIXME this a an ugly quickfix, quite cheap
         	
         # open database
         db, db_hierarchy, feat_db = database.load(db_name, features_info=True)
@@ -98,9 +100,11 @@ class Task(object):
         self.feat_dbs = {}
         self.on_blocks = {}
         self.across_blocks = {}
-        self.on_across_blocks = {}       
+        self.on_across_blocks = {}  
+        self.antiacross_blocks = {}
         by_groups = db.groupby(by)
         
+
         if self.verbose > 0:
             display = progress_display.ProgressDisplay()
             display.add('block', 'Preprocessing by block', len(by_groups))
@@ -124,6 +128,15 @@ class Task(object):
                 self.on_blocks[by_key] = self.by_dbs[by_key].groupby(on)
                 self.across_blocks[by_key] = self.by_dbs[by_key].groupby(across)           
                 self.on_across_blocks[by_key] = self.by_dbs[by_key].groupby(on + across)
+                self.antiacross_blocks[by_key] = dict()
+                
+                if len(across) > 1:
+                    for across_key in self.across_blocks[by_key].groups.iterkeys():
+                        b = True
+                        for i,col in enumerate(across):
+                            b = b * (by_frame[col] != across_key[i])
+                        self.antiacross_blocks[by_key][across_key] = by_frame[b].index
+                    
 
         # store parameters
         self.database = db_name
@@ -191,7 +204,7 @@ class Task(object):
                     display.display()
                 block = self.on_across_blocks[by].groups[block_key]
                 on_across_by_values = dict(db.ix[block[0]])
-                on, across = on_across_from_key(block_key)
+                on, across = on_across_from_key(self,block_key)
                 if self.filters.on_across_by_filter(on_across_by_values):
                     n_A = count
                     n_X = stats['on_levels'][on]
@@ -228,17 +241,23 @@ class Task(object):
     # generate all possible triplets for the 'on'/'across' values of A specified by a given block
     def on_across_triplets(self, by, on, across, on_across_block, on_across_by_values, with_regressors=True):            
 
-        # find all possible A, B, X where A and X have the 'on' feature of the block and A and B have the 'across' feature of the block
+        # find all possible A, B, X where A and X have the 'on' feature of the block and A and B have the 'across' feature of the block 
         A = np.array(on_across_block, dtype=self.types[by]) 
-        X = self.on_blocks[by].groups[on]
+        on_set = set(self.on_blocks[by].groups[on])
         if self.across == ['#across']: #FIXME quick fix to process case whith no across, but better done in a separate loop ...        
-            B = np.array(list(set(self.by_dbs[by].index).difference(X)), dtype=self.types[by])# in this case A is a singleton and B can be anything in the by block that doesn't have the same 'on' as A       
+            B = np.array(list(set(self.by_dbs[by].index).difference(on_set)), dtype=self.types[by])# in this case A is a singleton and B can be anything in the by block that doesn't have the same 'on' as A       
         else:
             B = self.across_blocks[by].groups[across]
             # remove B with the same 'on' than A 
             B = np.array(list(set(B).difference(A)), dtype=self.types[by])
         # remove X with the same 'across' than A
-        X = np.array(list(set(X).difference(A)), dtype=self.types[by])
+        
+        if type(across) is tuple:
+            antiacross_set = set(self.antiacross_blocks[by][across])
+            X = np.array(list(antiacross_set & on_set), dtype=self.types[by])
+        else:
+            X = np.array(list(set(on_set).difference(A)), dtype=self.types[by])
+        
         
         # apply singleton filters
         db = self.by_dbs[by]
@@ -374,7 +393,7 @@ class Task(object):
                         on_across_by_values = dict(db.ix[block[0]]) # allow to get on, across, by values as well as values of other variables that are determined by these
                         if self.filters.on_across_by_filter(on_across_by_values):
                             self.regressors.set_on_across_by_regressors(on_across_by_values) # instantiate on_across_by regressors here                
-                            on, across = on_across_from_key(block_key)                            
+                            on, across = on_across_from_key(self.nbargs, block_key)                            
                             triplets, regressors = self.on_across_triplets(by, on, across, block, on_across_by_values)
                             out.write(triplets)
                             out_regs.write(regressors, indexed=True)
@@ -548,9 +567,9 @@ class Task(object):
             
      
 # utility function necessary because of current inconsistencies in panda: you can't seem to index a dataframe with a tuple with only one element, even though tuple with more than one element are fine
-def on_across_from_key(key):
-    on = key[0] # if panda was more consistent we could use key[:1] instead ...
-    across = key[1:]
+def on_across_from_key(self,key):
+    on = key[0]#:self.nbargs[0]] # if panda was more consistent we could use key[:1] instead ...
+    across = key[1:]#self.nbargs[1]:]
     if len(across) == 1: # this is the problematic case
         across = across[0]
     return on, across
