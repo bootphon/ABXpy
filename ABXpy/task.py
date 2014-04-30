@@ -194,25 +194,19 @@ class Task(object):
         
         for by, db in self.by_dbs.iteritems():
             stats = self.by_stats[by]
-            block_sizes = {}
-            n_triplets = 0 
-            n_across = 0
-            n_on = 0
+            stats['block_sizes'] = {}
+            stats['nb_triplets'] = 0 
+            stats['nb_across_pairs'] = 0
+            stats['nb_on_pairs'] = 0
             # iterate over on/across blocks
             for block_key, count in stats['on_across_levels'].iteritems():
                 if self.verbose > 0:
                     display.update('block', 1)
                     display.display()
                 block = self.on_across_blocks[by].groups[block_key]
-#            for count, (block_key, block) in enumerate(self.on_across_blocks[by].groups.iteritems()):
-##            for block_key, block in self.on_across_blocks[by].groups.iteritems():
-#                if self.verbose > 0:
-#                    display.update('block', 1)
-#                    display.display()
-#                block = self.on_across_blocks[by].groups[block_key]
                 on_across_by_values = dict(db.ix[block[0]])
-                on, across = on_across_from_key(self,block_key)
-                if self.filters.on_across_by_filter(on_across_by_values):
+                on, across = on_across_from_key(self,block_key) # retrieve the on and across keys (as they are stored in the panda object)
+                if self.filters.on_across_by_filter(on_across_by_values): # apply the filter and check if block is empty
                     n_A = count
                     n_X = stats['on_levels'][on]
                     if self.across == ['#across']: #FIXME quick fix to process case whith no across, but better done in a separate loop ...        
@@ -220,24 +214,20 @@ class Task(object):
                     else:
                         n_B = stats['across_levels'][across]-n_A
                     n_X = n_X-n_A
-                    n_across = n_across + n_A*n_B
-                    n_on = n_on + n_A*n_X                
+                    stats['nb_across_pairs'] += n_A*n_B
+                    stats['nb_on_pairs'] += n_A*n_X                
                     if (approximate or not(self.filters.A or self.filters.B or self.filters.X or self.filters.ABX)) and type(across) != tuple:
-                        n_triplets = n_triplets + n_A*n_B*n_X
-                        block_sizes[block_key] = n_A*n_B*n_X
+                        stats['nb_triplets'] += n_A*n_B*n_X
+                        stats['block_sizes'][block_key] = n_A*n_B*n_X
                     else:
                         # count exact number of triplets, could be further optimized because it isn't necessary to do the whole triplet generation, in particular in the case where there are no ABX filters              
                         triplets = self.on_across_triplets(by, on, across, block, on_across_by_values, with_regressors=False)                             
-                        n_triplets = n_triplets+triplets.shape[0] 
-                        block_sizes[block_key] = triplets.shape[0]  
+                        stats['nb_triplets'] += triplets.shape[0] 
+                        stats['block_sizes'][block_key] = triplets.shape[0]  
                 else:
-                    block_sizes[block_key] = 0
+                    stats['block_sizes'][block_key] = 0
                     
-                    
-            stats['block_sizes'] = block_sizes                        
-            stats['nb_triplets'] = n_triplets
-            stats['nb_across_pairs'] = n_across
-            stats['nb_on_pairs'] = n_on
+   
         self.stats['nb_triplets'] = sum([stats['nb_triplets'] for stats in self.by_stats.values()])
         #FIXME: remove empty by blocks then remove empty on_across_by blocks here
         # also reset self.n_blocks appropriately
