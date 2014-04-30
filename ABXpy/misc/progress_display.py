@@ -14,7 +14,7 @@ class ProgressDisplay(object):
        self.total = collections.OrderedDict()
        self.count = collections.OrderedDict()
        self.init = True 
-       if os.isatty(sys.stdin.fileno()): #FIXME the goal of this is to determine whether using \033[<n>A will move the standard output n lines backwards, but I'm not sure this is somthing that would work on all tty devices ... might rather be a VT100 feature, but not sure how to detect if the stdio is a VT100 from python ...
+       if os.isatty(sys.stdin.fileno()): #FIXME the goal of this is to determine whether using \033[<n>A will move the standard output n lines backwards, but I'm not sure this is something that would work on all tty devices ... might rather be a VT100 feature, but not sure how to detect if the stdio is a VT100 from python ...
            self.is_tty = True
        else:
            self.is_tty = False       

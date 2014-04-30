@@ -69,9 +69,7 @@ class Task(object):
         if isinstance(by, basestring):
             by = [by]
             
-        self.nbargs = [len(on), len(across)] #FIXME this a an ugly quickfix, quite cheap
-        self.sampling = False #FIXME initial value for compute stats, i dont know if this is true
-        	
+            
         # open database
         db, db_hierarchy, feat_db = database.load(db_name, features_info=True)
         	
@@ -84,6 +82,9 @@ class Task(object):
         # FIXME add additional checks, for example that columns in BY, ACROSS, ON are not the same ? (see task structure notes)
         # also that location columns are not used         
         
+        self.nbargs = [len(on), len(across)] #FIXME this a an ugly quickfix, quite cheap
+        self.sampling = False #FIXME initial value for compute stats, i dont know if this is true
+
         # if 'by' or 'across' are empty create appropriate dummy columns (note that '#' is forbidden in user names for columns)
         if not by:
             db['#by'] = 0
