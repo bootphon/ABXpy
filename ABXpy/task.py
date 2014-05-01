@@ -564,7 +564,7 @@ class Task(object):
             
      
 # utility function necessary because of current inconsistencies in panda: you can't seem to index a dataframe with a tuple with only one element, even though tuple with more than one element are fine
-def on_across_from_key(self,key):
+def on_across_from_key(key):
     on = key[0]#:self.nbargs[0]] # if panda was more consistent we could use key[:1] instead ...
     across = key[1:]#self.nbargs[1]:]
     if len(across) == 1: # this is the problematic case
