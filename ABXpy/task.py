@@ -62,8 +62,8 @@ class Task(object):
         if regressors is None: regressors = []
 
         # check parameters        
-        if isinstance(on, basestring):#, 'ON attribute must be specified by a string' 
-            on = [on]
+        assert isinstance(on, basestring), 'ON attribute must be specified by a string' # this is useful to indicate to user attempting to use several 'on' that it isn't supported by the toolbox
+        on = [on]
         if isinstance(across, basestring):
             across = [across]
         if isinstance(by, basestring):
