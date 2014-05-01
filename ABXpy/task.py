@@ -94,6 +94,8 @@ class Task(object):
         self.filters = filter_manager.FilterManager(db_hierarchy, on, across, by, filters)
         self.regressors = regressor_manager.RegressorManager(db, db_hierarchy, on, across, by, regressors)
         
+        self.sampling = False
+
         # prepare the database for generating the triplets
         self.by_dbs = {}
         self.feat_dbs = {}
