@@ -245,7 +245,7 @@ class Task(object):
             B = np.array(list(set(B).difference(A)), dtype=self.types[by])
         # remove X with the same 'across' than A
         
-        if len(across) > 1: # "type(across) is tuple" wouldn't work because across can be a list for example
+        if type(across) is tuple:
             antiacross_set = set(self.antiacross_blocks[by][across])
             X = np.array(list(antiacross_set & on_set), dtype=self.types[by])
         else:
