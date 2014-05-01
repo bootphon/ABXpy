@@ -82,8 +82,6 @@ class Task(object):
         # FIXME add additional checks, for example that columns in BY, ACROSS, ON are not the same ? (see task structure notes)
         # also that location columns are not used         
         
-        self.sampling = False #FIXME initial value for compute stats, i dont know if this is true
-
         # if 'by' or 'across' are empty create appropriate dummy columns (note that '#' is forbidden in user names for columns)
         if not by:
             db['#by'] = 0
@@ -129,9 +127,8 @@ class Task(object):
                 self.on_blocks[by_key] = self.by_dbs[by_key].groupby(on)
                 self.across_blocks[by_key] = self.by_dbs[by_key].groupby(across)           
                 self.on_across_blocks[by_key] = self.by_dbs[by_key].groupby(on + across)
-                self.antiacross_blocks[by_key] = dict()
-                
                 if len(across) > 1:
+                    self.antiacross_blocks[by_key] = dict()
                     for across_key in self.across_blocks[by_key].groups.iterkeys():
                         b = True
                         for i,col in enumerate(across):
@@ -205,7 +202,7 @@ class Task(object):
                     display.display()
                 block = self.on_across_blocks[by].groups[block_key]
                 on_across_by_values = dict(db.ix[block[0]])
-                on, across = on_across_from_key(self,block_key) # retrieve the on and across keys (as they are stored in the panda object)
+                on, across = on_across_from_key(block_key) # retrieve the on and across keys (as they are stored in the panda object)
                 if self.filters.on_across_by_filter(on_across_by_values): # apply the filter and check if block is empty
                     n_A = count
                     n_X = stats['on_levels'][on]
@@ -230,7 +227,7 @@ class Task(object):
    
         self.stats['nb_triplets'] = sum([stats['nb_triplets'] for stats in self.by_stats.values()])
         #FIXME: remove empty by blocks then remove empty on_across_by blocks here
-        # also reset self.n_blocks appropriately
+        # also reset self.n_blocks in consequence
         self.n_blocks = self.stats['nb_blocks']
         
             
@@ -248,11 +245,11 @@ class Task(object):
             B = np.array(list(set(B).difference(A)), dtype=self.types[by])
         # remove X with the same 'across' than A
         
-        if type(across) is tuple:
+        if len(across) > 1: # "type(across) is tuple" wouldn't work because across can be a list for example
             antiacross_set = set(self.antiacross_blocks[by][across])
             X = np.array(list(antiacross_set & on_set), dtype=self.types[by])
         else:
-            X = np.array(list(set(on_set).difference(A)), dtype=self.types[by])
+            X = np.array(list(on_set.difference(A)), dtype=self.types[by])
         
         
         # apply singleton filters
@@ -277,7 +274,7 @@ class Task(object):
         if size > 0:
             ind_type = type_fitting.fit_integer_type(size, is_signed=False)
             # if sampling in the absence of triplets filters, do it here
-            if False:# self.sampling and not(self.filters.ABX):
+            if self.sampling and not(self.filters.ABX):
                 indices = self.sampler.sample(size, dtype=ind_type)
             else:
                 indices = np.arange(size, dtype=ind_type)
@@ -389,7 +386,7 @@ class Task(object):
                         on_across_by_values = dict(db.ix[block[0]]) # allow to get on, across, by values as well as values of other variables that are determined by these
                         if self.filters.on_across_by_filter(on_across_by_values):
                             self.regressors.set_on_across_by_regressors(on_across_by_values) # instantiate on_across_by regressors here                
-                            on, across = on_across_from_key(self, block_key)                            
+                            on, across = on_across_from_key(block_key)                            
                             triplets, regressors = self.on_across_triplets(by, on, across, block, on_across_by_values)
                             out.write(triplets)
                             out_regs.write(regressors, indexed=True)
@@ -508,7 +505,7 @@ class Task(object):
             for block_key, n_block in self.by_stats[by]['on_across_levels'].iteritems():
                 block = self.on_across_blocks[by].groups[block_key]
                 on_across_by_values = dict(db.ix[block[0]])
-                on, across = on_across_from_key(self, block_key)
+                on, across = on_across_from_key(block_key)
                 if self.filters.on_across_by_filter(on_across_by_values):
                     # find all possible A, B, X where A and X have the 'on' feature of the block and A and B have the 'across' feature of the block
                     on_across_block = self.on_across_blocks[by].groups[block_key]               
