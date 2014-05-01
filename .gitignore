@@ -1,6 +1,10 @@
 # Mac specific files
 .DS_Store
 
+# Spyder IDE files
+.spyderproject
+.spyderworkspace
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -7,6 +7,7 @@ Created on Wed Jan 22 01:47:42 2014
 import numpy as np
 import scipy
 
+#FIXME change name to just distance ou distance_matrix?
 # compute cosine distances between all possible pairs of lines in the x and y matrix
 # x and y should be 2D numpy arrays with "features" on the lines and "times" on the columns
 # x, y must be float arrays    
