@@ -82,7 +82,6 @@ class Task(object):
         # FIXME add additional checks, for example that columns in BY, ACROSS, ON are not the same ? (see task structure notes)
         # also that location columns are not used         
         
-        self.nbargs = [len(on), len(across)] #FIXME this a an ugly quickfix, quite cheap
         self.sampling = False #FIXME initial value for compute stats, i dont know if this is true
 
         # if 'by' or 'across' are empty create appropriate dummy columns (note that '#' is forbidden in user names for columns)
@@ -565,8 +564,8 @@ class Task(object):
      
 # utility function necessary because of current inconsistencies in panda: you can't seem to index a dataframe with a tuple with only one element, even though tuple with more than one element are fine
 def on_across_from_key(key):
-    on = key[0]#:self.nbargs[0]] # if panda was more consistent we could use key[:1] instead ...
-    across = key[1:]#self.nbargs[1]:]
+    on = key[0] # if panda was more consistent we could use key[:1] instead ...
+    across = key[1:]
     if len(across) == 1: # this is the problematic case
         across = across[0]
     return on, across
