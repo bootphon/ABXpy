@@ -20,8 +20,11 @@ import ABXpy.misc.type_fitting as type_fitting
 
 #FIXME: include distance computation here
 def score(task_file, distance_file, score_file, score_group='scores'):
-    with h5py.File(task_file) as t:
-        bys = [by for by in t['triplets']]
+    #with h5py.File(task_file) as t:
+        #bys = [by for by in t['triplets']]
+    #FIXME skip empty by datasets, this should not be necessary anymore when empty datasets are filtered at the task file generation level
+    with h5py.File(distance_file) as d:        
+        bys = [by for by in d['distances']]   
     for by in bys:
         with h5py.File(task_file) as t, h5py.File(distance_file) as d:
             n = t['triplets'][by].shape[0]
@@ -30,7 +33,7 @@ def score(task_file, distance_file, score_file, score_group='scores'):
             pairs = t['unique_pairs'][by][...] #FIXME idem + only unique_pairs used ?
             pairs = np.reshape(pairs, pairs.shape[0])
             base = t['unique_pairs'].attrs[by]
-        pair_key_type = type_fitting.fit_integer_type((base)**2-1, is_signed=False)
+            pair_key_type = type_fitting.fit_integer_type((base)**2-1, is_signed=False)
         with h52np.H52NP(task_file) as t:
             with np2h5.NP2H5(score_file) as s:
                 inp = t.add_dataset('triplets', by)                 
