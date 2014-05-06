@@ -70,8 +70,9 @@ def compute_distances(load_f, dis_f, pair_file, distance_file, by, start_i=None,
     df.drop_duplicates(cols='index', inplace=True)
     df = df.drop('index', axis=1)
     features = load_f(df) # returns a dictionary with the dataframe index as key 
+    print('computing %d distances for by level %s' % (len(frameA), by))
     for i in range(len(frameA)): 
-        print('computing distance %d on %d for by level %s' % (i, len(frameA), by))
+        #print('computing distance %d on %d for by level %s' % (i, len(frameA), by))
         dataA = features[frameA.index[i]]
         dataB = features[frameB.index[i]]
         d[i,0] = dis_f(dataA, dataB)
