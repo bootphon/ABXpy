@@ -4,7 +4,7 @@ ABXpy Package
 :mod:`ABXpy` Package
 --------------------
 
-.. automodule:: ABXpy
+.. automodule:: ABXpy.__init__
     :members:
     :undoc-members:
     :show-inheritance:
