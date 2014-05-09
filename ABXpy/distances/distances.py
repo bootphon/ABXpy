@@ -210,7 +210,17 @@ class Features_Accessor(object):
             features[ix] = self.features[f + '_' + str(on) + '_' + str(off)]
         return features
 
-# check multiprocessing
-# test
 # write split_feature_file, such that it create the appropriate files
-# + check that no filename conflict can occur
+# + check that no filename conflict can occur in:
+# (f + '_' + str(on) + '_' + str(off))
+# -> mem -> mem_by_cpu
+# if not enough mem_by_cpu to load whole dataset:
+# rewrite files of size matching mem_by_cpu using the structure of the jobs
+# do not rewrite items of a by block if not used in considered job
+# only way this can fail is if some (sub-)by blocks contain too many items for
+# being stored in mem_by_cpu
+# do not treat this case for now, but detect it and if it ever happens:
+#   divide items in (items_1, items_2,....)
+#   read items_1, then items_1, items_2, then items_1, items_3...
+# if this ever proves too slow: could use co-clustering on the big by blocks,
+# use it for the job creation and adopt smarter loading schemes
