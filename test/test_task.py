@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import os, sys
+import os
+import sys
 package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 if not(package_path in sys.path):
     sys.path.append(package_path)
@@ -10,10 +11,9 @@ import numpy as np
 import items
 
 
-#not optimise, but unimportant
+# not optimise, but unimportant
 def tables_equivalent(t1, t2):
     assert t1.shape == t2.shape
-#    return np.array_equal(t1.sort(), t2.sort()) # faster if the sort for datasets is equivalent
     for a1 in t1:
         res = False
         for a2 in t2:
@@ -50,8 +50,8 @@ def test_basic():
             os.remove('data.item')
         except:
             pass
-  
-#testing with a list of across attributes, triplets verification         
+
+#testing with a list of across attributes, triplets verification
 def test_multiple_across():
     items.generate_testitems(2,3,name='data.item')
     try:
@@ -71,7 +71,7 @@ def test_multiple_across():
             os.remove('data.item')
         except:
             pass
-    
+
 #testing without any across attribute
 def test_no_across():
     items.generate_testitems(2,3,name='data.item')
@@ -88,7 +88,7 @@ def test_no_across():
             os.remove('data.item')
         except:
             pass
-# testing for multiple by attributes, asserting the statistics      
+# testing for multiple by attributes, asserting the statistics
 def test_multiple_bys():
     items.generate_testitems(3,4,name='data.item')
     try:
@@ -132,8 +132,8 @@ def test_filter():
             os.remove('data.item')
         except:
             pass
-        
-#testing with simple filter on A, verifying triplet generation
+
+# testing with simple filter on A, verifying triplet generation
 def test_filter_on_A():
     items.generate_testitems(2,2,name='data.item')
     try:
@@ -153,8 +153,8 @@ def test_filter_on_A():
             os.remove('data.item')
         except:
             pass
-        
-#testing with simple filter on B, verifying triplet generation
+
+# testing with simple filter on B, verifying triplet generation
 def test_filter_on_B():
     items.generate_testitems(2,2,name='data.item')
     try:
@@ -166,8 +166,9 @@ def test_filter_on_B():
         task.generate_triplets()
         f = h5py.File('data.abx', 'r')
         triplets_block0 = f.get('triplets/0')
-        triplets = np.array([[0,1,2], [1,0,3], [2,1,0], [3,0,1]])
-        assert tables_equivalent(triplets, triplets_block0), "triplets incorrectly generated"
+        triplets = np.array([[0, 1, 2], [1, 0, 3], [2, 1, 0], [3, 0, 1]])
+        assert tables_equivalent(triplets, triplets_block0), \
+            "triplets incorrectly generated"
     finally:
         try:
             os.remove('data.abx')
@@ -175,11 +176,16 @@ def test_filter_on_B():
         except:
             pass
 
-#testing with simple filter on B, verifying triplet generation
+
+# testing with simple filter on B, verifying triplet generation
 def test_filter_on_C():
-    items.generate_testitems(2,2,name='data.item')
+    items.generate_testitems(2, 2, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', filters=["[attr == 0 for attr in c1_X]"], regressors=None)
+        task = ABXpy.task.Task('data.item',
+                               'c0',
+                               filters=["[attr == 0 for attr in c1_X]"],
+                               regressors=None
+                               )
         stats = task.stats
         assert stats['nb_blocks'] == 4, "incorrect stats: number of blocks"
         assert stats['nb_triplets'] == 4
@@ -187,18 +193,20 @@ def test_filter_on_C():
         task.generate_triplets()
         f = h5py.File('data.abx', 'r')
         triplets_block0 = f.get('triplets/0')
-        triplets = np.array([[2,1,0], [2,3,0], [3,0,1], [3,2,1]])
-        assert tables_equivalent(triplets, triplets_block0), "triplets incorrectly generated"
+        triplets = np.array([[2, 1, 0], [2, 3, 0], [3, 0, 1], [3, 2, 1]])
+        assert tables_equivalent(triplets, triplets_block0), \
+            "triplets incorrectly generated"
     finally:
         try:
             os.remove('data.abx')
             os.remove('data.item')
         except:
             pass
-        
-#test_basic()
-#test_multiple_across()
-#test_no_across()
-#test_multiple_bys()
-#test_filter()
-#test_filter_on_C()
+
+
+test_basic()
+test_multiple_across()
+test_no_across()
+test_multiple_bys()
+test_filter()
+test_filter_on_C()

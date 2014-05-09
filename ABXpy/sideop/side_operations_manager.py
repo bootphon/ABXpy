@@ -2,62 +2,65 @@
 """
 Created on Tue Nov 12 06:39:40 2013
 
-@author: Thomas Schatz
+:author: Thomas Schatz
 
 Class working closely with task.py providing services for it, specifically by:
-    - finding out the best point to execute side-operations (such as filtering and regressor generation) in the 
-    ABX task computation flow:
-        basically the more related a given side-operation is to the on/across/by structure of the ABX task,
-        the earlier itcan be executed and the lowest the computational cost is
-    - providing methods to actually carry out these side-operations at the point in the execution flow to which they
-    were attributed
-"""  
+    - finding out the best point to execute side-operations (such as filtering
+      and regressor generation) in the ABX task computation flow:
+
+        * basically the more related a given side-operation is to the
+          on/across/by structure of the ABX task, the earlier it can be
+          executed and the lowest the computational cost is
+    - providing methods to actually carry out these side-operations at the
+      point in the execution flow to which they were attributed
+"""
 
 import copy
 
+
 class SideOperationsManager(object):
-    
+
     def __init__(self, db_hierarchy, on, across, by):
-         
-        # all columns       
-        self.extensions = ['', '_A', '_B', '_X', '_AB', '_AX', '_1', '_2'] 
-        self.all_cols = {node.name  for tree in db_hierarchy for node in tree.preOrder()}
+
+        # all columns
+        self.extensions = ['', '_A', '_B', '_X', '_AB', '_AX', '_1', '_2']
+        self.all_cols = {node.name for tree in db_hierarchy for node in tree.preOrder()}
         self.extended_cols = [col+ext for col in self.all_cols for ext in self.extensions]  #FIXME add some checks that the original column names will not cause parsing problems
-        self.extended_cols_by_column = [[col+ext for col in self.all_cols] for ext in self.extensions]       
-        # find on/by/across descendant columns  
-        roots = [tree.findChild(lambda x: x.name==on[0]) for tree in db_hierarchy] # db_hierarchy is a list of ABX.lib.tinytree object    
+        self.extended_cols_by_column = [[col+ext for col in self.all_cols] for ext in self.extensions]
+        # find on/by/across descendant columns
+        roots = [tree.findChild(lambda x: x.name == on[0]) for tree in db_hierarchy] # db_hierarchy is a list of ABX.lib.tinytree object
         for root in roots:
             if not(root is None):
                 on_root = root
                 break
         self.on_cols = {node.name for node in on_root.preOrder()}
-        across_roots = []        
+        across_roots = []
         for col in across:
-            roots = [tree.findChild(lambda x: x.name==col) for tree in db_hierarchy]
+            roots = [tree.findChild(lambda x: x.name == col) for tree in db_hierarchy]
             for root in roots:
                 if not(root is None):
                     across_roots.append(root)
                     break
         self.across_cols = {col for root in across_roots for col in {node.name for node in root.preOrder()}}
-        by_roots = []        
+        by_roots = []
         for col in by:
-            roots = [tree.findChild(lambda x: x.name==col) for tree in db_hierarchy]
+            roots = [tree.findChild(lambda x: x.name == col) for tree in db_hierarchy]
             for root in roots:
                 if not(root is None):
                     by_roots.append(root)
                     break
         self.by_cols = {col for root in by_roots for col in {node.name for node in root.preOrder()}}
-        # other columns       
+        # other columns
         self.other_cols = set.difference(self.all_cols, set.union(self.on_cols, self.across_cols, self.by_cols))
-        
+
         # containers could also add AX, AB, BX for further optimization (but wait to see if this can really be useful) 
-        self.by = [] # one value for a whole 'by' database
-        self.on_across_by = [] # one value for a whole ABX cell
-        self.A = [] # value dependent on specific items in A column
-        self.B = [] # value dependent on specific items in B column (or on their 'on' property which we do not treat as a special case as there can be very few elements with the same 'on' in a row in the B column)
-        self.X = [] # value dependent on specific items in X column (or on their 'across' property which we do not treat as a special case as there can be very few elements with the same 'across' in a row in the X colum) 
-        self.ABX = [] # most general case
-        
+        self.by = []  # one value for a whole 'by' database
+        self.on_across_by = []  # one value for a whole ABX cell
+        self.A = []  # value dependent on specific items in A column
+        self.B = []  # value dependent on specific items in B column (or on their 'on' property which we do not treat as a special case as there can be very few elements with the same 'on' in a row in the B column)
+        self.X = []  # value dependent on specific items in X column (or on their 'across' property which we do not treat as a special case as there can be very few elements with the same 'across' in a row in the X colum) 
+        self.ABX = []  # most general case
+
         self.by_context = {'by': set(), 'generic': set(), 'on_across_by': set(), 'A': set(), 'B': set(), 'X': set(), 'ABX': set()}
         self.generic_context = {'generic': set()}
         self.on_context = {'on_across_by': set(), 'A': set(), 'B': set(), 'X': set(), 'ABX': set()}
@@ -67,12 +70,12 @@ class SideOperationsManager(object):
         self.X_context = {'X': set(), 'ABX': set()}
 
     # get radical and suffix part for every context_variable, returns the set of the encountered couples    
-    def parse_extended_columns(self, columns):        
+    def parse_extended_columns(self, columns):
         out = set()
         for var in columns:
             out.add(self.parse_extended_column(var))
         return out
-        
+
     def parse_extended_column(self, column):
         for i, cols in enumerate(self.extended_cols_by_column):
             if column in cols:
@@ -80,8 +83,8 @@ class SideOperationsManager(object):
                 radical = column[:len(column)-len(self.extensions[i])]
                 break
         return radical, suffix
-       
-       
+
+
      # check that something with a AX, AB or 1, 2 extension is an on/across descendant and a correct one for AX, AB           
     def check_extensions(self, elements):
         err = ValueError('Columns used with extensions _AX, _AB, _1 or _2 in filter and regressor specifications must be appropriately determined by the on and across of the task defined.') #FIXME generate more precise error messages        
