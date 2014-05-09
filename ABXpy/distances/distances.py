@@ -107,50 +107,53 @@ could group them into intermediate size h5features files
 
 
 def run_distance_job(job_description, distance_file, distance,
-                     feature_file, feature_group, splitted_features):
+                     feature_file, feature_group, splitted_features, i):
     if not(splitted_features):
         times, features = h5features.read(feature_file, feature_group)
-        get_features = lambda items: \
-            get_features_from_raw(times, features, items)
+        get_features = Features_Accessor(times, features).get_features_from_raw
     pair_file = job_description['pair_file']
-    with h5py.File(pair_file) as fh:
-        for b in range(len(job_description['by'])):
-            # get block spec
-            by = job_description['by'][b]
-            start = job_description['start'][b]
-            stop = job_description['stop'][b]
-            if splitted_features:
-                times, features = h5features.read(feature_file, feature_group)
-                get_features = lambda items: \
-                    get_features_from_splitted(times, features, items)
-            # load pandas dataframe containing info for loading the features
-            store = pandas.HDFStore(pair_file)
-            by_db = store['feat_dbs/' + by]
-            store.close()
-            # load pairs to be computed
-            # indexed relatively to the above dataframe
+    n_blocks = len(job_description['by'])
+    for b in range(n_blocks):
+        print('Job %d: computing distances for block %d on %d' % (i, b,
+                                                                  n_blocks))
+        # get block spec
+        by = job_description['by'][b]
+        start = job_description['start'][b]
+        stop = job_description['stop'][b]
+        if splitted_features:
+            #FIXME modify featutr_file/feature_group to adapt to 'by'
+            times, features = h5features.read(feature_file, feature_group)
+            accessor = Features_Accessor(times, features)
+            get_features = accessor.get_features_from_splitted
+        # load pandas dataframe containing info for loading the features
+        store = pandas.HDFStore(pair_file)
+        by_db = store['feat_dbs/' + by]
+        store.close()
+        # load pairs to be computed
+        # indexed relatively to the above dataframe
+        with h5py.File(pair_file) as fh:
             pair_list = fh['unique_pairs/' + by][start:stop, 0]
             base = fh['unique_pairs'].attrs[by]
-            A = np.mod(pair_list, base)
-            B = pair_list // base
-            pairs = np.column_stack([A, B])
-            n_pairs = pairs.shape[0]
-            # get dataframe with one entry by item involved in this block
-            # indexed by its 'by'-specific index
-            by_inds = np.unique(np.concatenate([A, B]))
-            items = by_db.iloc[by_inds]
-            # get a dictionary whose keys are the 'by' indices
-            features = get_features(items)
-            dis = np.empty(shape=(n_pairs, 1))
-            # FIXME: second dim is 1 because of the way it is stored to disk,
-            # but ultimately it shouldn't be necessary anymore
-            # (if using axis arg in np2h5, h52np and h5io...)
-            for i in range(n_pairs):
-                dataA = features[pairs[i, 0]]
-                dataB = features[pairs[i, 1]]
-                dis[i, 0] = distance(dataA, dataB)
-            with h5py.File(distance_file) as fh:
-                fh['distances/' + by][start:stop, :] = dis
+        A = np.mod(pair_list, base)
+        B = pair_list // base
+        pairs = np.column_stack([A, B])
+        n_pairs = pairs.shape[0]
+        # get dataframe with one entry by item involved in this block
+        # indexed by its 'by'-specific index
+        by_inds = np.unique(np.concatenate([A, B]))
+        items = by_db.iloc[by_inds]
+        # get a dictionary whose keys are the 'by' indices
+        features = get_features(items)
+        dis = np.empty(shape=(n_pairs, 1))
+        # FIXME: second dim is 1 because of the way it is stored to disk,
+        # but ultimately it shouldn't be necessary anymore
+        # (if using axis arg in np2h5, h52np and h5io...)
+        for i in range(n_pairs):
+            dataA = features[pairs[i, 0]]
+            dataB = features[pairs[i, 1]]
+            dis[i, 0] = distance(dataA, dataB)
+        with h5py.File(distance_file) as fh:
+            fh['distances/' + by][start:stop, :] = dis
 
 
 # mem in megabytes
@@ -162,38 +165,50 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
     if n_cpu is None:
         n_cpu = multiprocessing.cpu_count()
     # FIXME if there are other datasets in feature_file this is not accurate
-    feature_size = os.path.getsize(feature_file)
+    feature_size = os.path.getsize(feature_file)/float(2**20)
     mem_needed = feature_size * n_cpu
-    splitted_features = mem_needed > mem
+    splitted_features = False
+    #splitted_features = mem_needed > mem
     #if splitted_features:
     #    split_feature_file(feature_file, feature_group, pair_file)
     jobs = create_distance_jobs(pair_file, distance_file, n_cpu)
-    pool = multiprocessing.Pool(n_cpu)
-    for i, job in enumerate(jobs):
-        print('launching job %d' % i)
-        pool.apply_async(run_distance_job,
-                         (job, distance_file, distance,
-                          feature_file, feature_group, splitted_features))
-        time.sleep(10)
-    pool.close()
-    pool.join()
+    if n_cpu > 1:
+        pool = multiprocessing.Pool(n_cpu)
+        for i, job in enumerate(jobs):
+            print('launching job %d' % i)
+            pool.apply_async(run_distance_job,
+                             (job, distance_file, distance,
+                              feature_file, feature_group, splitted_features,
+                              i))
+            time.sleep(10)
+        pool.close()
+        pool.join()
+    else:
+        run_distance_job(jobs[0], distance_file, distance,
+                         feature_file, feature_group, splitted_features)
 
 
-def get_features_from_raw(times, all_features, items):
-    features = {}
-    for ix, f, on, off in zip(items.index, items['file'],
-                              items['onset'], items['offset']):
-        t = np.where(np.logical_and(times[f] >= on, times[f] <= off))[0]
-        features[ix] = all_features[f][t, :]
-    return features
+class Features_Accessor(object):
 
+    def __init__(self, times, features):
+        self.times = times
+        self.features = features
 
-def get_features_from_splitted(times, all_features, items):
-    features = {}
-    for ix, f, on, off in zip(items.index, items['file'],
-                              items['onset'], items['offset']):
-        features[ix] = all_features[f + '_' + str(on) + '_' + str(off)]
-    return features
+    def get_features_from_raw(self, items):
+        features = {}
+        for ix, f, on, off in zip(items.index, items['file'],
+                                  items['onset'], items['offset']):
+            t = np.where(np.logical_and(self.times[f] >= on,
+                                        self.times[f] <= off))[0]
+            features[ix] = self.features[f][t, :]
+        return features
+
+    def get_features_from_splitted(self, items):
+        features = {}
+        for ix, f, on, off in zip(items.index, items['file'],
+                                  items['onset'], items['offset']):
+            features[ix] = self.features[f + '_' + str(on) + '_' + str(off)]
+        return features
 
 # check multiprocessing
 # test
