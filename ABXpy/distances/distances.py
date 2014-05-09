@@ -13,6 +13,7 @@ import os
 import time
 import h5features
 
+#FIXME detect when multiprocessed jobs crashed
 #FIXME do a separate functions: generic load_balancing
 #FIXME write distances in a separate file
 
@@ -107,14 +108,14 @@ could group them into intermediate size h5features files
 
 
 def run_distance_job(job_description, distance_file, distance,
-                     feature_file, feature_group, splitted_features, i):
+                     feature_file, feature_group, splitted_features, job_id):
     if not(splitted_features):
         times, features = h5features.read(feature_file, feature_group)
         get_features = Features_Accessor(times, features).get_features_from_raw
     pair_file = job_description['pair_file']
     n_blocks = len(job_description['by'])
     for b in range(n_blocks):
-        print('Job %d: computing distances for block %d on %d' % (i, b,
+        print('Job %d: computing distances for block %d on %d' % (job_id, b,
                                                                   n_blocks))
         # get block spec
         by = job_description['by'][b]
@@ -185,7 +186,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
         pool.join()
     else:
         run_distance_job(jobs[0], distance_file, distance,
-                         feature_file, feature_group, splitted_features)
+                         feature_file, feature_group, splitted_features, 1)
 
 
 class Features_Accessor(object):
