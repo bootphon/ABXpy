@@ -11,7 +11,8 @@ import pandas
 import ast
 
 
-def analyze(task_file, score_file, analyze_file):
+#FIXME by_columns should be stored as attributes into the task file
+def analyze(task_file, score_file, analyze_file, by_columns=None):
     #FIXME memory issues ?
     bys = []
     by_scores = []
@@ -23,11 +24,12 @@ def analyze(task_file, score_file, analyze_file):
             bys.append(by)
             by_scores.append(score)
     df = pandas.DataFrame({'by level': bys, 'average ABX score': by_scores})
-    by_levels = np.array(map(ast.literal_eval, df['by level']))
-    d = dict(zip(by, zip(*by_levels)))
-    for key in d:
-        df[key] = d[key]
-    del df['by level']
+    if not(by_columns is None):  # FIXME ugly fix
+        by_levels = np.array(map(ast.literal_eval, df['by level']))
+        d = dict(zip(by_columns, zip(*by_levels)))
+        for key in d:
+            df[key] = d[key]
+        del df['by level']
     df.to_csv(analyze_file, sep='\t')
 
 #FIXME write command-line interface
