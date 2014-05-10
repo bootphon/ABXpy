@@ -193,7 +193,8 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
     jobs = create_distance_jobs(pair_file, distance_file, n_cpu)
     results = []
     if n_cpu > 1:
-        distance_file_lock = multiprocessing.Lock()
+        # use of a manager seems necessary because we're using a Pool...
+        distance_file_lock = multiprocessing.Manager().Lock()
         pool = multiprocessing.Pool(n_cpu)
         for i, job in enumerate(jobs):
             print('launching job %d' % i)
@@ -202,8 +203,8 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
             result = pool.apply_async(worker,
                                       (job, distance_file, distance,
                                        feature_file, feature_group,
-                                       splitted_features, i,
-                                       distance_file_lock))
+                                       splitted_features,
+                                       i, distance_file_lock))
             results.append(result)
             time.sleep(10)
         pool.close()
@@ -217,6 +218,8 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
                     finished_jobs[i] = True
                 except multiprocessing.TimeoutError:
                     pass
+        # recommended in multiprocessing doc to avoid zombie process (?)
+        pool.join()
     else:
         run_distance_job(jobs[0], distance_file, distance,
                          feature_file, feature_group, splitted_features, 1)
