@@ -107,9 +107,22 @@ If there are very small by blocks and i/o become too slow
 could group them into intermediate size h5features files
 """
 
-
+"""
+This function can be used concurrently by several processes.
+When it is the case synchronization of the writing operations in
+the target distance_file is required by HDF5.
+The current solution uses a global lock for the whole file.
+Since each job is writing in different places, it should in principle be
+possible to do all the write concurrently if ever necessary, using parallel
+HDF5 (based on MPI-IO).
+"""
 def run_distance_job(job_description, distance_file, distance,
-                     feature_file, feature_group, splitted_features, job_id):
+                     feature_file, feature_group, splitted_features,
+                     job_id, distance_file_lock=None):
+    if distance_file_lock is None:
+        synchronize = False
+    else:
+        synchronize = True
     if not(splitted_features):
         times, features = h5features.read(feature_file, feature_group)
         get_features = Features_Accessor(times, features).get_features_from_raw
@@ -154,8 +167,12 @@ def run_distance_job(job_description, distance_file, distance,
             dataA = features[pairs[i, 0]]
             dataB = features[pairs[i, 1]]
             dis[i, 0] = distance(dataA, dataB)
+        if synchronize:
+            distance_file_lock.acquire()
         with h5py.File(distance_file) as fh:
             fh['distances/' + by][start:stop, :] = dis
+        if synchronize:
+            distance_file_lock.release()
 
 
 # mem in megabytes
@@ -176,6 +193,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
     jobs = create_distance_jobs(pair_file, distance_file, n_cpu)
     results = []
     if n_cpu > 1:
+        distance_file_lock = multiprocessing.Lock()
         pool = multiprocessing.Pool(n_cpu)
         for i, job in enumerate(jobs):
             print('launching job %d' % i)
@@ -184,7 +202,8 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
             result = pool.apply_async(worker,
                                       (job, distance_file, distance,
                                        feature_file, feature_group,
-                                       splitted_features, i))
+                                       splitted_features, i,
+                                       distance_file_lock))
             results.append(result)
             time.sleep(10)
         pool.close()
@@ -214,6 +233,7 @@ class print_exception(object):
             return self.fun(*args, **kwargs)
         except Exception:
             print(traceback.format_exc())
+            raise
 
 
 class Features_Accessor(object):
