@@ -179,7 +179,9 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
         pool = multiprocessing.Pool(n_cpu)
         for i, job in enumerate(jobs):
             print('launching job %d' % i)
-            result = pool.apply_async(run_distance_job,
+            # hack to get details of exceptions in child processes
+            worker = print_exception(run_distance_job)
+            result = pool.apply_async(worker,
                                       (job, distance_file, distance,
                                        feature_file, feature_group,
                                        splitted_features, i))
@@ -199,6 +201,19 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
     else:
         run_distance_job(jobs[0], distance_file, distance,
                          feature_file, feature_group, splitted_features, 1)
+
+
+# hack to get details of exceptions in child processes
+#FIXME use as a decorator?
+class print_exception(object):
+    def __init__(self, fun):
+        self.fun = fun
+
+    def __call__(self, *args, **kwargs):
+        try:
+            return self.fun(*args, **kwargs)
+        except Exception:
+            print(traceback.format_exc())
 
 
 class Features_Accessor(object):
