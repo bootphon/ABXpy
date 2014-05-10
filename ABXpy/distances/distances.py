@@ -11,6 +11,7 @@ import pandas
 import multiprocessing
 import os
 import time
+import traceback
 import h5features
 
 #FIXME detect when multiprocessed jobs crashed
@@ -173,17 +174,28 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
     #if splitted_features:
     #    split_feature_file(feature_file, feature_group, pair_file)
     jobs = create_distance_jobs(pair_file, distance_file, n_cpu)
+    results = []
     if n_cpu > 1:
         pool = multiprocessing.Pool(n_cpu)
         for i, job in enumerate(jobs):
             print('launching job %d' % i)
-            pool.apply_async(run_distance_job,
-                             (job, distance_file, distance,
-                              feature_file, feature_group, splitted_features,
-                              i))
+            result = pool.apply_async(run_distance_job,
+                                      (job, distance_file, distance,
+                                       feature_file, feature_group,
+                                       splitted_features, i))
+            results.append(result)
             time.sleep(10)
         pool.close()
-        pool.join()
+        # wait for results
+        # using 'get' allow detecting exceptions in child processes
+        finished_jobs = [False]*len(jobs)
+        while not(all(finished_jobs)):
+            for i, result in enumerate(results):
+                try:
+                    result.get(1)  # wait 1 second
+                    finished_jobs[i] = True
+                except multiprocessing.TimeoutError:
+                    pass
     else:
         run_distance_job(jobs[0], distance_file, distance,
                          feature_file, feature_group, splitted_features, 1)
