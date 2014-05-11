@@ -23,7 +23,10 @@ CTYPE = np.float64 # cost type
 
 
 def dtw(x, y, metric):
-    return _dtw(x.shape[0], y.shape[0], metric(x,y)) 
+    if x.shape[0] == 0 or y.shape[0] == 0:
+        raise ValueError('Cannot compute distance between empty representations')
+    else:
+        return _dtw(x.shape[0], y.shape[0], metric(x,y)) 
     
  
 # There was a bug at initialization in both Dan Ellis DTW and Gabriel's code:
