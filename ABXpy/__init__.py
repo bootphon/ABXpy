@@ -11,7 +11,20 @@ It is composed of 3 main modules and other submodules.
 
 The pipeline
 ------------
-#TODO graphic description of the pipeline
+#TODO the table doesnt render well, do a graphic version in a line
+
++--------------+---------+--------------+
+| In           | Module  | Out          |
++==============+=========+==============+
+| - data.item  | task    | - data.abx   |
+| - parameters |         |              |
++--------------+---------+--------------+
+| - data.abx   | score   | - data.score |
+| - distance   |         |              |
++--------------+---------+--------------+
+| - data.abx   | analyse | - data.csv   |
+| - data.score |         |              |
++--------------+---------+--------------+
 """
 # -*- coding: utf-8 -*-
 """

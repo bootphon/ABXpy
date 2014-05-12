@@ -489,7 +489,7 @@ class Task(object):
         # set up sampling if any
         self.total_n_triplets = self.stats['nb_triplets']
         if sample is not None:
-            self.sampling=True
+            self.sampling = True
             if self.stats['approximate_nb_triplets']:
                 raise ValueError('Cannot sample if number of triplets is computed approximately')
             np.random.seed() #FIXME for now just something as random a possible
