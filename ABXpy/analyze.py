@@ -15,6 +15,17 @@ import ast
 
 #FIXME by_columns should be stored as attributes into the task file
 def analyze(task_file, score_file, analyze_file, by_columns=None):
+    """Analyse the results of a task
+
+    Parameters
+    ----------
+    task_file : string, hdf5 file
+        the file containing the triplets and pairs of the task
+    score_file : string, hdf5 file
+        the file containing the score of a task
+    analyse_file: string, csv file
+        the file that will contain the analysis
+    """
     #FIXME memory issues ?
     bys = []
     by_scores = []
