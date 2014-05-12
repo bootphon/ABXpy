@@ -27,13 +27,13 @@ class IncrementalSampler(object):
         sampling with too large samples, more precisely samples whose expected
         number of sampled items is larger than 10**5.
 
-        .. note:: It will return the indexes to drop if n > N/2, is it normal ?
+        .. warning:: It will return the indexes to drop if n > N/2, is it normal ?
 
         Parameters
         ----------
-        n: int
+        n : int
             the size of the chunk
-        dtype: dtype
+        dtype : dtype
             the type of the elements of the sample
 
         Returns
@@ -74,6 +74,10 @@ class IncrementalSampler(object):
 # seems at worse to require comparable execution time when compared to the actual rejection sampling, so probably not going to be so bad all in all
 def hypergeometric_sample(N, K, n):
 
+    # bug correction
+    if n >= N:
+        return K
+
     K_eff = min(K, N-K)  # using symmetries to speed up computations
     n_eff = min(n, N-n)  # using symmetries to speed up computations
     N_float = np.float64(N)  # useful to avoid unexpected roundings
@@ -110,10 +114,6 @@ def hypergeometric_sample(N, K, n):
         k = n-k
     if n_eff < n:
         k = K-k
-
-    #FIXME is it really the solution ?
-    if k < n/4:
-        k = n + k
 
     return k
 

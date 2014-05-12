@@ -12,6 +12,7 @@ import ABXpy.sampling as sampling
 import h5py
 import numpy as np
 import items
+import random
 
 #TODO test rejection sampling
 
@@ -30,6 +31,9 @@ def test_simple_no_replace(N=1000, K=500):
 def test_simple_completion(N=1000, K=500, n=100):
     """Test the exact completion of the sample when N is a multiple of N
     """
+#    print N
+#    print K
+#    print n
     sampler = sampling.sampler.IncrementalSampler(N, K)
     count = 0
     for j in range(N/n):
@@ -41,6 +45,8 @@ def test_simple_completion(N=1000, K=500, n=100):
 
 #FIXME SAMPLER NO REPLACEMENT DOESNT SEEMS TO WORK FOR K > 10^5
 for i in range(100):
-    test_simple_completion(N=1010, K= 478, n=99)
+    test_simple_completion(N=random.randrange(1000, 1501),
+                           K=random.randrange(100, 500),
+                           n=random.randrange(50, 101))
 #test_simple_no_replace(1000000, 300000)
 #test_simple_completion(1000000, 200000)
