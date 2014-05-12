@@ -1,3 +1,5 @@
+"""This module is used to analyse the results of an ABX discrimination task
+"""
 # -*- coding: utf-8 -*-
 """
 Created on Mon Oct 14 12:28:22 2013

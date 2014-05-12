@@ -29,4 +29,4 @@ def generate_testitems(base, n, repeats=0, name='data.item'):
 
     np.savetxt(name,res,delimiter=' ',fmt='%s') 
 
-generate_testitems(2,2,name='data.item')
+generate_testitems(5,5)
