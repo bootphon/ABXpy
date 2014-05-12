@@ -1,3 +1,5 @@
+"""This test script contains tests for the basic parameters of task.py
+"""
 # -*- coding: utf-8 -*-
 
 import os
@@ -9,6 +11,9 @@ import ABXpy.task
 import h5py
 import numpy as np
 import items
+
+error_pairs = "pairs incorrectly generated"
+error_triplets = "triplets incorrectly generated"
 
 
 # not optimise, but unimportant
@@ -23,11 +28,12 @@ def tables_equivalent(t1, t2):
             return False
     return True
 
+
 # test1, triplets and pairs verification
 def test_basic():
-    items.generate_testitems(2,3,name='data.item')
+    items.generate_testitems(2, 3, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2', filters=None, regressors=None)
+        task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2')
         stats = task.stats
         assert stats['nb_blocks'] == 8, "incorrect stats: number of blocks"
         assert stats['nb_triplets'] == 8
@@ -36,14 +42,14 @@ def test_basic():
         f = h5py.File('data.abx', 'r')
         triplets_block0 = f.get('triplets/0')
         triplets_block1 = f.get('triplets/1')
-        triplets = np.array([[0,1,2], [1,0,3], [2,3,0], [3,2,1]])
-        assert tables_equivalent(triplets, triplets_block0), "triplets incorrectly generated"
-        assert tables_equivalent(triplets, triplets_block1), "triplets incorrectly generated"
-        pairs = [2,6,7,3,8,12,13,9]
+        triplets = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0], [3, 2, 1]])
+        assert tables_equivalent(triplets, triplets_block0), error_triplets
+        assert tables_equivalent(triplets, triplets_block1), error_triplets
+        pairs = [2, 6, 7, 3, 8, 12, 13, 9]
         pairs_block0 = f.get('unique_pairs/0')
         pairs_block1 = f.get('unique_pairs/1')
-        assert (set(pairs) == set(pairs_block0[:,0])), "pairs incorrectly generated"
-        assert (set(pairs) == set(pairs_block1[:,0])), "pairs incorrectly generated"
+        assert (set(pairs) == set(pairs_block0[:, 0])), error_pairs
+        assert (set(pairs) == set(pairs_block1[:, 0])), error_pairs
     finally:
         try:
             os.remove('data.abx')
@@ -51,11 +57,12 @@ def test_basic():
         except:
             pass
 
-#testing with a list of across attributes, triplets verification
+
+# testing with a list of across attributes, triplets verification
 def test_multiple_across():
-    items.generate_testitems(2,3,name='data.item')
+    items.generate_testitems(2, 3, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', ['c1', 'c2'], None, filters=None, regressors=None)
+        task = ABXpy.task.Task('data.item', 'c0', ['c1', 'c2'])
         stats = task.stats
         assert stats['nb_blocks'] == 8
         assert stats['nb_triplets'] == 8
@@ -63,7 +70,8 @@ def test_multiple_across():
         task.generate_triplets()
         f = h5py.File('data.abx', 'r')
         triplets_block = f.get('triplets/0')
-        triplets = np.array([[0,1,6], [1,0,7], [2,3,4], [3,2,5], [4,5,2], [5,4,3], [6,7,0], [7,6,1]])
+        triplets = np.array([[0, 1, 6], [1, 0, 7], [2, 3, 4], [3, 2, 5],
+                             [4, 5, 2], [5, 4, 3], [6, 7, 0], [7, 6, 1]])
         assert tables_equivalent(triplets, triplets_block)
     finally:
         try:
@@ -72,11 +80,12 @@ def test_multiple_across():
         except:
             pass
 
-#testing without any across attribute
+
+# testing without any across attribute
 def test_no_across():
-    items.generate_testitems(2,3,name='data.item')
+    items.generate_testitems(2, 3, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', None, 'c2', filters=None, regressors=None, verbose=1)
+        task = ABXpy.task.Task('data.item', 'c0', None, 'c2', verbose=1)
         stats = task.stats
         assert stats['nb_blocks'] == 8
         assert stats['nb_triplets'] == 16
@@ -88,11 +97,13 @@ def test_no_across():
             os.remove('data.item')
         except:
             pass
+
+
 # testing for multiple by attributes, asserting the statistics
 def test_multiple_bys():
-    items.generate_testitems(3,4,name='data.item')
+    items.generate_testitems(3, 4, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', None, ['c1', 'c2', 'c3'], filters=None, regressors=None)
+        task = ABXpy.task.Task('data.item', 'c0', None, ['c1', 'c2', 'c3'])
         stats = task.stats
         assert stats['nb_blocks'] == 81
         assert stats['nb_triplets'] == 0
@@ -105,11 +116,13 @@ def test_multiple_bys():
         except:
             pass
 
+
 # testing for a general filter (discarding last column)
 def test_filter():
-    items.generate_testitems(2,4,name='data.item')
+    items.generate_testitems(2, 4, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2', filters=["[attr == 0 for attr in c3]"], regressors=None)
+        task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2',
+                               filters=["[attr == 0 for attr in c3]"])
         stats = task.stats
         assert stats['nb_blocks'] == 8, "incorrect stats: number of blocks"
         assert stats['nb_triplets'] == 8
@@ -118,14 +131,14 @@ def test_filter():
         f = h5py.File('data.abx', 'r')
         triplets_block0 = f.get('triplets/0')
         triplets_block1 = f.get('triplets/1')
-        triplets = np.array([[0,1,2], [1,0,3], [2,3,0], [3,2,1]])
-        assert tables_equivalent(triplets, triplets_block0), "triplets incorrectly generated"
-        assert tables_equivalent(triplets, triplets_block1), "triplets incorrectly generated"
-        pairs = [2,6,7,3,8,12,13,9]
+        triplets = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0], [3, 2, 1]])
+        assert tables_equivalent(triplets, triplets_block0), error_triplets
+        assert tables_equivalent(triplets, triplets_block1), error_triplets
+        pairs = [2, 6, 7, 3, 8, 12, 13, 9]
         pairs_block0 = f.get('unique_pairs/0')
         pairs_block1 = f.get('unique_pairs/1')
-        assert (set(pairs) == set(pairs_block0[:,0])), "pairs incorrectly generated"
-        assert (set(pairs) == set(pairs_block1[:,0])), "pairs incorrectly generated"
+        assert (set(pairs) == set(pairs_block0[:, 0])), error_pairs
+        assert (set(pairs) == set(pairs_block1[:, 0])), error_pairs
     finally:
         try:
             os.remove('data.abx')
@@ -133,11 +146,13 @@ def test_filter():
         except:
             pass
 
+
 # testing with simple filter on A, verifying triplet generation
 def test_filter_on_A():
-    items.generate_testitems(2,2,name='data.item')
+    items.generate_testitems(2, 2, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', filters=["[attr == 0 for attr in c0_A]"], regressors=None)
+        task = ABXpy.task.Task('data.item', 'c0',
+                               filters=["[attr == 0 for attr in c0_A]"])
         stats = task.stats
         assert stats['nb_blocks'] == 4, "incorrect stats: number of blocks"
         assert stats['nb_triplets'] == 4
@@ -145,8 +160,8 @@ def test_filter_on_A():
         task.generate_triplets()
         f = h5py.File('data.abx', 'r')
         triplets_block0 = f.get('triplets/0')
-        triplets = np.array([[0,1,2], [0,3,2], [2,1,0], [2,3,0]])
-        assert tables_equivalent(triplets, triplets_block0), "triplets incorrectly generated"
+        triplets = np.array([[0, 1, 2], [0, 3, 2], [2, 1, 0], [2, 3, 0]])
+        assert tables_equivalent(triplets, triplets_block0), error_triplets
     finally:
         try:
             os.remove('data.abx')
@@ -154,11 +169,13 @@ def test_filter_on_A():
         except:
             pass
 
+
 # testing with simple filter on B, verifying triplet generation
 def test_filter_on_B():
-    items.generate_testitems(2,2,name='data.item')
+    items.generate_testitems(2, 2, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', filters=["[attr == 0 for attr in c1_B]"], regressors=None)
+        task = ABXpy.task.Task('data.item', 'c0',
+                               filters=["[attr == 0 for attr in c1_B]"])
         stats = task.stats
         assert stats['nb_blocks'] == 4, "incorrect stats: number of blocks"
         assert stats['nb_triplets'] == 4
@@ -167,8 +184,7 @@ def test_filter_on_B():
         f = h5py.File('data.abx', 'r')
         triplets_block0 = f.get('triplets/0')
         triplets = np.array([[0, 1, 2], [1, 0, 3], [2, 1, 0], [3, 0, 1]])
-        assert tables_equivalent(triplets, triplets_block0), \
-            "triplets incorrectly generated"
+        assert tables_equivalent(triplets, triplets_block0), error_triplets
     finally:
         try:
             os.remove('data.abx')
@@ -184,7 +200,6 @@ def test_filter_on_C():
         task = ABXpy.task.Task('data.item',
                                'c0',
                                filters=["[attr == 0 for attr in c1_X]"],
-                               regressors=None
                                )
         stats = task.stats
         assert stats['nb_blocks'] == 4, "incorrect stats: number of blocks"
@@ -194,8 +209,7 @@ def test_filter_on_C():
         f = h5py.File('data.abx', 'r')
         triplets_block0 = f.get('triplets/0')
         triplets = np.array([[2, 1, 0], [2, 3, 0], [3, 0, 1], [3, 2, 1]])
-        assert tables_equivalent(triplets, triplets_block0), \
-            "triplets incorrectly generated"
+        assert tables_equivalent(triplets, triplets_block0), error_triplets
     finally:
         try:
             os.remove('data.abx')

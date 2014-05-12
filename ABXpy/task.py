@@ -46,6 +46,8 @@ An example of ABX triplet:
 A and X share the same 'on' attribute; A and B share the same 'across'
 attribute; A,B and X share the same 'by' attribute
 """
+# -*- coding: utf-8 -*-
+
 # make sure the rest of the ABXpy package is accessible
 import os
 import sys
@@ -88,19 +90,22 @@ import ABXpy.misc.progress_display as progress_display
 #FIXME allow other ways of providing the hierarchical db (directly in pandas format, etc.)
 
 
-""" More complicated FIXMES """
+"""More complicated FIXMES"""
 #FIXME taking by datasets as the basic unit was a mistake, because cases where there many small by datasets happen. Find a way to group them when needed both in the computations and in the h5 files
 #FIXME allow by sampling customization depending on the analyzes to be carried out
 
 
 class Task(object):
     """
-    Define an ABX rask for a given database
+    Define an ABX task for a given database.
 
     Attributes
     ----------
-    stats : dict
-        contain several statistics about the task #FIXME display incorrect
+    stats: dict. Contain several statistics about the task. The main 3 attributes are:
+
+    - nb_blocks the number of blocks of ABX triplets sharing the same 'on', 'across' and 'by' features.
+    - nb_triplets the number of triplets considered.
+    - nb_by_levels the number of blocks of ABX triplets sharing the same 'by' attribute.
 
     Parameters
     ----------
@@ -421,7 +426,7 @@ class Task(object):
                 if self.sampling:
                     ind_type = type_fitting.fit_integer_type(size, is_signed=False)
                     indices = self.sampler.sample(size, dtype=ind_type)
-                    triplets = triplets[indices,:]
+                    triplets = triplets[indices, :]
         else:
             triplets = np.empty(shape=(0,3), dtype=self.types[by])
             indices = np.empty(shape=size, dtype=np.uint8)
@@ -491,19 +496,21 @@ class Task(object):
         if sample is not None:
             self.sampling = True
             if self.stats['approximate_nb_triplets']:
-                raise ValueError('Cannot sample if number of triplets is computed approximately')
+                raise ValueError('Cannot sample if number of triplets is \
+                    computed approximately')
             np.random.seed() #FIXME for now just something as random a possible
-            if sample < 1: # proportion of triplets to be sampled
-                sample = np.uint64(round(sample*self.total_n_triplets))
-            self.sampler = sampler.IncrementalSampler(self.total_n_triplets, sample)
+            if sample < 1:  # proportion of triplets to be sampled
+                N = self.total_n_triplets
+                sample = np.uint64(round(sample*N))
+            self.sampler = sampler.IncrementalSampler(N, sample)
             self.n_triplets = sample
         else:
-            self.sampling=False
+            self.sampling = False
             self.n_triplets = self.total_n_triplets
 
         if self.verbose > 0:
             display = progress_display.ProgressDisplay()
-            display.add('block', 'Computing triplets for by/on/across block',  self.n_blocks)
+            display.add('block', 'Computing triplets for by/on/across block', self.n_blocks)
             display.add('triplets', 'Triplets considered:', self.total_n_triplets)
             display.add('sampled_triplets', 'Triplets sampled:', self.n_triplets)
         # fill output file with list of needed ABX triplets, it is done independently for each 'by' value

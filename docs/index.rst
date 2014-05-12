@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 3
 
    ABXpy
+   FilesFormat
 
 
 Indices and tables
