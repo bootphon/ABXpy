@@ -48,10 +48,12 @@ class IncrementalSampler(object):
         if expected_k > 10**5:
             sample = []
             chunk_size = int(np.floor(10**5*self.N/np.float(self.K)))
+            i = 0
             while n > 0:
                 amount = min(chunk_size, n)
-                sample.append(self.simple_sample(amount, dtype))
+                sample.append(self.simple_sample(amount, dtype) + i*amount)
                 n = n-amount
+                i += 1
             sample = np.concatenate(sample)
         else:
             sample = self.simple_sample(n, dtype)
@@ -89,7 +91,8 @@ def hypergeometric_sample(N, K, n):
     c2 = 3-2*np.sqrt(3/np.e)
     a = average+0.5
     b = c1*np.sqrt(variance+0.5)+c2
-    p_mode = math.lgamma(mode+1) + math.lgamma(K_eff-mode+1)+math.lgamma(n_eff-mode+1)+math.lgamma(N-K_eff-n_eff+mode+1)
+    p_mode = (math.lgamma(mode+1) + math.lgamma(K_eff-mode+1) +
+              math.lgamma(n_eff-mode+1)+math.lgamma(N-K_eff-n_eff+mode+1))
     upper_bound = min(min(n_eff, K_eff)+1, np.floor(a+16*np.sqrt(variance+0.5))) # 16 for 16-decimal-digit precision in c1 and c2 (?)
 
     while True:

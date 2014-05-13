@@ -15,8 +15,11 @@ import items
 import random
 
 #TODO test rejection sampling
+#FIXME sampling without replacement does not work for K > 10^5
+#FIXME problems when K > N/2 (not important ?)
 
-def test_no_replace(N=1000, K=500):
+
+def test_no_replace(N, K):
     """Test the correct functionnality of the sampler, and particularly the no
     replacement property in simple sample"""
     sampler = sampling.sampler.IncrementalSampler(N, K)
@@ -26,7 +29,7 @@ def test_no_replace(N=1000, K=500):
     assert len(indices) == K
 
 
-def test_completion(N=1000, K=500, n=100):
+def test_completion(N, K, n):
     """Test the exact completion of the sample when N is a multiple of N
     """
     sampler = sampling.sampler.IncrementalSampler(N, K)
@@ -37,19 +40,32 @@ def test_completion(N=1000, K=500, n=100):
     assert (count <= K + (N % n)) & (count >= K - (N % n))
 
 
-#FIXME SAMPLER NO REPLACEMENT DOESNT SEEMS TO WORK FOR K > 10^5, problems when K > N/2 (not important ?)
 def test_simple_completion():
-    for i in range(10000):
-        test_completion(N=random.randrange(1000, 2000),
-                        K=random.randrange(100, 500),
-                        n=random.randrange(50, 100))
+    for i in range(1000):
+        N = random.randint(1000, 10000)
+        test_completion(N, K=random.randrange(100, N/2),
+                        n=random.randrange(50, N))
 
 
 def test_simple_no_replace():
     for i in range(100):
         N = random.randint(1000, 10000)
         test_no_replace(N, random.randint(100, N/2))
-#test_no_replace(1000000, 300000)
-#test_completion(1000000, 200000)
+
+
+def test_hard_completion():
+    for i in range(5):
+        N = random.randint(10**6, 10**7)
+        test_completion(N, K=random.randrange(10**5, N/2),
+                        n=random.randrange(10**5, N))
+
+
+def test_hard_no_replace():
+    for i in range(5):
+        N = random.randint(10**6, 10**7)
+        test_no_replace(N, K=random.randrange(10**5, N/2))
+
+test_hard_completion()
+#test_hard_no_replace()  #wont work for now
 test_simple_no_replace()
 test_simple_completion()
