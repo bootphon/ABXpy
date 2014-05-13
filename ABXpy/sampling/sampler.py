@@ -74,8 +74,8 @@ class IncrementalSampler(object):
 # seems at worse to require comparable execution time when compared to the actual rejection sampling, so probably not going to be so bad all in all
 def hypergeometric_sample(N, K, n):
 
-    # bug correction
-    if n >= N:
+    # last call:
+    if n >= K:
         return K
 
     K_eff = min(K, N-K)  # using symmetries to speed up computations
