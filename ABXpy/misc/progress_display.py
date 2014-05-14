@@ -2,7 +2,9 @@
 """
 Created on Tue Jan  7 18:11:16 2014
 
-@author: Thomas Schatz
+:author: Thomas Schatz
+
+This class is used to display the progress during the computing.
 """
 
 import os, sys, collections

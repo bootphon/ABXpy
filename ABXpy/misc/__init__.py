@@ -2,8 +2,8 @@
 """
 Created on Sun Aug 18 22:31:59 2013
 
-@author: thomas
+:author: thomas
 
-This file only serves to signal that the content of the folder is a Python package.
+This module contains several useful functions and classes that dont fit in any
+other modules.
 """
-
