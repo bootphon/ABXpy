@@ -87,10 +87,11 @@ class IncrementalSampler(object):
 # could be optimized a lot if needed (for small samples in particular but also generally)
 # seems at worse to require comparable execution time when compared to the actual rejection sampling, so probably not going to be so bad all in all
 def hypergeometric_sample(N, K, n):
-    """This function implement numpy.random.hypergeometric
+    """This function return the number of elements to sample from the next n
+    items.
     """
     # last call:
-    if n >= K:
+    if n >= N:
         return K
 
     K_eff = min(K, N-K)  # using symmetries to speed up computations

@@ -9,14 +9,18 @@ if not(package_path in sys.path):
     sys.path.append(package_path)
 import ABXpy.task
 import ABXpy.sampling as sampling
-import h5py
 import numpy as np
 import items
 import random
+from scipy.stats import chisquare as chisquare
 
-#TODO test rejection sampling
-#FIXME sampling without replacement does not work for K > 10^5
+
 #FIXME problems when K > N/2 (not important ?)
+def chi2test(frequencies, significance):
+#    dof = len(frequencies) - 1
+    dof = 0
+    (_, p) = chisquare(frequencies, ddof=dof)
+    return p > significance
 
 
 def test_no_replace(N, K):
@@ -37,7 +41,30 @@ def test_completion(N, K, n):
     for j in range(N/n):
         indices = sampler.sample(n)
         count += len(indices)
-    assert (count <= K + (N % n)) & (count >= K - (N % n))
+    assert K - (N % n) <= count <= K + (N % n)
+
+
+# this function is really not optimised
+def test_uniformity(N, K, n, nbins=10, significance=0.001):
+    """Test the uniformity of a sample
+
+    .. note:: This test is not exact and may return false even if the function
+    is correct. Use the significance wisely.
+
+    Parameters:
+    -----------
+    nbins : int
+        the number of bins for the Chi2 test
+    """
+    sampler = sampling.sampler.IncrementalSampler(N, K)
+    distr = []
+    bins = np.zeros(nbins, np.int64)
+    for j in range(N/n):
+        indices = sampler.sample(n) + n*j
+        distr.extend(indices.tolist())
+    for i in distr:
+        bins[i * nbins / N] += 1
+    assert chi2test(bins, significance)
 
 
 def test_simple_completion():
@@ -54,18 +81,30 @@ def test_simple_no_replace():
 
 
 def test_hard_completion():
-    for i in range(5):
+    for i in range(3):
         N = random.randint(10**6, 10**7)
         test_completion(N, K=random.randrange(10**5, N/2),
                         n=random.randrange(10**5, N))
 
 
 def test_hard_no_replace():
-    for i in range(5):
+    for i in range(3):
         N = random.randint(10**6, 10**7)
         test_no_replace(N, K=random.randrange(10**5, N/2))
 
-test_hard_completion()
-#test_hard_no_replace()  #wont work for now
+
+def test_simple_uniformity():
+    for i in range(100):
+        N = random.randint(1000, 10000)
+        test_completion(N, K=random.randrange(100, N/2),
+                        n=random.randrange(50, N))
+
+
+def test_sampling_task():
+    pass
+
+test_simple_uniformity()
+#test_hard_completion()
+#test_hard_no_replace()
 test_simple_no_replace()
 test_simple_completion()
