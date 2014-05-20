@@ -499,8 +499,8 @@ class Task(object):
                 raise ValueError('Cannot sample if number of triplets is \
                     computed approximately')
             np.random.seed() #FIXME for now just something as random a possible
+            N = self.total_n_triplets
             if sample < 1:  # proportion of triplets to be sampled
-                N = self.total_n_triplets
                 sample = np.uint64(round(sample*N))
             self.sampler = sampler.IncrementalSampler(N, sample)
             self.n_triplets = sample

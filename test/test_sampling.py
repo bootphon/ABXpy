@@ -101,7 +101,22 @@ def test_simple_uniformity():
 
 
 def test_sampling_task():
-    pass
+    items.generate_testitems(4, 6, name='data.item')
+    try:
+        task = ABXpy.task.Task('data.item', 'c0', 'c1', ['c2', 'c3'])
+        print "stats computed"
+        stats = task.stats
+        task.generate_triplets(sample=0.2)
+        print "first sample"
+        os.remove('data.abx')
+        task.generate_triplets(sample=200)
+        print "second sample"
+    finally:
+        try:
+            os.remove('data.abx')
+            os.remove('data.item')
+        except:
+            pass
 
 test_simple_uniformity()
 #test_hard_completion()
