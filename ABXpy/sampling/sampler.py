@@ -1,4 +1,7 @@
-"""The sampler class implementing the incremental sampler.
+"""The sampler class implementing incremental sampling without replacement.
+Incremental meaning that you don't have to draw the whole sample at once,
+instead at any given time you can get a piece of the sample of a size you specify.
+This is useful for very large sample sizes.
 """
 # -*- coding: utf-8 -*-
 """
@@ -11,38 +14,67 @@ import numpy as np
 import math
 
 
-# class for sampling without replacement in an incremental fashion
+"""Class for sampling without replacement in an incremental fashion
+
+Toy example of usage:
+    sampler = IncrementalSampler(10**4, 10**4, step=100, relative_indexing=False)
+    complete_sample = np.concatenate([sample for sample in sampler])
+    assert all(complete_sample==range(10**4))
+    
+More realistic example of usage: sampling without replacement 1 million items
+from a total of 1 trillion items, considering 100 millions items at a time
+    sampler = IncrementalSampler(10**12, 10**6, step=10**8, relative_indexing=False)
+    complete_sample = np.concatenate([sample for sample in sampler])
+"""
 class IncrementalSampler(object):
 
     # sampling K sample in a a population of size N
-    def __init__(self, N, K):
+    # both K and N can be very large
+    def __init__(self, N, K, step=None, relative_indexing=True, dtype=np.int64):
         assert K <= N
         self.N = N  # remaining items to sample from
         self.K = K  # remaining items to be sampled
+        self.initial_N = N
+        self.relative_indexing = relative_indexing
+        self.type = dtype  # the type of the elements of the sample
+        # step used when iterating over the sampler
+        if step is None:
+            self.step = 10**4*N//K # 10**4 samples by iteration on average  
+        else:
+            self.step = step
 
-    def sample(self, n, dtype=np.int64):
+    # method for implementing the iterable pattern
+    def __iter__(self):
+        return self
+
+    # method for implementing the iterable pattern
+    def next(self):
+        if self.N == 0:
+            raise StopIteration
+        return self.sample(self.step)
+
+    def sample(self, n):
         """Fast implementation of the sampling function
 
         Get all samples from the next n items in a way that avoid rejection
         sampling with too large samples, more precisely samples whose expected
         number of sampled items is larger than 10**5.
 
-        .. warning:: It will return the indexes to drop if n > N/2, is it normal ?
-
         Parameters
         ----------
         n : int
             the size of the chunk
-        dtype : dtype
-            the type of the elements of the sample
-
         Returns
         -------
         sample : numpy.array
-            the indices to drop or to keep depending on the chunk size
-            (see note)
+            the indices to keep given relative to the current position
+            in the sample or absolutely, depending on the value of
+            relative_indexing specified when initialising the sampler
+            (default value is True)
         """
-        assert n <= self.N
+        position = self.initial_N-self.N
+        if n > self.N:
+            n = self.N
         # expected number of sampled items
         expected_k = n*self.K/np.float(self.N)
         if expected_k > 10**5:
@@ -51,30 +83,31 @@ class IncrementalSampler(object):
             i = 0
             while n > 0:
                 amount = min(chunk_size, n)
-                sample.append(self.simple_sample(amount, dtype) + i*amount)
+                sample.append(self.simple_sample(amount) + i*chunk_size)
                 n = n-amount
                 i += 1
             sample = np.concatenate(sample)
         else:
-            sample = self.simple_sample(n, dtype)
+            sample = self.simple_sample(n)
+        if not(self.relative_indexing):
+            sample = sample + position
         return sample
 
-    def simple_sample(self, n, dtype=np.int64):
+    def simple_sample(self, n):
         """get all samples from the next n items in a naive fashion
 
         Parameters
         ----------
         n : int
             the size of the chunk
-        dtype : dtype
-            the type of the elements of the sample
         Returns
         -------
         sample : numpy.array
-            the indices to be kept
+            the indices to be kept relative to the current position
+            in the sample
         """
         k = hypergeometric_sample(self.N, self.K, n)  # get the sample size
-        sample = sample_without_replacement(k, n, dtype)
+        sample = sample_without_replacement(k, n, self.type)
         self.N = self.N - n
         self.K = self.K - k
         return sample
@@ -89,48 +122,48 @@ class IncrementalSampler(object):
 def hypergeometric_sample(N, K, n):
     """This function return the number of elements to sample from the next n
     items.
-    """
-    # last call:
-    if n >= N:
-        return K
+    """    
+    # handling edge cases
+    if N == 0 or N==1:
+        k = K    
+    else:      
+        # using symmetries to speed up computations
+        K_eff = min(K, N-K)  # if the probability of failure is smaller than the probability of success, draw the failure count
+        n_eff = min(n, N-n)  # if the amount of items to sample from is larger than the amount of items that will remain, draw from the items that will remain 
+        N_float = np.float64(N)  # useful to avoid unexpected roundings
+    
+        average = n_eff*(K_eff/N_float)
+        mode = np.floor((n_eff+1)*((K_eff+1)/(N_float+2)))
+        variance = average*((N-K_eff)/N_float)*((N-n_eff)/(N_float-1))
+        c1 = 2*np.sqrt(2/np.e)
+        c2 = 3-2*np.sqrt(3/np.e)
+        a = average+0.5
+        b = c1*np.sqrt(variance+0.5)+c2
+        p_mode = (math.lgamma(mode+1) + math.lgamma(K_eff-mode+1) +
+                  math.lgamma(n_eff-mode+1)+math.lgamma(N-K_eff-n_eff+mode+1))
+        upper_bound = min(min(n_eff, K_eff)+1, np.floor(a+16*np.sqrt(variance+0.5))) # 16 for 16-decimal-digit precision in c1 and c2 (?)
 
-    K_eff = min(K, N-K)  # using symmetries to speed up computations
-    n_eff = min(n, N-n)  # using symmetries to speed up computations
-    N_float = np.float64(N)  # useful to avoid unexpected roundings
-
-    average = n_eff*(K_eff/N_float)
-    mode = np.floor((n_eff+1)*((K_eff+1)/(N_float+2)))
-    variance = average*((N-K_eff)/N_float)*((N-n_eff)/(N_float-1))
-    c1 = 2*np.sqrt(2/np.e)
-    c2 = 3-2*np.sqrt(3/np.e)
-    a = average+0.5
-    b = c1*np.sqrt(variance+0.5)+c2
-    p_mode = (math.lgamma(mode+1) + math.lgamma(K_eff-mode+1) +
-              math.lgamma(n_eff-mode+1)+math.lgamma(N-K_eff-n_eff+mode+1))
-    upper_bound = min(min(n_eff, K_eff)+1, np.floor(a+16*np.sqrt(variance+0.5))) # 16 for 16-decimal-digit precision in c1 and c2 (?)
-
-    while True:
-        U = np.random.rand()
-        V = np.random.rand()
-        k = np.int64(np.floor(a+b*(V-0.5)/U))
-        if k < 0 or k >= upper_bound:
-            continue
-        else:
-            p_k = math.lgamma(k+1)+ math.lgamma(K_eff-k+1) + math.lgamma(n_eff-k+1) + math.lgamma(N-K_eff-n_eff+k+1)
-            d = p_mode-p_k
-            if U*(4-U)-3 <= d:
-                break
-            if U*(U-d) >= 1:
+        while True: 
+            U = np.random.rand()
+            V = np.random.rand()
+            k = np.int64(np.floor(a+b*(V-0.5)/U))
+            if k < 0 or k >= upper_bound:
                 continue
-            if 2*np.log(U) <= d:
-                break
-
-    # retrieving original variables by symmetry
-
-    if K_eff < K:
-        k = n-k
-    if n_eff < n:
-        k = K-k
+            else:
+                p_k = math.lgamma(k+1)+ math.lgamma(K_eff-k+1) + math.lgamma(n_eff-k+1) + math.lgamma(N-K_eff-n_eff+k+1)
+                d = p_mode-p_k
+                if U*(4-U)-3 <= d:
+                    break
+                if U*(U-d) >= 1:
+                    continue
+                if 2*np.log(U) <= d:
+                    break
+    
+        # retrieving original variables by symmetry
+        if K_eff < K:
+            k = n_eff-k
+        if n_eff < n:
+            k = K-k
 
     return k
 
