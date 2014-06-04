@@ -196,30 +196,33 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
         # use of a manager seems necessary because we're using a Pool...
         distance_file_lock = multiprocessing.Manager().Lock()
         pool = multiprocessing.Pool(n_cpu)
-        for i, job in enumerate(jobs):
-            print('launching job %d' % i)
-            # hack to get details of exceptions in child processes
-            worker = print_exception(run_distance_job)
-            result = pool.apply_async(worker,
-                                      (job, distance_file, distance,
-                                       feature_file, feature_group,
-                                       splitted_features,
-                                       i, distance_file_lock))
-            results.append(result)
-            time.sleep(10)
-        pool.close()
-        # wait for results
-        # using 'get' allow detecting exceptions in child processes
-        finished_jobs = [False]*len(jobs)
-        while not(all(finished_jobs)):
-            for i, result in enumerate(results):
-                try:
-                    result.get(1)  # wait 1 second
-                    finished_jobs[i] = True
-                except multiprocessing.TimeoutError:
-                    pass
-        # recommended in multiprocessing doc to avoid zombie process (?)
-        pool.join()
+        try:
+            for i, job in enumerate(jobs):
+                print('launching job %d' % i)
+                # hack to get details of exceptions in child processes
+                worker = print_exception(run_distance_job)
+                result = pool.apply_async(worker,
+                                          (job, distance_file, distance,
+                                           feature_file, feature_group,
+                                           splitted_features,
+                                           i, distance_file_lock))
+                results.append(result)
+                time.sleep(10)
+            pool.close()
+            # wait for results
+            # using 'get' allow detecting exceptions in child processes
+            finished_jobs = [False]*len(jobs)
+            while not(all(finished_jobs)):
+                for i, result in enumerate(results):
+                    try:
+                        result.get(1)  # wait 1 second
+                        finished_jobs[i] = True
+                    except multiprocessing.TimeoutError:
+                        pass
+        finally:
+            pool.close() # in case it wasn't done before
+            # recommended in multiprocessing doc to avoid zombie process (?)
+            pool.join()
     else:
         run_distance_job(jobs[0], distance_file, distance,
                          feature_file, feature_group, splitted_features, 1)
