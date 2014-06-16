@@ -117,14 +117,20 @@ possible to do all the write concurrently if ever necessary, using parallel
 HDF5 (based on MPI-IO).
 """
 def run_distance_job(job_description, distance_file, distance,
-                     feature_file, feature_group, splitted_features,
+                     feature_files, feature_groups, splitted_features,
                      job_id, distance_file_lock=None):
     if distance_file_lock is None:
         synchronize = False
     else:
         synchronize = True
     if not(splitted_features):
-        times, features = h5features.read(feature_file, feature_group)
+        times = {}
+        features = {}
+        for feature_file, feature_group in zip(feature_files, feature_groups):
+            t, f = h5features.read(feature_file, feature_group)
+            assert not(set(times.keys()).intersection(t.keys())), "The same file is indexed by (at least) two different feature files"
+            times.update(t)
+            features.update(f)
         get_features = Features_Accessor(times, features).get_features_from_raw
     pair_file = job_description['pair_file']
     n_blocks = len(job_description['by'])
@@ -136,8 +142,15 @@ def run_distance_job(job_description, distance_file, distance,
         start = job_description['start'][b]
         stop = job_description['stop'][b]
         if splitted_features:
-            #FIXME modify featutr_file/feature_group to adapt to 'by'
-            times, features = h5features.read(feature_file, feature_group)
+            #FIXME modify feature_file/feature_group to adapt to 'by'
+            #FIXME any change needed when several feature files before splitting ?
+            times = {}
+            features = {}
+            for feature_file, feature_group in zip(feature_files, feature_groups):
+                t, f = h5features.read(feature_file, feature_group)
+                assert not(set(times.keys()).intersection(t.keys())), "The same file is indexed by (at least) two different feature files"
+                times.update(t)
+                features.update(f)
             accessor = Features_Accessor(times, features)
             get_features = accessor.get_features_from_splitted
         # load pandas dataframe containing info for loading the features
@@ -180,12 +193,20 @@ def run_distance_job(job_description, distance_file, distance,
 # and/or have an external utility for concatenating them?
 # get rid of the group in feature file (never used ?)
 def compute_distances(feature_file, feature_group, pair_file, distance_file,
-                      distance, n_cpu=None, mem=1000):
+                      distance, n_cpu=None, mem=1000, feature_file_as_list=False):
     if n_cpu is None:
         n_cpu = multiprocessing.cpu_count()
+    if not(feature_file_as_list):
+        feature_files = [feature_file]
+        feature_groups = [feature_group]
+    else:
+        feature_files = feature_file
+        feature_groups = feature_group
     # FIXME if there are other datasets in feature_file this is not accurate
-    feature_size = os.path.getsize(feature_file)/float(2**20)
-    mem_needed = feature_size * n_cpu
+    mem_needed = 0
+    for feature_file in feature_files:
+        feature_size = os.path.getsize(feature_file)/float(2**20)
+        mem_needed = feature_size * n_cpu + mem_needed
     splitted_features = False
     #splitted_features = mem_needed > mem
     #if splitted_features:
@@ -203,7 +224,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
                 worker = print_exception(run_distance_job)
                 result = pool.apply_async(worker,
                                           (job, distance_file, distance,
-                                           feature_file, feature_group,
+                                           feature_files, feature_groups,
                                            splitted_features,
                                            i, distance_file_lock))
                 results.append(result)
@@ -225,7 +246,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
             pool.join()
     else:
         run_distance_job(jobs[0], distance_file, distance,
-                         feature_file, feature_group, splitted_features, 1)
+                         feature_files, feature_groups, splitted_features, 1)
 
 
 # hack to get details of exceptions in child processes
