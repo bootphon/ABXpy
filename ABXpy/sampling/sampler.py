@@ -53,7 +53,7 @@ class IncrementalSampler(object):
             raise StopIteration
         return self.sample(self.step)
 
-    def sample(self, n):
+    def sample(self, n, dtype=np.int64):
         """Fast implementation of the sampling function
 
         Get all samples from the next n items in a way that avoid rejection
@@ -72,6 +72,7 @@ class IncrementalSampler(object):
             relative_indexing specified when initialising the sampler
             (default value is True)
         """
+        self.type = dtype
         position = self.initial_N-self.N
         if n > self.N:
             n = self.N
