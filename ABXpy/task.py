@@ -448,7 +448,7 @@ class Task(object):
             scalar_regressors = self.regressors.by_regressors + self.regressors.on_across_by_regressors
             for names, regs in zip(scalar_names, scalar_regressors):
                 for name, reg in zip(names, regs):
-                    regressors[name] = np.tile(np.array(reg), (size,1))
+                    regressors[name] = np.tile(np.array(reg), (len(iA),1))
             for names, regs in zip(self.regressors.A_names, self.regressors.A_regressors):
                 for name, reg in zip(names, regs):
                     regressors[name] = reg[iA]
