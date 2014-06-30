@@ -844,9 +844,9 @@ def verifydb(filename):
         assert cols[0] == '#file', 'The first column must be named #file'
         assert cols[1] == 'onset', 'The second column must be named onset'
         assert cols[2] == 'offset', 'The third column must be named offset'
-        for line in f:
-            source = str.split(line, ' ')[0]
-            assert os.path.isfile(source), "The file " + source + " cannot be found"
+        # for line in f:
+        #     source = str.split(line, ' ')[0]
+        #     assert os.path.isfile(source), "The file " + source + " cannot be found"
 
 
 """
