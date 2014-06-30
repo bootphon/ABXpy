@@ -33,7 +33,7 @@ def tables_equivalent(t1, t2):
 def test_basic():
     items.generate_testitems(2, 3, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2')
+        task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2', verify=False)
         stats = task.stats
         assert stats['nb_blocks'] == 8, "incorrect stats: number of blocks"
         assert stats['nb_triplets'] == 8
@@ -62,7 +62,7 @@ def test_basic():
 def test_multiple_across():
     items.generate_testitems(2, 3, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', ['c1', 'c2'])
+        task = ABXpy.task.Task('data.item', 'c0', ['c1', 'c2'], verify=False)
         stats = task.stats
         assert stats['nb_blocks'] == 8
         assert stats['nb_triplets'] == 8
@@ -85,7 +85,8 @@ def test_multiple_across():
 def test_no_across():
     items.generate_testitems(2, 3, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', None, 'c2', verbose=1)
+        task = ABXpy.task.Task('data.item', 'c0', None, 'c2', verbose=1,
+                               verify=False)
         stats = task.stats
         assert stats['nb_blocks'] == 8
         assert stats['nb_triplets'] == 16
@@ -103,7 +104,8 @@ def test_no_across():
 def test_multiple_bys():
     items.generate_testitems(3, 4, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', None, ['c1', 'c2', 'c3'])
+        task = ABXpy.task.Task('data.item', 'c0', None, ['c1', 'c2', 'c3'],
+                               verify=False)
         stats = task.stats
         assert stats['nb_blocks'] == 81
         assert stats['nb_triplets'] == 0
@@ -122,7 +124,8 @@ def test_filter():
     items.generate_testitems(2, 4, name='data.item')
     try:
         task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2',
-                               filters=["[attr == 0 for attr in c3]"])
+                               filters=["[attr == 0 for attr in c3]"],
+                               verify=False)
         stats = task.stats
         assert stats['nb_blocks'] == 8, "incorrect stats: number of blocks"
         assert stats['nb_triplets'] == 8
@@ -152,7 +155,8 @@ def test_filter_on_A():
     items.generate_testitems(2, 2, name='data.item')
     try:
         task = ABXpy.task.Task('data.item', 'c0',
-                               filters=["[attr == 0 for attr in c0_A]"])
+                               filters=["[attr == 0 for attr in c0_A]"],
+                               verify=False)
         stats = task.stats
         assert stats['nb_blocks'] == 4, "incorrect stats: number of blocks"
         assert stats['nb_triplets'] == 4
@@ -175,7 +179,8 @@ def test_filter_on_B():
     items.generate_testitems(2, 2, name='data.item')
     try:
         task = ABXpy.task.Task('data.item', 'c0',
-                               filters=["[attr == 0 for attr in c1_B]"])
+                               filters=["[attr == 0 for attr in c1_B]"],
+                               verify=False)
         stats = task.stats
         assert stats['nb_blocks'] == 4, "incorrect stats: number of blocks"
         assert stats['nb_triplets'] == 4
@@ -200,6 +205,7 @@ def test_filter_on_C():
         task = ABXpy.task.Task('data.item',
                                'c0',
                                filters=["[attr == 0 for attr in c1_X]"],
+                               verify=False
                                )
         stats = task.stats
         assert stats['nb_blocks'] == 4, "incorrect stats: number of blocks"
@@ -218,9 +224,9 @@ def test_filter_on_C():
             pass
 
 
-test_basic()
-test_multiple_across()
-test_no_across()
-test_multiple_bys()
-test_filter()
-test_filter_on_C()
+# test_basic()
+# test_multiple_across()
+# test_no_across()
+# test_multiple_bys()
+# test_filter()
+# test_filter_on_C()
