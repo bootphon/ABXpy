@@ -55,7 +55,6 @@ package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 if not(package_path in sys.path):
     sys.path.append(package_path)
 
-import re
 import h5py
 import numpy as np
 import pandas as pd
@@ -870,7 +869,7 @@ if __name__ == '__main__':
     # mandatory ones; otherwise parsing is not possible beacause optional
     # arguments can have various numbers of inputs)
     parser = argparse.ArgumentParser(
-        usage="%(prog)s database [output] -o ON [-a ACROSS [ACROSS ...]] [-b BY [BY ...]] [-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT_OR_PROPORTION] [--stats-only] [-h] [-v VERBOSE_LEVEL]", description='ABX task specification')
+        usage="%(prog)s database [output] -o ON [-a ACROSS [ACROSS ...]] [-b BY [BY ...]] [-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT_OR_PROPORTION] [--stats-only] [-h] [-v VERBOSE_LEVEL] [--no_verif]", description='ABX task specification')
     message = 'must be defined by the database you are using (e.g. speaker or phonemes, if your database contains columns defining these attributes)'
     # I/O files
     g1 = parser.add_argument_group('I/O files')
@@ -900,9 +899,11 @@ if __name__ == '__main__':
                     help="add this flag if you only want some statistics about the specified task")
     g4.add_argument('-v', '--verbose', default=0,
                     help="optional: level of verbosity required on the standard output")
+    g4.add_argument('--no_verif', default=False, action='store_true',
+                    help="optional: skip the verification of the database file consistancy")
     args = parser.parse_args()
     task = Task(args.database, args.on, args.across,
-                args.by, args.filt, args.reg, args.verbose)
+                args.by, args.filt, args.reg, args.verbose, not args.no_verif)
 
     if not(args.stats_only):
         # generate triplets and unique pairs
