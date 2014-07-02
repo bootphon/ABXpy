@@ -303,6 +303,11 @@ class Features_Accessor(object):
 if __name__ == '__main__':
 
     import argparse
+    import metrics.cosine as cosine
+    import metrics.dtw as dtw
+
+    def dtw_cosine_distance(x, y):
+        return dtw.dtw(x, y, cosine.cosine_distance)
 
     # parser (the usage string is specified explicitly because the default does not show that the mandatory arguments must come before the mandatory ones; otherwise parsing is not possible beacause optional arguments can have various numbers of inputs)
     parser = argparse.ArgumentParser(usage="%(prog)s features task [distance] [-o output]",
@@ -316,5 +321,7 @@ if __name__ == '__main__':
     g1.add_argument('distance', nargs='?', default=None, help='optional, callable: distance to use')
     g1.add_argument(
         '-o', '--output', help='optional: output distance file')
+    g1.add_argument(
+        '-n', '--ncpu', default=None, help='optional: number of cpus to use')
     args = parser.parse_args()
-    compute_distances(feature_file, '/features/', args.task, args.output, dtw_cosine_distance)
+    compute_distances(args.features, '/features/', args.task, args.output, dtw_cosine_distance, n_cpu=args.ncpu)
