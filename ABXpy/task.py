@@ -839,7 +839,7 @@ def on_across_from_key(key):
 
 def verifydb(filename):
     with open(filename) as f:
-        cols = str.split(f.readline(), ' ')
+        cols = str.split(f.readline(), '\t')
         assert len(cols) > 4, 'the syntax of the item file is incorrect'
         assert cols[0] == '#file', 'The first column must be named #file'
         assert cols[1] == 'onset', 'The second column must be named onset'
