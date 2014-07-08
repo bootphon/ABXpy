@@ -88,10 +88,6 @@ def collapse(scorefile, taskfile):
             new_index = indices[:, i] + n_indices[i] * new_index
         # aux = np.arange(len(new_index))
         # aux = np.hstack((new_index[:, None], aux[:, None]))
-        print np.shape(np.unique(new_index))[0]
-        print np.unique(indices)[0]
-        if np.shape(np.unique(new_index))[0] != np.shape(np.unique(indices))[0]:
-            print indices
 
         permut = np.argsort(new_index)
         i_unique = 0
