@@ -24,14 +24,12 @@ import os.path as path
 # phone, context, talker
 # phoneA, phoneB, context, talkerA, talkerX
 
-
 def unique_rows(arr):
     return (np.unique(np.ascontiguousarray(arr)
                       .view(np.dtype((np.void,
                                       arr.dtype.itemsize * arr.shape[1]))))
             .view(arr.dtype).reshape(-1, arr.shape[1]))
 import pandas as pd
-
 
 def collapse(scorefile, taskfile):
     wf_tmp = open('tmp_pandas.txt', 'w')
@@ -56,18 +54,22 @@ def collapse(scorefile, taskfile):
         regs = tfrk['indexed_datasets']
         nregs = len(regs)
 
-        indexes = tfrk['indexes']
+        df=pd.DataFrame(np.hstack((indices,scores_arr)))
+        groups=df.groupby(range(nregs))
+        themean=(groups.mean()+1.0)/2
+        themean=themean[nregs]
+        thecount=(groups.count())
+        thecount=thecount[nregs]
+        indexes = []
+        for reg in regs:
+            indexes.append(tfrk['indexes'][reg][:])
 
-        df = pd.DataFrame(np.hstack((indices, scores_arr)))
-        groups = df.groupby(range(nregs))
-        themean = (groups.mean()+1.0)/2
-        themean = themean[nregs]
-        thecount = (groups.count())
-        thecount = thecount[nregs]
-        for k_id, key in enumerate(themean.keys()):
-            aux = np.array(indexes[regs[0]])[list(key)]
-            score = themean[key]
-            n = thecount[key]
+        for i, key in enumerate(tmp):
+            aux = list()
+            for j in range(nregs):
+                aux.append(indexes[j][key[j]])
+            score=themean[key]
+            n=thecount[key]
             results.append(tuple(aux) + (context, score, n))
             wf_tmp.write('\t'.join(map(str, results[-1])) + '\n')
 
