@@ -17,14 +17,13 @@
 
 from __future__ import division
 
-import sys
 import h5py
 import numpy as np
 import argparse
 import os.path as path
 # import ABXpy.h5tools.np2h5 as np2h5
 # import ABXpy.h5tools.h5_handler as h5_handler
-import time
+import ABXpy.misc.type_fitting as type_fitting
 
 
 def npdecode(keys, max_ind):
@@ -53,7 +52,6 @@ def unique_rows(arr):
                       .view(np.dtype((np.void,
                                       arr.dtype.itemsize * arr.shape[1]))))
             .view(arr.dtype).reshape(-1, arr.shape[1]))
-import pandas as pd
 
 
 def collapse(scorefile, taskfile):
@@ -73,6 +71,8 @@ def collapse(scorefile, taskfile):
 
         tmp = tfrk[u'indexed_data']
         indices = np.array(tmp)
+        if indices.size == 0:
+            continue
         tmp = scorefid['scores'][key]
         scores_arr = np.array(tmp)
         #unique = unique_rows(indices)
@@ -83,7 +83,9 @@ def collapse(scorefile, taskfile):
         n_indices = np.max(indices, 0) + 1
         if np.prod(n_indices) > 18446744073709551615:
             print "type not big enough"
-        new_index = indices[:, 0].astype(np.uint64)
+        ind_type = type_fitting.fit_integer_type(np.prod(n_indices),
+                                                 is_signed=False)
+        new_index = indices[:, 0].astype(ind_type)
         for i in range(1, len(n_indices)):
             new_index = indices[:, i] + n_indices[i] * new_index
         # aux = np.arange(len(new_index))
