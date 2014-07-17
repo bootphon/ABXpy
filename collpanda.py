@@ -64,7 +64,7 @@ def collapse(scorefile, taskfile):
         for reg in regs:
             indexes.append(tfrk['indexes'][reg][:])
 
-        for i, key in enumerate(tmp):
+        for i, key in enumerate(themean.keys()):
             aux = list()
             for j in range(nregs):
                 aux.append(indexes[j][key[j]])
