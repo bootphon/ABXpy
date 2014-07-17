@@ -98,6 +98,7 @@ def collapse(scorefile, taskfile):
         mean[0] = [key_reg, scores_arr[permut[0]], 0]
         i_start = 0
         for i, p in enumerate(permut[1:]):
+            i += 1
             if new_index[p] != key_reg:
                 mean[i_unique, 1] = (np.mean(scores_arr[permut[i_start:i]])
                                      + 1) / 2
