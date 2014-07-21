@@ -14,10 +14,11 @@ import time
 import traceback
 import h5features
 
+#FIXME Enforce single process usage when using python compiled with OMP enabled 
+
 #FIXME detect when multiprocessed jobs crashed
 #FIXME do a separate functions: generic load_balancing
 #FIXME write distances in a separate file
-
 
 def create_distance_jobs(pair_file, distance_file, n_cpu):
     #FIXME check (given an optional checking function)
