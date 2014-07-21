@@ -28,6 +28,8 @@ def kl_divergence(x, y, thresholded=True, symmetrized=True, normalize=True):
      - normalize=True => normalize the inputs so that lines sum to one.
     """
     assert (x.dtype == np.float64 and y.dtype == np.float64) or (x.dtype == np.float32 and y.dtype == np.float32)
+    if thresholded:
+        normalize = True
     if normalize:
         x /= x.sum(1).reshape(x.shape[0], 1)
         y /= y.sum(1).reshape(y.shape[0], 1)
