@@ -20,16 +20,22 @@ def __kl_divergence(x, y):
     return pp - pq
 
 
-def kl_divergence(x, y, thresholded=True, symmetrized=True):
+def kl_divergence(x, y, thresholded=True, symmetrized=True, normalize=True):
     """ Kullback-Leibler divergence 
     x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
+     - thresholded=True => means we add an epsilon to all the dimensions/values
+                           AND forces normalization of the inputs.
+     - symmetrized=True => uses the symmetrized KL (0.5 x->y + 0.5 y->x).
+     - normalize=True => normalized the inputs so that lines sum to one.
     """
     assert (x.dtype == np.float64 and y.dtype == np.float64) or (x.dtype == np.float32 and y.dtype == np.float32)
     if thresholded:
         eps = np.finfo(x.dtype).eps
         x = x+eps
-        x /= x.sum(1).reshape(x.shape[0], 1)
         y = y+eps
+        normalize = True
+    if normalize:
+        x /= x.sum(1).reshape(x.shape[0], 1)
         y /= y.sum(1).reshape(y.shape[0], 1)
     res = __kl_divergence(x, y)
     if symmetrized:
@@ -37,11 +43,14 @@ def kl_divergence(x, y, thresholded=True, symmetrized=True):
     return np.float64(res)
 
 
-def js_divergence(x, y):
+def js_divergence(x, y, normalize=True):
     """ Jensen-Shannon divergence 
     x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
     """
     assert (x.dtype == np.float64 and y.dtype == np.float64) or (x.dtype == np.float32 and y.dtype == np.float32)
+    if normalize:
+        x /= x.sum(1).reshape(x.shape[0], 1)
+        y /= y.sum(1).reshape(y.shape[0], 1)
     xx = np.tile(x, (y.shape[0], 1, 1)).transpose((1, 0, 2))
     yy = np.tile(y, (x.shape[0], 1, 1))
     m = (xx + yy) / 2
@@ -51,6 +60,10 @@ def js_divergence(x, y):
     y_y = np.tile(np.sum(y * np.log(y), axis=1).reshape(y.shape[0], 1), (1, x.shape[0])).transpose()
     res = 0.5 * (x_x - x_m) + 0.5 * (y_y - y_m)
     return np.float64(res)
+
+
+def sqrt_js_divergence(x, y):
+    return np.sqrt(js_divergence(x, y))
 
 
 def is_distance(x, y):
