@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import scipy
 
 
 def kl_ptwise(x, y):
@@ -24,17 +23,18 @@ def kl_divergence(x, y, thresholded=True, symmetrized=True, normalize=True):
     """ Kullback-Leibler divergence 
     x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
      - thresholded=True => means we add an epsilon to all the dimensions/values
-                           AND forces normalization of the inputs.
+                           AND renormalize inputs.
      - symmetrized=True => uses the symmetrized KL (0.5 x->y + 0.5 y->x).
-     - normalize=True => normalized the inputs so that lines sum to one.
+     - normalize=True => normalize the inputs so that lines sum to one.
     """
     assert (x.dtype == np.float64 and y.dtype == np.float64) or (x.dtype == np.float32 and y.dtype == np.float32)
+    if normalize:
+        x /= x.sum(1).reshape(x.shape[0], 1)
+        y /= y.sum(1).reshape(y.shape[0], 1)
     if thresholded:
         eps = np.finfo(x.dtype).eps
         x = x+eps
         y = y+eps
-        normalize = True
-    if normalize:
         x /= x.sum(1).reshape(x.shape[0], 1)
         y /= y.sum(1).reshape(y.shape[0], 1)
     res = __kl_divergence(x, y)
@@ -46,6 +46,7 @@ def kl_divergence(x, y, thresholded=True, symmetrized=True, normalize=True):
 def js_divergence(x, y, normalize=True):
     """ Jensen-Shannon divergence 
     x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
+     - normalize=True => normalize the inputs so that lines sum to one.
     """
     assert (x.dtype == np.float64 and y.dtype == np.float64) or (x.dtype == np.float32 and y.dtype == np.float32)
     if normalize:
@@ -60,6 +61,8 @@ def js_divergence(x, y, normalize=True):
     y_y = np.tile(np.sum(y * np.log(y), axis=1).reshape(y.shape[0], 1), (1, x.shape[0])).transpose()
     res = 0.5 * (x_x - x_m) + 0.5 * (y_y - y_m)
     return np.float64(res)
+    # division by zero
+    
 
 
 def sqrt_js_divergence(x, y):
