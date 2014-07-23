@@ -68,9 +68,27 @@ def js_divergence(x, y, normalize=True):
     # division by zero
     
 
-
 def sqrt_js_divergence(x, y):
     return np.sqrt(js_divergence(x, y))
+
+
+def hellinger_distance(x, y):
+    """ Hellinger distance 
+    x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
+     - normalize=True => normalize the inputs so that lines sum to one.
+    """
+    assert (x.dtype == np.float64 and y.dtype == np.float64) or (x.dtype == np.float32 and y.dtype == np.float32)
+    assert (np.all(x.sum(1) != 0.) and np.all(y.sum(1) != 0.))
+    x /= x.sum(1).reshape(x.shape[0], 1)
+    y /= y.sum(1).reshape(y.shape[0], 1)
+    x = np.sqrt(x)
+    y = np.sqrt(y)
+    # x (120, 40), y (100, 40), H(x,y) (120, 100)
+    xx = np.tile(x, (y.shape[0], 1, 1)).transpose((1, 0, 2))
+    yy = np.tile(y, (x.shape[0], 1, 1))
+    xx_yy = xx - yy
+    res = np.sqrt(np.sum(xx_yy ** 2, axis=-1))
+    return np.float64((1./np.sqrt(2)) * res)
 
 
 def is_distance(x, y):
