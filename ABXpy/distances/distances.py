@@ -180,7 +180,11 @@ def run_distance_job(job_description, distance_file, distance,
         for i in range(n_pairs):
             dataA = features[pairs[i, 0]]
             dataB = features[pairs[i, 1]]
-            dis[i, 0] = distance(dataA, dataB)
+            try:
+                dis[i, 0] = distance(dataA, dataB)
+            except ValueError as e:
+                print("Error with the files {0} and {1}".format(items['file'][pairs[i, 0]], items['file'][pairs[i, 1]]))
+                print(e.value)
         if synchronize:
             distance_file_lock.acquire()
         with h5py.File(distance_file) as fh:
