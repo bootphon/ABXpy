@@ -183,8 +183,7 @@ def run_distance_job(job_description, distance_file, distance,
             try:
                 dis[i, 0] = distance(dataA, dataB)
             except ValueError as e:
-                print("Error with the files {0} and {1}".format(items['file'][pairs[i, 0]], items['file'][pairs[i, 1]]))
-                print(e.value)
+                raise ValueError("Error with the files {0} and {1}: {2}".format(items['file'][pairs[i, 0]], items['file'][pairs[i, 1]], e.value))
         if synchronize:
             distance_file_lock.acquire()
         with h5py.File(distance_file) as fh:
