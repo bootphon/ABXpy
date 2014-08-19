@@ -135,7 +135,8 @@ def run_distance_job(job_description, distance_file, distance,
         for feature_file, feature_group in zip(feature_files, feature_groups):
             t, f = h5features.read(feature_file, feature_group)
             assert not(set(times.keys()).intersection(
-                t.keys())), "The same file is indexed by (at least) two different feature files"
+                t.keys())), ("The same file is indexed by (at least) two "
+                             "different feature files")
             times.update(t)
             features.update(f)
         get_features = Features_Accessor(times, features).get_features_from_raw
@@ -154,10 +155,12 @@ def run_distance_job(job_description, distance_file, distance,
             # splitting ?
             times = {}
             features = {}
-            for feature_file, feature_group in zip(feature_files, feature_groups):
+            for feature_file, feature_group in zip(feature_files,
+                                                   feature_groups):
                 t, f = h5features.read(feature_file, feature_group)
                 assert not(set(times.keys()).intersection(
-                    t.keys())), "The same file is indexed by (at least) two different feature files"
+                    t.keys())), ("The same file is indexed by (at least) two "
+                                 "different feature files")
                 times.update(t)
                 features.update(f)
             accessor = Features_Accessor(times, features)
@@ -191,8 +194,10 @@ def run_distance_job(job_description, distance_file, distance,
             try:
                 dis[i, 0] = distance(dataA, dataB)
             except ValueError as e:
-                raise ValueError("Error with the files {0} and {1}: {2}".format(
-                    items['file'][pairs[i, 0]], items['file'][pairs[i, 1]], e.value))
+                raise ValueError(
+                    "Error with the files {0} and {1}: {2}"
+                    .format(items['file'][pairs[i, 0]],
+                            items['file'][pairs[i, 1]], e.value))
         if synchronize:
             distance_file_lock.acquire()
         with h5py.File(distance_file) as fh:
@@ -206,7 +211,8 @@ def run_distance_job(job_description, distance_file, distance,
 # and/or have an external utility for concatenating them?
 # get rid of the group in feature file (never used ?)
 def compute_distances(feature_file, feature_group, pair_file, distance_file,
-                      distance, n_cpu=None, mem=1000, feature_file_as_list=False):
+                      distance, n_cpu=None, mem=1000,
+                      feature_file_as_list=False):
     if n_cpu is None:
         n_cpu = multiprocessing.cpu_count()
     if not(feature_file_as_list):
@@ -327,7 +333,8 @@ if __name__ == '__main__':
     # does not show that the mandatory arguments must come before the
     # mandatory ones; otherwise parsing is not possible beacause optional
     # arguments can have various numbers of inputs)
-    parser = argparse.ArgumentParser(usage="%(prog)s features task [distance] [-o output]",
+    parser = argparse.ArgumentParser(usage="%(prog)s features task [distance]"
+                                           " [-o output]",
                                      description='ABX distance computation')
     # I/O files
     g1 = parser.add_argument_group('I/O files')

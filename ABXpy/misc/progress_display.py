@@ -46,7 +46,9 @@ class ProgressDisplay(object):
         if self.init:
             m = ""
             self.init = False
-        for message, total, count in zip(self.message.values(), self.total.values(), self.count.values()):
+        for message, total, count in zip(self.message.values(),
+                                         self.total.values(),
+                                         self.count.values()):
             m = m + "%s %d on %d\n" % (message, count, total)
         sys.stdout.write(m)
         sys.stdout.flush()
