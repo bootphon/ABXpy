@@ -20,12 +20,16 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 # IN THE SOFTWARE.
 
-import sys, itertools, copy, unicodedata
+import sys
+import itertools
+import copy
+import unicodedata
+
 
 def _isStringLike(anobj):
     try:
         # Avoid succeeding expensively if anobj is large.
-        anobj[:0]+''
+        anobj[:0] + ''
     except:
         return 0
     else:
@@ -44,10 +48,12 @@ def _isSequenceLike(anobj):
 
 
 class Tree(object):
+
     """
         A simple implementation of an ordered tree
     """
-    def __init__(self, children = None):
+
+    def __init__(self, children=None):
         """
             :children A nested list specifying a tree of children
         """
@@ -83,7 +89,8 @@ class Tree(object):
             :child A Tree object
         """
         if not isinstance(node, Tree):
-            s = "Invalid tree specification: %s is not a Tree object."%repr(node)
+            s = "Invalid tree specification: %s is not a Tree object." % repr(
+                node)
             raise ValueError(s)
         self.children.append(node)
         node.register(self)
@@ -102,7 +109,8 @@ class Tree(object):
             object identity.
         """
         if not self.parent:
-            raise ValueError("Can not retrieve index of a node with no parent.")
+            raise ValueError(
+                "Can not retrieve index of a node with no parent.")
         lst = [id(i) for i in self.parent.children]
         return lst.index(id(self))
 
@@ -112,7 +120,7 @@ class Tree(object):
             in the parent child list.
         """
         idx = self.index()
-        del self.parent.children[idx:idx+1]
+        del self.parent.children[idx:idx + 1]
         self.parent = None
         return idx
 
@@ -329,7 +337,7 @@ class Tree(object):
         lst = list(self.getRoot().preOrder())
         lst.reverse()
         myIndex = lst.index(self)
-        return self._find(lst[(myIndex+1):], *func, **kwargs)
+        return self._find(lst[(myIndex + 1):], *func, **kwargs)
 
     def getPrevious(self):
         """
@@ -386,13 +394,15 @@ class Tree(object):
 
             :name Property name
         """
+
         def fget(self):
             if name in self.__dict__:
                 return self.__dict__[name]
             else:
                 if not self.parent:
-                    raise ValueError("Property %s not defined."%name)
+                    raise ValueError("Property %s not defined." % name)
                 return getattr(self.parent, name)
+
         def fset(self, value):
             self.__dict__[name] = value
         return property(fget, fset)
@@ -405,8 +415,9 @@ class Tree(object):
             :outf Output file descriptor.
         """
         for i in self.preOrder():
-            s = "\t"*(i.getDepth()-1)
-            s += unicodedata.normalize('NFKD', unicode(i)).encode('ascii','ignore')
+            s = "\t" * (i.getDepth() - 1)
+            s += unicodedata.normalize('NFKD',
+                                       unicode(i)).encode('ascii', 'ignore')
             outf.write(s)
             outf.write("\n")
 
@@ -428,9 +439,9 @@ def constructFromList(lst):
     heads = []
     for i, val in enumerate(lst):
         if _isSequenceLike(val):
-            if i == 0 or _isSequenceLike(lst[i-1]):
+            if i == 0 or _isSequenceLike(lst[i - 1]):
                 raise ValueError("constructFromList: Invalid list.")
-            lst[i-1].addChildrenFromList(val)
+            lst[i - 1].addChildrenFromList(val)
         else:
             heads.append(val)
     return heads

@@ -15,7 +15,8 @@ def js_ptwise(x, y):
 def __kl_divergence(x, y):
     """ just the KL-div """
     pq = np.dot(x, np.log(y.transpose()))
-    pp = np.tile(np.sum(x * np.log(x), axis=1).reshape(x.shape[0], 1), (1, y.shape[0]))
+    pp = np.tile(
+        np.sum(x * np.log(x), axis=1).reshape(x.shape[0], 1), (1, y.shape[0]))
     return pp - pq
 
 
@@ -27,7 +28,8 @@ def kl_divergence(x, y, thresholded=True, symmetrized=True, normalize=True):
      - symmetrized=True => uses the symmetrized KL (0.5 x->y + 0.5 y->x).
      - normalize=True => normalize the inputs so that lines sum to one.
     """
-    assert (x.dtype == np.float64 and y.dtype == np.float64) or (x.dtype == np.float32 and y.dtype == np.float32)
+    assert (x.dtype == np.float64 and y.dtype == np.float64) or (
+        x.dtype == np.float32 and y.dtype == np.float32)
     assert (np.all(x.sum(1) != 0.) and np.all(y.sum(1) != 0.))
     if thresholded:
         normalize = True
@@ -36,8 +38,8 @@ def kl_divergence(x, y, thresholded=True, symmetrized=True, normalize=True):
         y /= y.sum(1).reshape(y.shape[0], 1)
     if thresholded:
         eps = np.finfo(x.dtype).eps
-        x = x+eps
-        y = y+eps
+        x = x + eps
+        y = y + eps
         x /= x.sum(1).reshape(x.shape[0], 1)
         y /= y.sum(1).reshape(y.shape[0], 1)
     res = __kl_divergence(x, y)
@@ -51,7 +53,8 @@ def js_divergence(x, y, normalize=True):
     x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
      - normalize=True => normalize the inputs so that lines sum to one.
     """
-    assert (x.dtype == np.float64 and y.dtype == np.float64) or (x.dtype == np.float32 and y.dtype == np.float32)
+    assert (x.dtype == np.float64 and y.dtype == np.float64) or (
+        x.dtype == np.float32 and y.dtype == np.float32)
     assert (np.all(x.sum(1) != 0.) and np.all(y.sum(1) != 0.))
     if normalize:
         x /= x.sum(1).reshape(x.shape[0], 1)
@@ -61,12 +64,14 @@ def js_divergence(x, y, normalize=True):
     m = (xx + yy) / 2
     x_m = np.sum(xx * np.log(m), axis=2)
     y_m = np.sum(yy * np.log(m), axis=2)
-    x_x = np.tile(np.sum(x * np.log(x), axis=1).reshape(x.shape[0], 1), (1, y.shape[0]))
-    y_y = np.tile(np.sum(y * np.log(y), axis=1).reshape(y.shape[0], 1), (1, x.shape[0])).transpose()
+    x_x = np.tile(
+        np.sum(x * np.log(x), axis=1).reshape(x.shape[0], 1), (1, y.shape[0]))
+    y_y = np.tile(np.sum(
+        y * np.log(y), axis=1).reshape(y.shape[0], 1), (1, x.shape[0])).transpose()
     res = 0.5 * (x_x - x_m) + 0.5 * (y_y - y_m)
     return np.float64(res)
     # division by zero
-    
+
 
 def sqrt_js_divergence(x, y):
     return np.sqrt(js_divergence(x, y))
@@ -77,7 +82,8 @@ def hellinger_distance(x, y):
     x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
      - normalize=True => normalize the inputs so that lines sum to one.
     """
-    assert (x.dtype == np.float64 and y.dtype == np.float64) or (x.dtype == np.float32 and y.dtype == np.float32)
+    assert (x.dtype == np.float64 and y.dtype == np.float64) or (
+        x.dtype == np.float32 and y.dtype == np.float32)
     assert (np.all(x.sum(1) != 0.) and np.all(y.sum(1) != 0.))
     x /= x.sum(1).reshape(x.shape[0], 1)
     y /= y.sum(1).reshape(y.shape[0], 1)
@@ -88,14 +94,13 @@ def hellinger_distance(x, y):
     yy = np.tile(y, (x.shape[0], 1, 1))
     xx_yy = xx - yy
     res = np.sqrt(np.sum(xx_yy ** 2, axis=-1))
-    return np.float64((1./np.sqrt(2)) * res)
+    return np.float64((1. / np.sqrt(2)) * res)
 
 
 def is_distance(x, y):
     """ Itakura-Saito distance 
     x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
     """
-    assert (x.dtype == np.float64 and y.dtype == np.float64) or (x.dtype == np.float32 and y.dtype == np.float32)
-    #TODO
-
-
+    assert (x.dtype == np.float64 and y.dtype == np.float64) or (
+        x.dtype == np.float32 and y.dtype == np.float32)
+    # TODO

@@ -13,7 +13,7 @@ import pandas
 import ast
 
 
-#FIXME by_columns should be stored as attributes into the task file
+# FIXME by_columns should be stored as attributes into the task file
 def analyze(task_file, score_file, analyze_file, by_columns=None):
     """Analyse the results of a task
 
@@ -26,14 +26,14 @@ def analyze(task_file, score_file, analyze_file, by_columns=None):
     analyse_file: string, csv file
         the file that will contain the analysis
     """
-    #FIXME memory issues ?
+    # FIXME memory issues ?
     bys = []
     by_scores = []
     with h5py.File(score_file) as s:
         for by in s['scores']:
             scores = s['scores'][by][...]
             scores = np.float64(np.reshape(scores, scores.shape[0]))
-            score = np.mean((scores+1)/2.)
+            score = np.mean((scores + 1) / 2.)
             bys.append(by)
             by_scores.append(score)
     df = pandas.DataFrame({'by level': bys, 'average ABX score': by_scores})
@@ -45,4 +45,4 @@ def analyze(task_file, score_file, analyze_file, by_columns=None):
         del df['by level']
     df.to_csv(analyze_file, sep='\t')
 
-#FIXME write command-line interface
+# FIXME write command-line interface

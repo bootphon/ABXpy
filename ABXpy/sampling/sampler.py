@@ -26,10 +26,13 @@ from a total of 1 trillion items, considering 100 millions items at a time
     sampler = IncrementalSampler(10**12, 10**6, step=10**8, relative_indexing=False)
     complete_sample = np.concatenate([sample for sample in sampler])
 """
+
+
 class IncrementalSampler(object):
 
     # sampling K sample in a a population of size N
     # both K and N can be very large
+
     def __init__(self, N, K, step=None, relative_indexing=True, dtype=np.int64):
         assert K <= N
         self.N = N  # remaining items to sample from
@@ -39,7 +42,8 @@ class IncrementalSampler(object):
         self.type = dtype  # the type of the elements of the sample
         # step used when iterating over the sampler
         if step is None:
-            self.step = 10**4*N//K # 10**4 samples by iteration on average  
+            # 10**4 samples by iteration on average
+            self.step = 10 ** 4 * N // K
         else:
             self.step = step
 
@@ -73,19 +77,19 @@ class IncrementalSampler(object):
             (default value is True)
         """
         self.type = dtype
-        position = self.initial_N-self.N
+        position = self.initial_N - self.N
         if n > self.N:
             n = self.N
         # expected number of sampled items
-        expected_k = n*self.K/np.float(self.N)
-        if expected_k > 10**5:
+        expected_k = n * self.K / np.float(self.N)
+        if expected_k > 10 ** 5:
             sample = []
-            chunk_size = int(np.floor(10**5*self.N/np.float(self.K)))
+            chunk_size = int(np.floor(10 ** 5 * self.N / np.float(self.K)))
             i = 0
             while n > 0:
                 amount = min(chunk_size, n)
-                sample.append(self.simple_sample(amount) + i*chunk_size)
-                n = n-amount
+                sample.append(self.simple_sample(amount) + i * chunk_size)
+                n = n - amount
                 i += 1
             sample = np.concatenate(sample)
         else:
@@ -119,52 +123,62 @@ class IncrementalSampler(object):
 # following algo HRUA by Ernst Stadlober as implemented in numpy (https://github.com/numpy/numpy/blob/master/numpy/random/mtrand/distributions.c and see original ref in zotero)
 # this is 100 to 200 times slower than np.random.hypergeometric, but it works reliably
 # could be optimized a lot if needed (for small samples in particular but also generally)
-# seems at worse to require comparable execution time when compared to the actual rejection sampling, so probably not going to be so bad all in all
+# seems at worse to require comparable execution time when compared to the
+# actual rejection sampling, so probably not going to be so bad all in all
 def hypergeometric_sample(N, K, n):
     """This function return the number of elements to sample from the next n
     items.
-    """    
+    """
     # handling edge cases
-    if N == 0 or N==1:
-        k = K    
-    else:      
+    if N == 0 or N == 1:
+        k = K
+    else:
         # using symmetries to speed up computations
-        K_eff = min(K, N-K)  # if the probability of failure is smaller than the probability of success, draw the failure count
-        n_eff = min(n, N-n)  # if the amount of items to sample from is larger than the amount of items that will remain, draw from the items that will remain 
+        # if the probability of failure is smaller than the probability of
+        # success, draw the failure count
+        K_eff = min(K, N - K)
+        # if the amount of items to sample from is larger than the amount of
+        # items that will remain, draw from the items that will remain
+        n_eff = min(n, N - n)
         N_float = np.float64(N)  # useful to avoid unexpected roundings
-    
-        average = n_eff*(K_eff/N_float)
-        mode = np.floor((n_eff+1)*((K_eff+1)/(N_float+2)))
-        variance = average*((N-K_eff)/N_float)*((N-n_eff)/(N_float-1))
-        c1 = 2*np.sqrt(2/np.e)
-        c2 = 3-2*np.sqrt(3/np.e)
-        a = average+0.5
-        b = c1*np.sqrt(variance+0.5)+c2
-        p_mode = (math.lgamma(mode+1) + math.lgamma(K_eff-mode+1) +
-                  math.lgamma(n_eff-mode+1)+math.lgamma(N-K_eff-n_eff+mode+1))
-        upper_bound = min(min(n_eff, K_eff)+1, np.floor(a+16*np.sqrt(variance+0.5))) # 16 for 16-decimal-digit precision in c1 and c2 (?)
 
-        while True: 
+        average = n_eff * (K_eff / N_float)
+        mode = np.floor((n_eff + 1) * ((K_eff + 1) / (N_float + 2)))
+        variance = average * ((N - K_eff) / N_float) * \
+            ((N - n_eff) / (N_float - 1))
+        c1 = 2 * np.sqrt(2 / np.e)
+        c2 = 3 - 2 * np.sqrt(3 / np.e)
+        a = average + 0.5
+        b = c1 * np.sqrt(variance + 0.5) + c2
+        p_mode = (math.lgamma(mode + 1) + math.lgamma(K_eff - mode + 1) +
+                  math.lgamma(n_eff - mode + 1) + math.lgamma(N - K_eff - n_eff + mode + 1))
+        # 16 for 16-decimal-digit precision in c1 and c2 (?)
+        upper_bound = min(
+            min(n_eff, K_eff) + 1, np.floor(a + 16 * np.sqrt(variance + 0.5)))
+
+        while True:
             U = np.random.rand()
             V = np.random.rand()
-            k = np.int64(np.floor(a+b*(V-0.5)/U))
+            k = np.int64(np.floor(a + b * (V - 0.5) / U))
             if k < 0 or k >= upper_bound:
                 continue
             else:
-                p_k = math.lgamma(k+1)+ math.lgamma(K_eff-k+1) + math.lgamma(n_eff-k+1) + math.lgamma(N-K_eff-n_eff+k+1)
-                d = p_mode-p_k
-                if U*(4-U)-3 <= d:
+                p_k = math.lgamma(k + 1) + math.lgamma(K_eff - k + 1) + \
+                    math.lgamma(n_eff - k + 1) + \
+                    math.lgamma(N - K_eff - n_eff + k + 1)
+                d = p_mode - p_k
+                if U * (4 - U) - 3 <= d:
                     break
-                if U*(U-d) >= 1:
+                if U * (U - d) >= 1:
                     continue
-                if 2*np.log(U) <= d:
+                if 2 * np.log(U) <= d:
                     break
-    
+
         # retrieving original variables by symmetry
         if K_eff < K:
-            k = n_eff-k
+            k = n_eff - k
         if n_eff < n:
-            k = K-k
+            k = K - k
 
     return k
 
@@ -179,7 +193,7 @@ def sample_without_replacement(n, N, dtype=np.int64):
     .. note:: the values 0.6 and 100 are based on empirical tests of the
     functions and would need to be changed if the functions are changed
     """
-    if N > 100 and n/float(N) < 0.6:
+    if N > 100 and n / float(N) < 0.6:
         sample = rejection_sampling(n, N, dtype)
     else:
         sample = Knuth_sampling(n, N, dtype)
@@ -198,10 +212,10 @@ def Knuth_sampling(n, N, dtype=np.int64):
     sample = np.zeros(shape=n, dtype=dtype)
     while m < n:
         u = np.random.rand()
-        if (N-t)*u < n-m:
+        if (N - t) * u < n - m:
             sample[m] = t
-            m = m+1
-        t = t+1
+            m = m + 1
+        t = t + 1
     return sample
 
 
@@ -216,7 +230,7 @@ def rejection_sampling(n, N, dtype=np.int64):
         new_sample = np.random.randint(0, N, remaining).astype(dtype)
         # keeping only unique element:
         sample = np.union1d(sample, np.unique(new_sample))
-        remaining = n-sample.shape[0]
+        remaining = n - sample.shape[0]
     return sample
 
 """
@@ -269,36 +283,37 @@ for e, b in zip(tt, ra):
 """
 
 ### Profiling rejection sampling and Knuth sampling ###
-# could create an automatic test for finding the turning point and offset between Knuth and rejection
+# could create an automatic test for finding the turning point and offset
+# between Knuth and rejection
 
 # manual results:
-#N	100
-#n
-#1	R:60mu, K:30mu	
-#10  R:83mu, K:54mu
-#100 R:7780mu, K:78mu
-#N < 100 always Knuth 
+# N	100
+# n
+# 1	R:60mu, K:30mu
+# 10  R:83mu, K:54mu
+# 100 R:7780mu, K:78mu
+# N < 100 always Knuth
 #
-#N	1000
-#n
-#1	R:60mu, K:248mu	
-#10  R:65mu, K:450mu
-#100 R:150mu, K:523mu
-#1000 R:8610mu, K:785mu
-#turning point: n/N between 0.5 and 0.75
+# N	1000
+# n
+# 1	R:60mu, K:248mu
+# 10  R:65mu, K:450mu
+# 100 R:150mu, K:523mu
+# 1000 R:8610mu, K:785mu
+# turning point: n/N between 0.5 and 0.75
 #
-#N 10**6
-#10**6 R:???, K:791ms
-#10**4 R:1ms, K:562ms
-#10**5 R:20ms, K:531ms
-#turning point: n/N between 0.5 and 0.75 
+# N 10**6
+# 10**6 R:???, K:791ms
+# 10**4 R:1ms, K:562ms
+# 10**5 R:20ms, K:531ms
+# turning point: n/N between 0.5 and 0.75
 #
-#N 10**9
-#10**6 R:174ms
-#10**7 R:2.7s
+# N 10**9
+# 10**6 R:174ms
+# 10**7 R:2.7s
 #
-#N 10**18
-#1 R: 62mu
-#10 R: 62mu
-#10**3 R: 148mu
-#10**6 R: 131ms
+# N 10**18
+# 1 R: 62mu
+# 10 R: 62mu
+# 10**3 R: 148mu
+# 10**6 R: 131ms

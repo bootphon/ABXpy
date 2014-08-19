@@ -15,9 +15,9 @@ import random
 from scipy.stats import chisquare as chisquare
 
 
-#FIXME problems when K > N/2 (not important ?)
+# FIXME problems when K > N/2 (not important ?)
 def chi2test(frequencies, significance):
-#    dof = len(frequencies) - 1
+    #    dof = len(frequencies) - 1
     dof = 0
     (_, p) = chisquare(frequencies, ddof=dof)
     return p > significance
@@ -38,7 +38,7 @@ def _test_completion(N, K, n):
     """
     sampler = sampling.sampler.IncrementalSampler(N, K)
     count = 0
-    for j in range(N/n):
+    for j in range(N / n):
         indices = sampler.sample(n)
         count += len(indices)
     indices = sampler.sample(N % n)
@@ -61,8 +61,8 @@ def _test_uniformity(N, K, n, nbins=10, significance=0.001):
     sampler = sampling.sampler.IncrementalSampler(N, K)
     distr = []
     bins = np.zeros(nbins, np.int64)
-    for j in range(N/n):
-        indices = sampler.sample(n) + n*j
+    for j in range(N / n):
+        indices = sampler.sample(n) + n * j
         distr.extend(indices.tolist())
     for i in distr:
         bins[i * nbins / N] += 1
@@ -72,33 +72,33 @@ def _test_uniformity(N, K, n, nbins=10, significance=0.001):
 def test_simple_completion():
     for i in range(1000):
         N = random.randint(1000, 10000)
-        _test_completion(N, K=random.randrange(100, N/2),
+        _test_completion(N, K=random.randrange(100, N / 2),
                          n=random.randrange(50, N))
 
 
 def test_simple_no_replace():
     for i in range(100):
         N = random.randint(1000, 10000)
-        _test_no_replace(N, random.randint(100, N/2))
+        _test_no_replace(N, random.randint(100, N / 2))
 
 
 def test_hard_completion():
     for i in range(3):
-        N = random.randint(10**6, 10**7)
-        _test_completion(N, K=random.randrange(10**5, N/2),
-                         n=random.randrange(10**5, N))
+        N = random.randint(10 ** 6, 10 ** 7)
+        _test_completion(N, K=random.randrange(10 ** 5, N / 2),
+                         n=random.randrange(10 ** 5, N))
 
 
 def test_hard_no_replace():
     for i in range(3):
-        N = random.randint(10**6, 10**7)
-        _test_no_replace(N, K=random.randrange(10**5, N/2))
+        N = random.randint(10 ** 6, 10 ** 7)
+        _test_no_replace(N, K=random.randrange(10 ** 5, N / 2))
 
 
 def test_simple_uniformity():
     for i in range(100):
         N = random.randint(1000, 10000)
-        _test_completion(N, K=random.randrange(100, N/2),
+        _test_completion(N, K=random.randrange(100, N / 2),
                          n=random.randrange(50, N))
 
 
@@ -129,11 +129,11 @@ def plot_uniformity(nb_resamples, N, K):
     indices = []
     for i in range(nb_resamples):
         if i % 1000 == 0:
-            print('%d resamples left to do' % (nb_resamples-i))
+            print('%d resamples left to do' % (nb_resamples - i))
         sampler = sampling.sampler.IncrementalSampler(N, K)
         current_N = 0
         while current_N < N:
-            n = min(random.randrange(N/10), N-current_N)
+            n = min(random.randrange(N / 10), N - current_N)
             indices = indices + list(sampler.sample(n) + current_N)
             current_N = current_N + n
     plt.hist(indices, bins=100)

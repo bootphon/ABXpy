@@ -14,15 +14,18 @@ import time
 import traceback
 import h5features
 
-#FIXME Enforce single process usage when using python compiled with OMP enabled 
+# FIXME Enforce single process usage when using python compiled with OMP
+# enabled
 
-#FIXME detect when multiprocessed jobs crashed
-#FIXME do a separate functions: generic load_balancing
-#FIXME write distances in a separate file
+# FIXME detect when multiprocessed jobs crashed
+# FIXME do a separate functions: generic load_balancing
+# FIXME write distances in a separate file
+
 
 def create_distance_jobs(pair_file, distance_file, n_cpu):
-    #FIXME check (given an optional checking function)
-    #that all features required in feat_dbs are indeed present in feature files
+    # FIXME check (given an optional checking function)
+    # that all features required in feat_dbs are indeed present in feature
+    # files
 
     # getting 'by' datasets characteristics
     with h5py.File(pair_file) as fh:
@@ -50,7 +53,7 @@ def create_distance_jobs(pair_file, distance_file, n_cpu):
     # step 1
     by_n_pairs = np.int64(by_n_pairs)
     total_n_pairs = np.sum(by_n_pairs)
-    max_block_size = np.int64(np.ceil(total_n_pairs/np.float(n_cpu)))
+    max_block_size = np.int64(np.ceil(total_n_pairs / np.float(n_cpu)))
     by = []
     start = []
     stop = []
@@ -64,12 +67,12 @@ def create_distance_jobs(pair_file, distance_file, n_cpu):
             else:
                 amount = n_pairs
             n_pairs = n_pairs - amount
-            sto = sto+amount
+            sto = sto + amount
             by.append(dset)
             start.append(sta)
             stop.append(sto)
             n_dist.append(amount)
-            sta = sta+amount
+            sta = sta + amount
     # step 2
     # blocks are sorted according to the number of distances they contain
     # (in decreasing order, hence the [::-1])
@@ -117,6 +120,8 @@ Since each job is writing in different places, it should in principle be
 possible to do all the write concurrently if ever necessary, using parallel
 HDF5 (based on MPI-IO).
 """
+
+
 def run_distance_job(job_description, distance_file, distance,
                      feature_files, feature_groups, splitted_features,
                      job_id, distance_file_lock=None):
@@ -129,7 +134,8 @@ def run_distance_job(job_description, distance_file, distance,
         features = {}
         for feature_file, feature_group in zip(feature_files, feature_groups):
             t, f = h5features.read(feature_file, feature_group)
-            assert not(set(times.keys()).intersection(t.keys())), "The same file is indexed by (at least) two different feature files"
+            assert not(set(times.keys()).intersection(
+                t.keys())), "The same file is indexed by (at least) two different feature files"
             times.update(t)
             features.update(f)
         get_features = Features_Accessor(times, features).get_features_from_raw
@@ -143,13 +149,15 @@ def run_distance_job(job_description, distance_file, distance,
         start = job_description['start'][b]
         stop = job_description['stop'][b]
         if splitted_features:
-            #FIXME modify feature_file/feature_group to adapt to 'by'
-            #FIXME any change needed when several feature files before splitting ?
+            # FIXME modify feature_file/feature_group to adapt to 'by'
+            # FIXME any change needed when several feature files before
+            # splitting ?
             times = {}
             features = {}
             for feature_file, feature_group in zip(feature_files, feature_groups):
                 t, f = h5features.read(feature_file, feature_group)
-                assert not(set(times.keys()).intersection(t.keys())), "The same file is indexed by (at least) two different feature files"
+                assert not(set(times.keys()).intersection(
+                    t.keys())), "The same file is indexed by (at least) two different feature files"
                 times.update(t)
                 features.update(f)
             accessor = Features_Accessor(times, features)
@@ -183,7 +191,8 @@ def run_distance_job(job_description, distance_file, distance,
             try:
                 dis[i, 0] = distance(dataA, dataB)
             except ValueError as e:
-                raise ValueError("Error with the files {0} and {1}: {2}".format(items['file'][pairs[i, 0]], items['file'][pairs[i, 1]], e.value))
+                raise ValueError("Error with the files {0} and {1}: {2}".format(
+                    items['file'][pairs[i, 0]], items['file'][pairs[i, 1]], e.value))
         if synchronize:
             distance_file_lock.acquire()
         with h5py.File(distance_file) as fh:
@@ -193,7 +202,7 @@ def run_distance_job(job_description, distance_file, distance,
 
 
 # mem in megabytes
-#FIXME allow several feature files?
+# FIXME allow several feature files?
 # and/or have an external utility for concatenating them?
 # get rid of the group in feature file (never used ?)
 def compute_distances(feature_file, feature_group, pair_file, distance_file,
@@ -209,11 +218,11 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
     # FIXME if there are other datasets in feature_file this is not accurate
     mem_needed = 0
     for feature_file in feature_files:
-        feature_size = os.path.getsize(feature_file)/float(2**20)
+        feature_size = os.path.getsize(feature_file) / float(2 ** 20)
         mem_needed = feature_size * n_cpu + mem_needed
     splitted_features = False
     #splitted_features = mem_needed > mem
-    #if splitted_features:
+    # if splitted_features:
     #    split_feature_file(feature_file, feature_group, pair_file)
     jobs = create_distance_jobs(pair_file, distance_file, n_cpu)
     results = []
@@ -236,7 +245,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
             pool.close()
             # wait for results
             # using 'get' allow detecting exceptions in child processes
-            finished_jobs = [False]*len(jobs)
+            finished_jobs = [False] * len(jobs)
             while not(all(finished_jobs)):
                 for i, result in enumerate(results):
                     try:
@@ -245,7 +254,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
                     except multiprocessing.TimeoutError:
                         pass
         finally:
-            pool.close() # in case it wasn't done before
+            pool.close()  # in case it wasn't done before
             # recommended in multiprocessing doc to avoid zombie process (?)
             pool.join()
     else:
@@ -254,8 +263,9 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
 
 
 # hack to get details of exceptions in child processes
-#FIXME use as a decorator?
+# FIXME use as a decorator?
 class print_exception(object):
+
     def __init__(self, fun):
         self.fun = fun
 
@@ -313,7 +323,10 @@ if __name__ == '__main__':
     def dtw_cosine_distance(x, y):
         return dtw.dtw(x, y, cosine.cosine_distance)
 
-    # parser (the usage string is specified explicitly because the default does not show that the mandatory arguments must come before the mandatory ones; otherwise parsing is not possible beacause optional arguments can have various numbers of inputs)
+    # parser (the usage string is specified explicitly because the default
+    # does not show that the mandatory arguments must come before the
+    # mandatory ones; otherwise parsing is not possible beacause optional
+    # arguments can have various numbers of inputs)
     parser = argparse.ArgumentParser(usage="%(prog)s features task [distance] [-o output]",
                                      description='ABX distance computation')
     # I/O files
@@ -322,10 +335,12 @@ if __name__ == '__main__':
     g1.add_argument('task', help='task file generated by the task module, \
         containing the triplets and the pairs associated to the task \
         specification')
-    g1.add_argument('distance', nargs='?', default=None, help='optional, callable: distance to use')
+    g1.add_argument('distance', nargs='?', default=None,
+                    help='optional, callable: distance to use')
     g1.add_argument(
         '-o', '--output', help='optional: output distance file')
     g1.add_argument(
         '-n', '--ncpu', default=None, help='optional: number of cpus to use')
     args = parser.parse_args()
-    compute_distances(args.features, '/features/', args.task, args.output, dtw_cosine_distance, n_cpu=args.ncpu)
+    compute_distances(args.features, '/features/', args.task,
+                      args.output, dtw_cosine_distance, n_cpu=args.ncpu)

@@ -335,7 +335,7 @@ class Task(object):
             stats['nb_on_across_levels'] = len(stats['on_across_levels'])
             self.by_stats[by] = stats
         self.stats['nb_blocks'] = sum([stats['nb_on_across_levels']
-                                      for stats in self.by_stats.values()])
+                                       for stats in self.by_stats.values()])
 
         if self.verbose > 0:
             display = progress_display.ProgressDisplay()
@@ -374,8 +374,8 @@ class Task(object):
                     stats['nb_across_pairs'] += n_A * n_B
                     stats['nb_on_pairs'] += n_A * n_X
                     if ((approximate or not(self.filters.A or self.filters.B or
-                        self.filters.X or self.filters.ABX)) and
-                       type(across) != tuple):
+                                            self.filters.X or self.filters.ABX)) and
+                            type(across) != tuple):
                         stats['nb_triplets'] += n_A * n_B * n_X
                         stats['block_sizes'][block_key] = n_A * n_B * n_X
                     else:
@@ -521,7 +521,7 @@ class Task(object):
             for names, regs in zip(scalar_names, scalar_regressors):
                 for name, reg in zip(names, regs):
                     regressors[name] = np.tile(np.array(reg),
-                                              (np.size(triplets, 0), 1))
+                                               (np.size(triplets, 0), 1))
             for names, regs in zip(self.regressors.A_names,
                                    self.regressors.A_regressors):
                 for name, reg in zip(names, regs):
@@ -674,7 +674,7 @@ associated pairs
         # list all pairs
         all_empty = True
         for by, db in self.by_dbs.iteritems():
-            #FIXME maybe care about this case earlier ?
+            # FIXME maybe care about this case earlier ?
             with h5py.File(output) as fh:
                 not_empty = fh['/triplets/' + str(by)].size
             if not_empty:
@@ -853,7 +853,7 @@ associated pairs
                         n = n + n_level_B * n_level_X
             self.by_stats[by]['nb_levels'] = n
         self.stats['nb_levels'] = sum([stats['nb_levels']
-                                      for stats in self.by_stats.values()])
+                                       for stats in self.by_stats.values()])
 
     def print_stats(self, filename=None, summarized=True):
         if filename is None:
@@ -891,7 +891,7 @@ associated pairs
 # even though tuple with more than one element are fine
 def on_across_from_key(key):
     on = key[0]
-        # if panda was more consistent we could use key[:1] instead ...
+    # if panda was more consistent we could use key[:1] instead ...
     across = key[1:]
     if len(across) == 1:  # this is the problematic case
         across = across[0]

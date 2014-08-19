@@ -48,7 +48,7 @@ import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.misc.type_fitting as type_fitting
 
 
-#FIXME: include distance computation here
+# FIXME: include distance computation here
 def score(task_file, distance_file, score_file=None, score_group='scores'):
     """Calculate the score of a task and put the results in a hdf5 file.
 
@@ -72,24 +72,24 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
                                            distance_file)
     assert not os.path.exists(score_file), ('score file already exist ' +
                                             score_file)
-    #with h5py.File(task_file) as t:
-        #bys = [by for by in t['triplets']]
-    #FIXME skip empty by datasets, this should not be necessary anymore when
+    # with h5py.File(task_file) as t:
+    #bys = [by for by in t['triplets']]
+    # FIXME skip empty by datasets, this should not be necessary anymore when
     # empty datasets are filtered at the task file generation level
     with h5py.File(distance_file) as d:
         bys = [by for by in d['distances']]
     for by in bys:
         with h5py.File(task_file) as t, h5py.File(distance_file) as d:
             n = t['triplets'][by].shape[0]
-            #FIXME here we make the assumption
+            # FIXME here we make the assumption
             # that this fits into memory ...
             dis = d['distances'][by][...]
             dis = np.reshape(dis, dis.shape[0])
-            #FIXME idem + only unique_pairs used ?
+            # FIXME idem + only unique_pairs used ?
             pairs = t['unique_pairs'][by][...]
             pairs = np.reshape(pairs, pairs.shape[0])
             base = t['unique_pairs'].attrs[by]
-            pair_key_type = type_fitting.fit_integer_type((base)**2-1,
+            pair_key_type = type_fitting.fit_integer_type((base) ** 2 - 1,
                                                           is_signed=False)
         with h52np.H52NP(task_file) as t:
             with np2h5.NP2H5(score_file) as s:
@@ -97,15 +97,15 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
                 out = s.add_dataset('scores', by, n_rows=n, n_columns=1,
                                     item_type=np.int8)
                 try:  # FIXME replace this by a for loop by making h52np
-                # implement the iterable pattern with next() outputing
-                # inp.read()
+                    # implement the iterable pattern with next() outputing
+                    # inp.read()
                     while True:  # FIXME keep the pairs in the file ?
                         triplets = pair_key_type(inp.read())
-                        pairs_AX = triplets[:, 0]+base*triplets[:, 2]
-                        #FIXME change the encoding (and type_fitting) so that
+                        pairs_AX = triplets[:, 0] + base * triplets[:, 2]
+                        # FIXME change the encoding (and type_fitting) so that
                         # A,B and B,A have the same code ... (take a=min(a,b),
                         # b=max(a,b))
-                        pairs_BX = triplets[:, 1]+base*triplets[:, 2]
+                        pairs_BX = triplets[:, 1] + base * triplets[:, 2]
                         dis_AX = dis[np.searchsorted(pairs, pairs_AX)]
                         dis_BX = dis[np.searchsorted(pairs, pairs_BX)]
                         scores = (np.int8(dis_AX < dis_BX) -
@@ -117,7 +117,7 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
                 except StopIteration:
                     pass
 
-#FIXME write command-line interface
+# FIXME write command-line interface
 # detects whether the script was called from command-line
 if __name__ == '__main__':
 

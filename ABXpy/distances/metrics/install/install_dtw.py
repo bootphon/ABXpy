@@ -8,7 +8,9 @@ Generic script for compiling DTW with cython
 """
 
 
-import os, subprocess
+import os
+import subprocess
+
 
 def install_dtw(python):
     # find script directory
@@ -17,22 +19,23 @@ def install_dtw(python):
     tmp_folder = os.path.join(script_folder, 'tmp')
     install_script = os.path.join(script_folder, 'compile_dtw.py')
     # create .c and .so
-    subprocess.call("%s %s build_ext --build-lib %s --build-temp %s" % (python, install_script, bin_folder, tmp_folder), shell=True)
+    subprocess.call("%s %s build_ext --build-lib %s --build-temp %s" %
+                    (python, install_script, bin_folder, tmp_folder), shell=True)
     # clean-up tmp
     subprocess.call("rm -Rf %s" % tmp_folder, shell=True)
 
 
-if __name__ == '__main__': # detects whether the script was called from command-line
-    
+# detects whether the script was called from command-line
+if __name__ == '__main__':
+
     import argparse
-    
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('python', nargs='?', default=None, help='optional: python executable to be used')
-    args = parser.parse_args()  
-    
+    parser.add_argument('python', nargs='?', default=None,
+                        help='optional: python executable to be used')
+    args = parser.parse_args()
+
     if args.python is None:
         args.python = 'python'
-        
+
     install_dtw(args.python)
-        
-    

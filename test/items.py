@@ -82,5 +82,5 @@ def generate_db_and_feat(base, n, repeats=0, name_db='data.item', n_feat=2,
     """
     generate_named_testitems(base, n, repeats, name_db)
     print name_db
-    n_files = (base**n) * (repeats + 1)
+    n_files = (base ** n) * (repeats + 1)
     generate_features(n_files, n_feat, max_frames, name_feat)

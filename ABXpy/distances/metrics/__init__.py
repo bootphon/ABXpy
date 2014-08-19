@@ -6,4 +6,3 @@ Created on Sun Aug 18 22:31:59 2013
 
 This file only serves to signal that the content of the folder is a Python package.
 """
-
