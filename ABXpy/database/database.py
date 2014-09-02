@@ -85,9 +85,9 @@ def load_aux_dbs(basename, db, cols, mainfile):
             auxfile = basename + '.' + col
             if not(auxfile == mainfile):
                 auxdb = read_table(auxfile)
-                assert(col == auxdb.columns[0], 'First column name in file %s'
-                       ' is %s. It should be %s instead.' % (
-                       auxfile, auxdb.columns[0], col))
+                assert (col == auxdb.columns[0], 'First column name in file %s'
+                        ' is %s. It should be %s instead.' % (
+                        auxfile, auxdb.columns[0], col))
                 # call get_aux_dbs on child columns
                 auxdb, auxforest = load_aux_dbs(
                     basename, auxdb, auxdb.columns[1:])
