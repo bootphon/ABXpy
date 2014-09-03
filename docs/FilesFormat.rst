@@ -20,8 +20,7 @@ file 3  start 3 stop 3 value 3    value 1   value 1
 - **#source** is the name of the file minus the extension. Note that the '#' at the begining is mandatory.
 - **onset** is the instant when the sound start.
 - **offset** is the instant when the sound end.
-- **#index** is a unique identifier of the item (usually its index in the table). Note that the '#' at the begining is mandatory.
-- the **feature** columns are various features relevant to the discrimination task.
+- the **feature** columns are various features relevant to the discrimination task. Note that the first column must start with a '#'.
 
 `Features file`
 ---------------
@@ -60,7 +59,8 @@ Extension: .distance
 This file contains the distances between the two members of each unique pair. The distances are store by 'by' block and in the same order as the unique_pairs in the `Task file`_.
 
 - distances
-    - by0
+    - by0: 1D-array containing the distances between the two members of each pair.
+    - by1
     - etc.
 
 `Score file`
@@ -70,7 +70,8 @@ Extension: .score
 This file contains the score of each triplets. The score is 1 when X is closer to A and -1 when X is closer to B. The score are stored by 'by' block and in the same order as the triplets in the `Task file`_.
 
 - scores
-    - by0
+    - by0: 1D-array of integers containing the score of each triplet.
+    - by1
     - etc.
 
 `Analyse file`
@@ -82,6 +83,9 @@ The output file of the ABX baseline, in a human readable format. Contains the av
 The extension _1 (resp. _2) appended to the feature name means that the value is the value of the item A (resp. item B) of the triplet.
 
 For instance, a task on 'on' and across 'ac' will have the columns on_0, on_1, ac_0, ac_1. For an ABX triplet, on_0 is the value of the 'on' feature of A and X, and on_1 the value of the 'on' feature of B, etc.
+
+Example:
+For a task on 'on', across 'ac' and by 'by'
 
 ==== ==== ==== ==== == ===== =
 on_1 ac_1 ac_2 on_2 by score n
@@ -99,3 +103,4 @@ v1   v1   v0   v0   v0 0.7   3
 - **n** number of triplets
 
 .. _hdf5: http://www.hdfgroup.org/HDF5/
+.. _h5feature: 404

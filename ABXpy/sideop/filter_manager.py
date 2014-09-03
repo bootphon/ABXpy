@@ -96,9 +96,11 @@ def singleton_filter(generator):
 
 def vectorial_filter(generator, indices):
     """
+
     .. note:: To allow a lazy evaluation of the filter, the context is filtered
-    explicitly which acts on the generator by a side-effect (dict being mutable
-    in python)
+        explicitly which acts on the generator by a side-effect (dict being
+        mutable in python)
+
     """
     kept = indices
     context = {}

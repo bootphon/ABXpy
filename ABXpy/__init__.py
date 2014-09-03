@@ -6,25 +6,37 @@ Organisation
 It is composed of 3 main modules and other submodules.
 
 - `task module`_ is used for creating a new task and preprocessing.
+- `distance package <ABXpy.distances.html>`_ is used for calculating the\
+    distances necessary for the score calculation.
 - `score module`_ is used for computing the score of a task.
 - `analyze module`_ is used for analysing the results.
+
+The features can be calculated in numpy via external tools, and made
+compatible with this package with the `npz2h5features <404>`_ function
 
 The pipeline
 ------------
 #TODO the table doesnt render well, do a graphic version in a line
 
-+--------------+---------+--------------+
-| In           | Module  | Out          |
-+==============+=========+==============+
-| - data.item  | task    | - data.abx   |
-| - parameters |         |              |
-+--------------+---------+--------------+
-| - data.abx   | score   | - data.score |
-| - distance   |         |              |
-+--------------+---------+--------------+
-| - data.abx   | analyse | - data.csv   |
-| - data.score |         |              |
-+--------------+---------+--------------+
++-------------------+----------+-----------------+
+| In                | Module   | Out             |
++===================+==========+=================+
+| - data.item       | task     | - data.abx      |
+| - parameters      |          |                 |
++-------------------+----------+-----------------+
+| - data.abx        | distance | - data.distance |
+| - data.features   |          |                 |
+| - distance        |          |                 |
++-------------------+----------+-----------------+
+| - data.abx        | score    | - data.score    |
+| - data.distance   |          |                 |
++-------------------+----------+-----------------+
+| - data.abx        | analyse  | - data.csv      |
+| - data.score      |          |                 |
++-------------------+----------+-----------------+
+
+See `Files Format <FilesFormat.html>`_ for a description of the files used as input and output.
+
 """
 # -*- coding: utf-8 -*-
 """
