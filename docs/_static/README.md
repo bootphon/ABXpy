@@ -1,0 +1,1 @@
+Put static files here
