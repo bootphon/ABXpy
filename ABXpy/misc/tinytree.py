@@ -22,7 +22,6 @@
 
 import sys
 import itertools
-import copy
 import unicodedata
 
 
@@ -379,7 +378,6 @@ class Tree(object):
 
             :attr A string attribute name
         """
-        lst = []
         for i in self.pathToRoot():
             v = getattr(i, attr, None)
             if v:

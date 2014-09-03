@@ -334,8 +334,8 @@ class Task(object):
             stats['on_across_levels'] = self.on_across_blocks[by].size()
             stats['nb_on_across_levels'] = len(stats['on_across_levels'])
             self.by_stats[by] = stats
-        self.stats['nb_blocks'] = sum([stats['nb_on_across_levels']
-                                       for stats in self.by_stats.values()])
+        self.stats['nb_blocks'] = sum([bystats['nb_on_across_levels']
+                                       for bystats in self.by_stats.values()])
 
         if self.verbose > 0:
             display = progress_display.ProgressDisplay()
@@ -393,7 +393,7 @@ class Task(object):
                     stats['block_sizes'][block_key] = 0
 
         self.stats['nb_triplets'] = sum(
-            [stats['nb_triplets'] for stats in self.by_stats.values()])
+            [bystats['nb_triplets'] for bystats in self.by_stats.values()])
         # FIXME: remove empty by blocks then remove empty on_across_by blocks
         # here, also reset self.n_blocks in consequence
         self.n_blocks = self.stats['nb_blocks']

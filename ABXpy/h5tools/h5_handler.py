@@ -124,13 +124,13 @@ class H5Handler(object):
                             assert i_buf_rows > 0
                             i_buf = []
                             for ix, (g, d) in enumerate(self.sources):
-                                buf = []
+                                buf1 = []
                                 for c in range(n_chunks):
                                     buf_size = self.dtypes[
                                         ix].itemsize * self.n_columns[ix] * i_buf_rows / 1000.
-                                    buf.append(
+                                    buf1.append(
                                         i.add_dataset(g, d + '_' + str(c), buf_size))
-                                i_buf.append(buf)
+                                i_buf.append(buf1)
 
                             # create n_datasets output buffers
                             o_buf_rows = int(
