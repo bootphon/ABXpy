@@ -119,7 +119,7 @@ class Task(object):
 
     Attributes
     ----------
-    `stats : dict. Contain several statistics about the task. The main \
+    `stats` : dict. Contain several statistics about the task. The main \
         3 attributes are:
 
     - nb_blocks the number of blocks of ABX triplets sharing the same 'on', \

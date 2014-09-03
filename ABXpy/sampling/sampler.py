@@ -200,8 +200,9 @@ def sample_without_replacement(n, N, dtype=np.int64):
     """Returns uniform samples in [0, N-1] without replacement. It will use
     Knuth sampling or rejection sampling depending on the parameters n and N.
 
-    .. note:: the values 0.6 and 100 are based on empirical tests of the
+    .. note:: the values 0.6 and 100 are based on empirical tests of the \
     functions and would need to be changed if the functions are changed
+
     """
     if N > 100 and n / float(N) < 0.6:
         sample = rejection_sampling(n, N, dtype)

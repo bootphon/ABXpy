@@ -10,7 +10,7 @@ Form the command line:
 
 .. code-block:: bash
 
-    Not implemented yet.
+    python score.py data.abx data.distance data.score
 
 In python:
 

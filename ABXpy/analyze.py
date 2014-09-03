@@ -6,6 +6,24 @@ sharing the same on, across and by labels. It output a tab separated csv file
 which columns are the relevant labels, the average score and the number of
 triplets in the block. See `Files format <FilesFormat.html>`_ for a more
 in-depth explanation.
+
+It requires a score file and a task file.
+
+Usage
+-----
+Form the command line:
+
+.. code-block:: bash
+
+    python analyze.py data.score data.abx data.csv
+
+In python:
+
+.. code-block:: python
+
+    import ABXpy.analyze
+    # Prerequisite: calculate a task data.abx, and a score data.score
+    ABXpy.analyze.analyze(data.score, data.abx, data.csv)
 """
 # -*- coding: utf-8 -*-
 """
@@ -56,6 +74,9 @@ import ABXpy.misc.type_fitting as type_fitting
 
 
 def npdecode(keys, max_ind):
+    """Vectorized implementation of the decoding of the labels:
+    i = (a1*n2 + a2)*n3 + a3 ...
+    """
     res = np.empty((len(keys), len(max_ind)))
     aux = keys
     k = len(max_ind)
@@ -67,6 +88,8 @@ def npdecode(keys, max_ind):
 
 
 def unique_rows(arr):
+    """Numpy unique applied to the row only.
+    """
     return (np.unique(np.ascontiguousarray(arr)
                       .view(np.dtype((np.void,
                                       arr.dtype.itemsize * arr.shape[1]))))
@@ -74,6 +97,9 @@ def unique_rows(arr):
 
 
 def collapse(scorefile, taskfile, fid):
+    """Collapses the results for each triplets sharing the same on, across and
+    by labels.
+    """
     # wf_tmp = open('tmp_pandas.txt', 'wb')
     scorefid = h5py.File(scorefile)
     taskfid = h5py.File(taskfile)
@@ -148,6 +174,17 @@ def collapse(scorefile, taskfile, fid):
 
 
 def analyze(scorefile, taskfile, outfile):
+    """Analyse the results of a task
+
+    Parameters
+    ----------
+    task_file : string, hdf5 file
+        the file containing the triplets and pairs of the task
+    score_file : string, hdf5 file
+        the file containing the score of a task
+    analyse_file: string, csv file
+        the file that will contain the analysis
+    """
     with open(outfile, 'w+') as fid:
         taskfid = h5py.File(taskfile)
         aux = taskfid['regressors']
