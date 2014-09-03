@@ -16,7 +16,7 @@ Form the command line:
 column5 -f "[attr == 0 for attr in column3_X]"
 
 my_data.item is a special file containing an index of the database and a set
-of features or attributes. See input format [#TODO insert hypertext]
+of labels or attributes. See input format [#TODO insert hypertext]
 
 In python:
 
@@ -24,8 +24,8 @@ In python:
 
     import ABXpy.task
     # create a new task and compute the statistics
-    myTask = ABXpy.task.Task('data.item', 'on_feature', 'across_feature', \
-'by_feature', filters=my_filters, regressors=my_regressors)
+    myTask = ABXpy.task.Task('data.item', 'on_label', 'across_feature', \
+'by_label', filters=my_filters, regressors=my_regressors)
     print myTask.stats  # display statistics
     myTask.generate_triplets()  # generate a h5db file 'data.abx'containing \
 all the triplets and pairs
@@ -36,15 +36,15 @@ Example
 #TODO this example is for the front page or ABX module, to move
 An example of ABX triplet:
 
-+-----+-----+-----+
-|  A  |  B  |  X  |
-+=====+=====+=====+
-| on1 | on2 | on1 |
-+-----+-----+-----+
-| ac1 | ac1 | ac2 |
-+-----+-----+-----+
-| by1 | by1 | by1 |
-+-----+-----+-----+
++------+------+------+
+|  A   |  B   |  X   |
++======+======+======+
+| on_1 | on_2 | on_1 |
++------+------+------+
+| ac_1 | ac_1 | ac_2 |
++------+------+------+
+| by   | by   | by   |
++------+------+------+
 
 A and X share the same 'on' attribute; A and B share the same 'across'
 attribute; A,B and X share the same 'by' attribute
@@ -373,8 +373,9 @@ class Task(object):
                     n_X = n_X - n_A
                     stats['nb_across_pairs'] += n_A * n_B
                     stats['nb_on_pairs'] += n_A * n_X
-                    if ((approximate or not(self.filters.A or self.filters.B or
-                                            self.filters.X or self.filters.ABX)) and
+                    if ((approximate or
+                         not(self.filters.A or self.filters.B or
+                         self.filters.X or self.filters.ABX)) and
                             type(across) != tuple):
                         stats['nb_triplets'] += n_A * n_B * n_X
                         stats['block_sizes'][block_key] = n_A * n_B * n_X

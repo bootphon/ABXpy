@@ -9,24 +9,24 @@ Extension: .item
 
 This file indexes the database on which the ABX task is executed. It is a regular text file and should have the following structure:
 
-======= ======= ====== ========== ========= =========
-#source onset   offset #feature 1 feature 2 feature 3
-======= ======= ====== ========== ========= =========
-file 1  start 1 stop 1 value 1    value 1   value 1
-file 2  start 2 stop 2 value 2    value 1   value 1
-file 3  start 3 stop 3 value 3    value 1   value 1
-======= ======= ====== ========== ========= =========
+======= ======= ====== ======== ======= =======
+#source onset   offset #label 1 label 2 label 3
+======= ======= ====== ======== ======= =======
+file 1  start 1 stop 1 value 1  value 1 value 1
+file 2  start 2 stop 2 value 2  value 1 value 1
+file 3  start 3 stop 3 value 3  value 1 value 1
+======= ======= ====== ======== ======= =======
 
 - **#source** is the name of the file minus the extension. Note that the '#' at the begining is mandatory.
 - **onset** is the instant when the sound start.
 - **offset** is the instant when the sound end.
-- the **feature** columns are various features relevant to the discrimination task. Note that the first column must start with a '#'.
+- the **label** columns are various regressors relevant to the discrimination task. Note that the first column must start with a **'#'**.
 
 `Features file`
 ---------------
-Extension: .feature
+Extension: .features
 
-This file contains the features and the center time of each window in the `h5feature`_ format. This is a special `hdf5`_ file with the following attributes:
+This file contains the features and the center time of each window in the `h5features`_ format. This is a special `hdf5`_ file with the following attributes:
 
 - **features** a 2D arrays with the 'feature' dimension along the columns and the 'time' dimension along the lines.
 - **times** a 1D array with the center time of each window.
@@ -80,9 +80,15 @@ Extension: .csv
 
 The output file of the ABX baseline, in a human readable format. Contains the average results collapsed over triplets sharing the same on, across and by attributes. It uses a score of 1 when X is closer to A and 0 when X is closer to B.
 
-The extension _1 (resp. _2) appended to the feature name means that the value is the value of the item A (resp. item B) of the triplet.
+The extensions _1 and _2 to the labels name follow the following convention:
 
-For instance, a task on 'on' and across 'ac' will have the columns on_0, on_1, ac_0, ac_1. For an ABX triplet, on_0 is the value of the 'on' feature of A and X, and on_1 the value of the 'on' feature of B, etc.
++------+------+------+
+|  A   |  B   |  X   |
++======+======+======+
+| on_1 | on_2 | on_1 |
++------+------+------+
+| ac_1 | ac_1 | ac_2 |
++------+------+------+
 
 Example:
 For a task on 'on', across 'ac' and by 'by'
@@ -94,13 +100,13 @@ v0   v0   v1   v1   v0 0.2   5
 v1   v1   v0   v0   v0 0.7   3
 ==== ==== ==== ==== == ===== =
 
-- **on_1** value of 'on' feature for A and X
-- **on_2** value of 'on' feature for B
-- **ac_1** value of 'ac' feature for A
-- **ac_2** value of 'ac' feature for B and X
-- **by** value of 'by' feature for A, B and X
+- **on_1** value of 'on' label for A and X
+- **on_2** value of 'on' label for B
+- **ac_1** value of 'ac' label for A and B
+- **ac_2** value of 'ac' label for X
+- **by** value of 'by' label for A, B and X
 - **score** average score for those triplets
 - **n** number of triplets
 
 .. _hdf5: http://www.hdfgroup.org/HDF5/
-.. _h5feature: 404
+.. _h5features: 404

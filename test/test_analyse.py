@@ -13,7 +13,7 @@ import ABXpy.distances.metrics.cosine as cosine
 import ABXpy.distances.metrics.dtw as dtw
 import ABXpy.score as score
 import items
-import collapse
+import ABXpy.analyze as analyze
 
 
 def dtw_cosine_distance(x, y):
@@ -38,8 +38,7 @@ def test_analyze():
         distances.compute_distances(feature_file, '/features/', taskfilename,
                                     distance_file, dtw_cosine_distance)
         score.score(taskfilename, distance_file, scorefilename)
-        collapse.write(collapse.collapse(scorefilename, taskfilename),
-                       taskfilename, analyzefilename)
+        analyze.analyze(scorefilename, taskfilename, analyzefilename)
     finally:
         try:
             os.remove(item_file)
@@ -52,4 +51,4 @@ def test_analyze():
             pass
 
 
-test_analyze()
+# test_analyze()
