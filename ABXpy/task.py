@@ -150,6 +150,8 @@ class Task(object):
         display additionnal information is set superior to 0.
     verify : str, optionnal
         verify the correctness of the database file, do by default.
+    features : str, otpionnal
+        the features file. Add it to verify the consistency with the item file
     """
 
     def __init__(self, db_name, on, across=None, by=None, filters=None,

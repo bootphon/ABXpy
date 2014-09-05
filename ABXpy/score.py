@@ -4,6 +4,14 @@ how to create a task)
 This module contains the actual computation of the score. It requires a task
 and a distance, and redirect the output in a score file.
 
+The main function takes a distance file and a task file as input to compute
+the score of the task on those distances. X closer to A is associated with
+a score of 1 and X closer to B with  score of -1.
+
+The distances between pairs in the distance file must be ordered the same
+way as the pairs in the task file, and the triplet score int the output
+file will be ordered the same way as the triplets in the task file.
+
 Usage
 -----
 Form the command line:

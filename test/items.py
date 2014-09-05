@@ -8,7 +8,15 @@ Created on Thu Apr 24 18:05:41 2014
 """
 
 import numpy as np
-import h5features
+import sys
+import os
+try:
+    import h5features
+except ImportError:
+    sys.path.insert(0, os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.realpath(__file__)))), 'h5features'))
+    import h5features
 
 
 def generate_testitems(base, n, repeats=0, name='data.item'):

@@ -12,7 +12,14 @@ import multiprocessing
 import os
 import time
 import traceback
-import h5features
+import sys
+try:
+    import h5features
+except ImportError:
+    sys.path.insert(0, os.path.join(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.realpath(__file__))))), 'h5features'))
+    import h5features
 
 # FIXME Enforce single process usage when using python compiled with OMP
 # enabled

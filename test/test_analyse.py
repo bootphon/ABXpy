@@ -47,6 +47,7 @@ def test_analyze():
             os.remove(distance_file)
             os.remove(scorefilename)
             os.remove(analyzefilename)
+            # pass
         except:
             pass
 

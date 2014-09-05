@@ -124,12 +124,14 @@ def collapse(scorefile, taskfile, fid):
             print "type not big enough"
         ind_type = type_fitting.fit_integer_type(np.prod(n_indices),
                                                  is_signed=False)
+        # encoding the indices of a triplet to a unique index
         new_index = indices[:, 0].astype(ind_type)
         for i in range(1, len(n_indices)):
             new_index = indices[:, i] + n_indices[i] * new_index
 
         permut = np.argsort(new_index)
         i_unique = 0
+        # collapsing the score
         key_reg = new_index[permut[0]]
         mean = np.empty((len(permut), 3))
         mean[0] = [key_reg, scores_arr[permut[0]], 0]
@@ -149,6 +151,7 @@ def collapse(scorefile, taskfile, fid):
                                     + 1) / 2, i - i_start + 1]
         mean = np.resize(mean, (i_unique + 1, 3))
 
+        # retrieving the triplet indices from the unique index.
         tmp = npdecode(mean[:, 0], n_indices)
 
         regs = tfrk['indexed_datasets']
