@@ -1,4 +1,5 @@
-"""This test script contains tests for the basic parameters of score.py
+"""This test contains a full run of the ABX pipeline with randomly created
+database and features
 """
 # -*- coding: utf-8 -*-
 
@@ -12,7 +13,7 @@ import ABXpy.distances.distances as distances
 import ABXpy.distances.metrics.cosine as cosine
 import ABXpy.distances.metrics.dtw as dtw
 import ABXpy.score as score
-import items
+import ABXpy.misc.items as items
 import ABXpy.analyze as analyze
 
 
@@ -30,7 +31,7 @@ def fullrun():
     taskfilename = 'example_items/data.abx'
     analyzefilename = 'example_items/data.csv'
 
-    items.generate_db_and_feat(3, 3, 1, item_file, 2, 3, feature_file)
+    items.generate_db_and_feat(3, 3, 1, item_file, 2, 2, feature_file)
     task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2',
                            features=feature_file)
     task.generate_triplets()

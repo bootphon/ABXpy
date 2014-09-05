@@ -10,7 +10,7 @@ if not(package_path in sys.path):
 import ABXpy.task
 import ABXpy.sampling as sampling
 import numpy as np
-import items
+import ABXpy.misc.items as items
 import random
 from scipy.stats import chisquare as chisquare
 

@@ -10,6 +10,11 @@ Created on Thu Apr 24 18:05:41 2014
 import numpy as np
 import sys
 import os
+import filecmp
+import subprocess
+# import h5py
+# import numpy as np
+# from ys.mods import load
 try:
     import h5features
 except ImportError:
@@ -92,3 +97,20 @@ def generate_db_and_feat(base, n, repeats=0, name_db='data.item', n_feat=2,
     print name_db
     n_files = (base ** n) * (repeats + 1)
     generate_features(n_files, n_feat, max_frames, name_feat)
+
+
+def cmp(f1, f2):
+    return filecmp.cmp(f1, f2, shallow=True)
+
+
+def h5cmp(f1, f2):
+    try:
+        out = subprocess.check_output(['h5diff', f1, f2])
+    except subprocess.CalledProcessError:
+        print out
+        return False
+    # print out
+    if out:
+        return False
+    else:
+        return True

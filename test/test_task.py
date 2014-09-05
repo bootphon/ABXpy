@@ -10,7 +10,7 @@ if not(package_path in sys.path):
 import ABXpy.task
 import h5py
 import numpy as np
-import items
+import ABXpy.misc.items as items
 
 error_pairs = "pairs incorrectly generated"
 error_triplets = "triplets incorrectly generated"

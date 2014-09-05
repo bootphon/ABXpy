@@ -12,7 +12,7 @@ import ABXpy.distances.distances as distances
 import ABXpy.distances.metrics.cosine as cosine
 import ABXpy.distances.metrics.dtw as dtw
 import ABXpy.score as score
-import items
+import ABXpy.misc.items as items
 
 
 def dtw_cosine_distance(x, y):
