@@ -7,3 +7,4 @@ scipy==0.14.0
 # for the tests and general use:
 h5features
 numpydoc
+mock

@@ -14,9 +14,9 @@ setup(
     long_description=open('README.rst').read(),
     install_requires=[
         "python >= 2.7",
-        "h5py",
-        "numpy",
-        "pandas",
-        "scipy"
+        "h5py >= 2.3.0",
+        "numpy >= 1.8.0",
+        "pandas >= 0.13.1",
+        "scipy >= 0.14.0"
     ],
 )
