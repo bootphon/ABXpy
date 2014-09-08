@@ -61,6 +61,9 @@ def test_analyze():
 
 
 def test_frozen_analyze():
+    """Frozen analyze compare the results of a previously "frozen" run with
+    a new one, asserting that the code did not change in behaviour.
+    """
     try:
         if not os.path.exists('test_items'):
             os.makedirs('test_items')
@@ -92,6 +95,3 @@ def test_frozen_analyze():
             os.remove(analyzefilename)
         except:
             pass
-
-
-test_frozen_analyze()
