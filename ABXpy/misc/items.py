@@ -107,7 +107,6 @@ def h5cmp(f1, f2):
     try:
         out = subprocess.check_output(['h5diff', f1, f2])
     except subprocess.CalledProcessError:
-        print out
         return False
     # print out
     if out:
