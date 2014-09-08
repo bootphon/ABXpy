@@ -59,19 +59,31 @@ An example of ABX triplet:
 
 A and X share the same 'on' attribute; A and B share the same 'across' attribute; A,B and X share the same 'by' attribute.
 
-### Example of use
-
+Example of use
+--------------
 	TODO
 
-### Installation
+Installation
+------------
 
     The module should work with the anaconda distribution of python. However, you may get some (unrelevant) warnings while running task.py.
 
 	make
 	make install
 
-### Run the tests
+Run the tests
+-------------
 
     Note that you will need `h5features module <404>`_ in your path for some tests to work.
 
-	make test
+    make test
+
+Generate the documentation:
+---------------------------
+
+    Note that you will get warnings if you don't have the `h5features module <404>`_ in your path.
+
+    cd docs
+    make html
+    (you can also generate the doc in several thoer formats, see the Makefile)
+
