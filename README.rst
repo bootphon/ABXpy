@@ -5,17 +5,18 @@ ABX discrimination is a term that is used for three stimuli presented on an ABX 
 
 This package contains the operations necessary to initialize, calculate and analyse the results of an ABX discrimination task.
 
+Check out the full documentation at `read the docs <http://abxpy.readthedocs.org/en/latest/ABXpy.html>`_.
+
 Organisation
 ------------
 It is composed of 3 main modules and other submodules.
 
-- `task module <404>`_ is used for creating a new task and preprocessing.
-- `distance package <404>`_ is used for calculating the\
-    distances necessary for the score calculation.
-- `score module <404>`_ is used for computing the score of a task.
-- `analyze module <404>`_ is used for analysing the results.
+- `task module <http://abxpy.readthedocs.org/en/latest/ABXpy.html#task-module>`_ is used for creating a new task and preprocessing.
+- `distances package <http://abxpy.readthedocs.rg/en/latest/ABXpy.distances.html>`_ is used for calculating the distances necessary for the score calculation.
+- `score module <http://abxpy.readthedocs.org/en/latest/ABXpy.html#score-module>`_ is used for computing the score of a task.
+- `analyze module <http://abxpy.readthedocs.org/en/latest/ABXpy.html#analyze-module>`_ is used for analysing the results.
 
-The features can be calculated in numpy via external tools, and made compatible with this package with the `h5features module <404>`_, or directly calculated with one of our tools like the `feature_extraction module <404`_.
+The features can be calculated in numpy via external tools, and made compatible with this package with the `h5features module <http://h5features.readthedocs.org/en/latest/h5features.html>`_, or directly calculated with one of our tools like the `feature_extraction module <http://h5features.readthedocs.org/en/latest/h5features.html#module-npz2h5features>`_.
 
 The pipeline
 ------------
@@ -37,8 +38,7 @@ The pipeline
 | - data.score      |          |                 |
 +-------------------+----------+-----------------+
 
-See `Files Format <404>`_ for a description of the files used as
-input and output.
+See `Files Format <http://abxpy.readthedocs.org/en/latest/FilesFormat.html>`_ for a description of the files used as input and output.
 
 The task
 --------
@@ -66,7 +66,7 @@ Example of use
 Installation
 ------------
 
-    The module should work with the anaconda distribution of python. However, you may get some (unrelevant) warnings while running task.py.
+The module should work with the anaconda distribution of python. However, you may get some (unrelevant) warnings while running task.py.
 
 	make
 	make install
@@ -74,16 +74,17 @@ Installation
 Run the tests
 -------------
 
-    Note that you will need `h5features module <404>`_ in your path for some tests to work.
+Note that you will need `h5features module <http://h5features.readthedocs.org/en/latest/h5features.html>`_ in your path for some tests to work.
 
     make test
 
 Generate the documentation:
 ---------------------------
 
-    Note that you will get warnings if you don't have the `h5features module <404>`_ in your path.
+Note that you will get warnings if you don't have the `h5features module <http://h5features.readthedocs.org/en/latest/h5features.html>`_ in your path.
 
     cd docs
     make html
-    (you can also generate the doc in several thoer formats, see the Makefile)
+
+(you can also generate the doc in several other formats, see the Makefile)
 

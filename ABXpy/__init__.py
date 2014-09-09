@@ -18,7 +18,8 @@ It is composed of 3 main modules and other submodules.
 - `analyze module`_ is used for analysing the results.
 
 The features can be calculated in numpy via external tools, and made
-compatible with this package with the `npz2h5features <404>`_ function
+compatible with this package with the `npz2h5features <http://h5features.\
+readthedocs.org/en/latest/h5features.html#module-npz2h5features>`_ function
 
 The pipeline
 ------------
