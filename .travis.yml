@@ -1,11 +1,14 @@
 language: python
 python:
     - "2.7"
-install: 
+before_install:
+    "sudo apt-get upgrade -qq"
+    "sodu apt-get install -y hdf5"
+install:
     - "pip install -r requirements.txt --use-mirrors"
     # - "pip install coverage"
     # - "pip install coveralls"
 script: 
-    - "make test"
+    - "py.test -s ABXpy/test"
 # after_success:
 #     coveralls
