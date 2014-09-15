@@ -10,5 +10,6 @@ install:
     # - "pip install coveralls"
 script: 
     - "py.test -s ABXpy/test"
+
 # after_success:
 #     coveralls
