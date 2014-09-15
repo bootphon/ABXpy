@@ -6,6 +6,6 @@ install:
     # - "pip install coverage"
     # - "pip install coveralls"
 script: 
-    - "make test"
+    - "py.test -s ABXpy/test"
 # after_success:
 #     coveralls

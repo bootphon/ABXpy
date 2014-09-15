@@ -8,4 +8,4 @@ scipy==0.14.0
 h5features
 numpydoc
 mock
-pytest-cov>=1.8.0
+pytest>=2.6
