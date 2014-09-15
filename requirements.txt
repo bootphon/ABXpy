@@ -8,3 +8,4 @@ h5features
 numpydoc
 mock
 pytest==2.6
+cython==0.20.1
