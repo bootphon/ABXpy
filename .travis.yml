@@ -1,8 +1,10 @@
 language: python
 python:
     - "2.7"
+before_install:
+    "sudo apt-get upgrade -qq"
+    "sodu apt-get install -y hdf5"
 install:
-    - "sudo apt-get install hdf5"
     - "pip install -r requirements.txt --use-mirrors"
     # - "pip install coverage"
     # - "pip install coveralls"
