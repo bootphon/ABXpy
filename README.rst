@@ -78,7 +78,7 @@ Note that you will need `h5features module <http://h5features.readthedocs.org/en
 
     make test
 
-Generate the documentation:
+Generate the documentation
 ---------------------------
 
 Note that you will get warnings if you don't have the `h5features module <http://h5features.readthedocs.org/en/latest/h5features.html>`_ in your path.
@@ -87,4 +87,11 @@ Note that you will get warnings if you don't have the `h5features module <http:/
     make html
 
 (you can also generate the doc in several other formats, see the Makefile)
+
+
+Citation
+---------
+
+If you use this software in your research, please cite: 
+  ABX discriminability, Schatz T., Bach F. and Dupoux E., in preparation.
 
