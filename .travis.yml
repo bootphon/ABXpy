@@ -3,7 +3,7 @@ python:
     - "2.7"
 before_install:
     "sudo apt-get upgrade -qq"
-    "sodu apt-get install -y hdf5"
+    "sudo apt-get install -y hdf5"
 install:
     - "pip install -r requirements.txt --use-mirrors"
     # - "pip install coverage"
