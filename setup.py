@@ -7,7 +7,7 @@ setup(
     author='Thomas Schatz',
     packages=['ABXpy', 'ABXpy.test', 'ABXpy.database', 'ABXpy.dbfun',
               'ABXpy.distances', 'ABXpy.h5tools', 'ABXpy.misc',
-              'ABXpy.sampling', 'ABXpy.sideop', 'ABXpy.distances.cosine'],
+              'ABXpy.sampling', 'ABXpy.sideop', 'ABXpy.distances.metrics'],
     scripts=['bin/ABXrun.py'],
     # url='http://pypi.python.org/pypi/ABXpy/',
     license='license/LICENSE.txt',
