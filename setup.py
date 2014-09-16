@@ -1,5 +1,16 @@
 from distutils.core import setup
+from distutils.extension import Extension
+from Cython.Build import cythonize
+import os
+import numpy
 
+
+path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                    'ABXpy/distances/metrics/install')
+extension = Extension("dtw",
+                      [os.path.join(path, "dtw.pyx")],
+                      extra_compile_args=["-O3"],
+                      include_dirs=[numpy.get_include()])
 
 setup(
     name='ABXpy',
@@ -13,6 +24,7 @@ setup(
     license='license/LICENSE.txt',
     description='ABX discrimination task.',
     long_description=open('README.rst').read(),
+    ext_modules=cythonize(extension),
     install_requires=[
         "python >= 2.7",
         "h5py >= 2.3.0",
