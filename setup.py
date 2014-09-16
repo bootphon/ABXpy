@@ -7,7 +7,7 @@ import numpy
 
 path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                     'ABXpy/distances/metrics/install')
-extension = Extension("dtw",
+extension = Extension("ABXpy.distances.metrics.dtw",
                       [os.path.join(path, "dtw.pyx")],
                       extra_compile_args=["-O3"],
                       include_dirs=[numpy.get_include()])
