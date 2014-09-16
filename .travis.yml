@@ -29,8 +29,8 @@ install:
   - pip install -t /home/travis/miniconda/lib/python2.7/site-packages --no-deps h5features
   - export PATH=/home/travis/virtualenv/python2.7.8/build:$PATH
   # Coverage packages are on my binstar channel
-  - python setup.py install
   - make install
+  - python setup.py install
 
 script: 
     - "py.test -s ABXpy/test"
