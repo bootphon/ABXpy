@@ -22,12 +22,10 @@ before_install:
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
   - sudo apt-get install -qq python-numpy python-scipy
-  - sudo apt-get install -qq python-pip
 # Install packages
 install:
   - conda install --yes python=2.7 numpy scipy h5py pandas pytest
-  - pip search h5features
-  - pip install -r h5features
+  - pip install h5features
   # Coverage packages are on my binstar channel
   - python setup.py install
 
