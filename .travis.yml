@@ -23,9 +23,9 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 # Install packages
 install:
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels
+  - conda install --yes python=2.7 numpy scipy h5py pandas pytest
+  - pip install -r h5features
   # Coverage packages are on my binstar channel
-  - "pip install -r requirements.txt"
   - python setup.py install
 
 script: 
