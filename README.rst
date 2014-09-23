@@ -100,4 +100,4 @@ Travis status
 
 This package is continuously integrated with Travis-CI:
 
-[![Build Status](https://travis-ci.org/bootphon/ABXpy.png)](https://travis-ci.org/bootphon/ABXpy)
+[![Build Status](https://travis-ci.org/bootphon/ABXpy.svg?branch=master)](https://travis-ci.org/bootphon/ABXpy)
