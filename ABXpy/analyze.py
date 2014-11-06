@@ -171,7 +171,9 @@ def collapse(scorefile, taskfile, fid):
             fid.write('\t'.join(map(str, result)) + '\n')
             # results.append(aux + [context, score, n])
             # wf_tmp.write('\t'.join(map(str, results[-1])) + '\n')
-
+    scorefid.close()
+    taskfid.close()
+    del taskfid
     # wf_tmp.close()
     # return results
 
@@ -198,6 +200,7 @@ def analyze(scorefile, taskfile, outfile):
             string += reg + "\t"
         string += "by\tscore\tn\n"
         fid.write(string)
+        taskfid.close()
         collapse(scorefile, taskfile, fid)
         # for r in results:
         #     fid.write('\t'.join(map(str, r)) + '\n')
