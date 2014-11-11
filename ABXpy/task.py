@@ -61,6 +61,7 @@ if not(package_path in sys.path):
 import h5py
 import numpy as np
 import pandas as pd
+import warnings
 import ABXpy.database.database as database
 import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.h5tools.h52np as h52np
@@ -875,10 +876,15 @@ associated pairs
                 stream.write('### by level: %s ###\n' % str(by))
                 pprint.pprint(stats, stream)
         else:
+            try:
+                self.compute_nb_levels()
+            except ValueError:
+                warnings.warn("Filters not fully supported, nb_levels per by block wont be calculated", RuntimeWarning)
             for by, stats in self.by_stats.iteritems():
                 stream.write('### by level: %s ###\n' % str(by))
                 stream.write('nb_triplets: %d\n' % stats['nb_triplets'])
-                stream.write('nb_levels: %d\n' % stats['nb_levels'])
+                if 'nb_levels' in stats:
+                    stream.write('nb_levels: %d\n' % stats['nb_levels'])
                 stream.write('nb_across_pairs: %d\n' %
                              stats['nb_across_pairs'])
                 stream.write('nb_on_pairs: %d\n' % stats['nb_on_pairs'])
