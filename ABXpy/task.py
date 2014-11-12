@@ -998,6 +998,7 @@ or phonemes, if your database contains columns defining these attributes)"""
         assert args.output, "The output file was not provided"
     if not args.stats_only and os.path.exists(args.output):
         print("WARNING: Overwriting task file " + args.output)
+        os.path.remove(args.output)
     if not args.no_verif and (not args.features or not os.path.exists(args.features)):
         print("WARNING: Cannot verify the consistency of the item file {0} "
               "with the features file because the features file was not "
