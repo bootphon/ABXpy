@@ -994,7 +994,7 @@ or phonemes, if your database contains columns defining these attributes)"""
                     help='optional: feature file, verify the consistency '
                          'of the feature file with the item file')
     args = parser.parse_args()
-    if os.path.exists(args.output) and not args.stats_only:
+    if not args.stats_only and os.path.exists(args.output):
         print("WARNING: Overwriting task file " + args.output)
     if not args.no_verif and args.features:
         print("WARNING: Cannot verify the consistency of the item file {0} "
