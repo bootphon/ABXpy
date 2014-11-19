@@ -38,6 +38,7 @@ import numpy as np
 import argparse
 import os.path as path
 import ABXpy.misc.type_fitting as type_fitting
+import os
 
 
 # FIXME by_columns should be stored as attributes into the task file
@@ -218,30 +219,30 @@ $ ./collapse_results.py abx.score abx.task abx_collapsed.txt
 collapses the scores in abx.score by the conditions in abx.task and outputs
 to plain text format in abx_collapsed.txt.""")
     parser.add_argument('scorefile', metavar='SCORE',
-                        nargs=1,
                         help='score file in hdf5 format')
     parser.add_argument('taskfile', metavar='TASK',
-                        nargs=1,
                         help='task file in hdf5 format')
     parser.add_argument('output', metavar='OUTPUT',
-                        nargs=1,
                         help='plain text output file')
     return vars(parser.parse_args())
 
 
 if __name__ == '__main__':
     args = parse_args()
-    scorefile = args['scorefile'][0]
+    scorefile = args['scorefile']
     if not path.exists(scorefile):
         print 'No such file:', scorefile
         exit()
-    taskfile = args['taskfile'][0]
+    taskfile = args['taskfile']
     if not path.exists(taskfile):
         print 'No such file:', taskfile
         exit()
-    outfile = args['output'][0]
+    outfile = args['output']
     # if not path.exists(outfile):
     # print 'No such file:', outfile
     # exit()
+    if os.path.exists(outfile):
+        print("Warning: overwriting analyze file {}".format(outfile))
+        os.remove(outfile)
 
     analyze(scorefile, taskfile, outfile)

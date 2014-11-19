@@ -61,3 +61,7 @@ docs/_build/
 
 # pyTest cache
 test/__pycache__
+
+# Emacs
+*~
+\#*\#

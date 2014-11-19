@@ -57,7 +57,6 @@ import sys
 package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 if not(package_path in sys.path):
     sys.path.append(package_path)
-
 import h5py
 import numpy as np
 import pandas as pd
@@ -181,8 +180,10 @@ class Task(object):
         if isinstance(by, basestring):
             by = [by]
 
+        if verbose:
+            print("Verifying input...")
         if verify:
-            verifydb(db_name, features)
+            verifydb(db_name, features, verbose)
 
         # open database
         db, db_hierarchy, feat_db = database.load(db_name, features_info=True)
@@ -203,6 +204,8 @@ class Task(object):
                 column names'
             assert '#' not in col, col + ': you cannot use \'#\' in \
                 column names'
+        if verbose:
+            print("Input verified")
 
         # if 'by' or 'across' are empty create appropriate dummy columns
         # (note that '#' is forbidden in user names for columns)
@@ -610,13 +613,15 @@ associated pairs
         for by, db in self.by_dbs.iteritems():
             # class for efficiently writing to datasets of the output file
             # (using a buffer under the hood)
+            if self.verbose > 0:
+                print("Writing ABX triplets to task file...")
             with np2h5.NP2H5(h5file=output) as fh:
                 # FIXME test if not fixed size impacts performance a lot
                 datasets, indexes = self.regressors.get_regressor_info()
                 with (h5io.H5IO(
-                      filename=output, datasets=datasets,
-                      indexes=indexes,
-                      group='/regressors/' + str(by) + '/')) as out_regs:
+                        filename=output, datasets=datasets,
+                        indexes=indexes,
+                        group='/regressors/' + str(by) + '/')) as out_regs:
                     if sample is not None:
                         n_rows = np.uint64(
                             round(sample * (self.by_stats[by]['nb_triplets'] /
@@ -626,8 +631,8 @@ associated pairs
                     # not fixed_size datasets are necessary only when sampling
                     # is performed
                     out = fh.add_dataset(group='triplets', dataset=str(
-                        by), n_rows=n_rows, n_columns=3,
-                        item_type=self.types[by], fixed_size=False)
+                            by), n_rows=n_rows, n_columns=3,
+                                         item_type=self.types[by], fixed_size=False)
                     # allow to get by values as well as values of other
                     # variables that are determined by these
                     by_values = dict(db.iloc[0])
@@ -659,6 +664,8 @@ associated pairs
                                                 ['block_sizes'][block_key]))
                         if self.verbose > 0:
                             display.display()
+        if self.verbose > 0:
+            print("done.")
         self.generate_pairs(output)
 
     # FIXME clean this function (maybe do a few well-separated sub-functions
@@ -679,6 +686,8 @@ associated pairs
         all_empty = True
         for by, db in self.by_dbs.iteritems():
             # FIXME maybe care about this case earlier ?
+            if self.verbose > 0:
+                print("Writing AX/BX pairs to task file...")
             with h5py.File(output) as fh:
                 not_empty = fh['/triplets/' + str(by)].size
             if not_empty:
@@ -792,6 +801,8 @@ associated pairs
         if not(all_empty):
             with h5py.File(output) as fh:
                 del fh['/pairs/']
+        if self.verbose > 0:
+            print("done.")
 
     # number of triplets when triplets with same on, across, by are counted as
     # one
@@ -907,7 +918,9 @@ def on_across_from_key(key):
     return on, across
 
 
-def verifydb(filename, features=None):
+def verifydb(filename, features=None, verbose=0):
+    if verbose:
+        print("Opening item file")
     with open(filename) as f:
         cols = str.split(f.readline())
         assert len(cols) > 4, 'the syntax of the item file is incorrect'
@@ -916,13 +929,17 @@ def verifydb(filename, features=None):
         assert cols[2] == 'offset', 'The third column must be named offset'
 
         if features:
+            if verbose:
+                print("Opening features file")
             h5f = h5py.File(features)
             files = h5f['features']['files'][:]
             for line in f:
                 source = str.split(line, ' ')[0]
                 assert source in files, ("The file " + source + " cannot "
                                          "be found in the feature file")
-
+        elif verbose:
+            print("Features file coherency could not be verified because"
+                  " it was not provided")
 
 """
 Command-line API
@@ -998,7 +1015,7 @@ or phonemes, if your database contains columns defining these attributes)"""
         assert args.output, "The output file was not provided"
     if not args.stats_only and os.path.exists(args.output):
         print("WARNING: Overwriting task file " + args.output)
-        os.path.remove(args.output)
+        os.remove(args.output)
     if not args.no_verif and (not args.features or not os.path.exists(args.features)):
         print("WARNING: Cannot verify the consistency of the item file {0} "
               "with the features file because the features file was not "

@@ -254,7 +254,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
                                            splitted_features,
                                            i, distance_file_lock))
                 results.append(result)
-                time.sleep(10)
+                time.sleep(1)
             pool.close()
             # wait for results
             # using 'get' allow detecting exceptions in child processes
