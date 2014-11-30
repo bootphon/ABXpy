@@ -176,7 +176,7 @@ def collapse(scorefile, taskfile, fid):
     # return results
 
 
-def analyze(scorefile, taskfile, outfile):
+def analyze(task_file, score_file, result_file):
     """Analyse the results of a task
 
     Parameters
@@ -185,11 +185,11 @@ def analyze(scorefile, taskfile, outfile):
         the file containing the triplets and pairs of the task
     score_file : string, hdf5 file
         the file containing the score of a task
-    analyse_file: string, csv file
-        the file that will contain the analysis
+    result_file: string, csv file
+        the file that will contain the analysis results
     """
-    with open(outfile, 'w+') as fid:
-        taskfid = h5py.File(taskfile)
+    with open(result_file, 'w+') as fid:
+        taskfid = h5py.File(task_file)
         aux = taskfid['regressors']
         tfrk = aux[aux.keys()[0]]
         regs = tfrk['indexed_datasets']
@@ -198,7 +198,7 @@ def analyze(scorefile, taskfile, outfile):
             string += reg + "\t"
         string += "by\tscore\tn\n"
         fid.write(string)
-        collapse(scorefile, taskfile, fid)
+        collapse(score_file, task_file, fid)
         # for r in results:
         #     fid.write('\t'.join(map(str, r)) + '\n')
 
@@ -228,17 +228,17 @@ to plain text format in abx_collapsed.txt.""")
 
 if __name__ == '__main__':
     args = parse_args()
-    scorefile = args['scorefile'][0]
-    if not path.exists(scorefile):
-        print 'No such file:', scorefile
+    score_file = args['scorefile'][0]
+    if not path.exists(score_file):
+        print 'No such file:', score_file
         exit()
-    taskfile = args['taskfile'][0]
-    if not path.exists(taskfile):
-        print 'No such file:', taskfile
+    task_file = args['taskfile'][0]
+    if not path.exists(task_file):
+        print 'No such file:', task_file
         exit()
-    outfile = args['output'][0]
+    result_file = args['output'][0]
     # if not path.exists(outfile):
     # print 'No such file:', outfile
     # exit()
 
-    analyze(scorefile, taskfile, outfile)
+    analyze(task_file, score_file, result_file)
