@@ -9,10 +9,10 @@ ABXpy Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`analyze` Module
----------------------
+:mod:`task` Module
+------------------
 
-.. automodule:: ABXpy.analyze
+.. automodule:: ABXpy.task
     :members:
     :undoc-members:
     :show-inheritance:
@@ -25,10 +25,10 @@ ABXpy Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`task` Module
-------------------
+:mod:`analyze` Module
+---------------------
 
-.. automodule:: ABXpy.task
+.. automodule:: ABXpy.analyze
     :members:
     :undoc-members:
     :show-inheritance:
@@ -38,11 +38,11 @@ Subpackages
 
 .. toctree::
 
-    ABXpy.database
-    ABXpy.dbfun
     ABXpy.distances
-    ABXpy.h5tools
-    ABXpy.misc
     ABXpy.sampling
+    ABXpy.database
+    ABXpy.h5tools
+    ABXpy.dbfun
     ABXpy.sideop
+    ABXpy.misc
 

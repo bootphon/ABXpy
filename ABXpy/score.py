@@ -147,4 +147,8 @@ if __name__ == '__main__':
     g1.add_argument('score', nargs='?', default=None, help='optional: score \
         file, where the results of the computation will be put')
     args = parser.parse_args()
+
+    if os.path.exists(args.score):
+        print("Warning: overwriting score file {}".format(args.score))
+        os.remove(args.score)
     score(args.task, args.distance, args.score)

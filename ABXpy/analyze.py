@@ -38,6 +38,7 @@ import numpy as np
 import argparse
 import os.path as path
 import ABXpy.misc.type_fitting as type_fitting
+import os
 
 
 # FIXME by_columns should be stored as attributes into the task file
@@ -171,7 +172,9 @@ def collapse(scorefile, taskfile, fid):
             fid.write('\t'.join(map(str, result)) + '\n')
             # results.append(aux + [context, score, n])
             # wf_tmp.write('\t'.join(map(str, results[-1])) + '\n')
-
+    scorefid.close()
+    taskfid.close()
+    del taskfid
     # wf_tmp.close()
     # return results
 
@@ -198,6 +201,7 @@ def analyze(task_file, score_file, result_file):
             string += reg + "\t"
         string += "by\tscore\tn\n"
         fid.write(string)
+        taskfid.close()
         collapse(score_file, task_file, fid)
         # for r in results:
         #     fid.write('\t'.join(map(str, r)) + '\n')
@@ -215,30 +219,30 @@ $ ./collapse_results.py abx.score abx.task abx_collapsed.txt
 collapses the scores in abx.score by the conditions in abx.task and outputs
 to plain text format in abx_collapsed.txt.""")
     parser.add_argument('scorefile', metavar='SCORE',
-                        nargs=1,
                         help='score file in hdf5 format')
     parser.add_argument('taskfile', metavar='TASK',
-                        nargs=1,
                         help='task file in hdf5 format')
     parser.add_argument('output', metavar='OUTPUT',
-                        nargs=1,
                         help='plain text output file')
     return vars(parser.parse_args())
 
 
 if __name__ == '__main__':
     args = parse_args()
-    score_file = args['scorefile'][0]
+    score_file = args['scorefile']
     if not path.exists(score_file):
         print 'No such file:', score_file
         exit()
-    task_file = args['taskfile'][0]
+    task_file = args['taskfile']
     if not path.exists(task_file):
         print 'No such file:', task_file
         exit()
-    result_file = args['output'][0]
+    result_file = args['output']
     # if not path.exists(outfile):
     # print 'No such file:', outfile
     # exit()
+    if os.path.exists(result_file):
+        print("Warning: overwriting analyze file {}".format(result_file))
+        os.remove(result_file)
 
     analyze(task_file, score_file, result_file)
