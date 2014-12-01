@@ -47,7 +47,7 @@ def test_analyze():
         distances.compute_distances(feature_file, '/features/', taskfilename,
                                     distance_file, dtw_cosine_distance)
         score.score(taskfilename, distance_file, scorefilename)
-        analyze.analyze(scorefilename, taskfilename, analyzefilename)
+        analyze.analyze(taskfilename, scorefilename, analyzefilename)
     finally:
         try:
             os.remove(item_file)
@@ -81,7 +81,7 @@ def test_frozen_analyze():
         distances.compute_distances(feature_file, '/features/', taskfilename,
                                     distance_file, dtw_cosine_distance)
         score.score(taskfilename, distance_file, scorefilename)
-        analyze.analyze(scorefilename, taskfilename, analyzefilename)
+        analyze.analyze(taskfilename, scorefilename, analyzefilename)
 
         # assert items.h5cmp(taskfilename, frozen_file('abx'))
         # assert items.h5cmp(distance_file, frozen_file('distance'))
