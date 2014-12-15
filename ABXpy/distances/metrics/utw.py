@@ -8,9 +8,27 @@ Created on Sat Dec 13 13:40:46 2014
 
 import numpy as np
 
-def utw(x, y, metric):  
+def utw(x, y, div):  
     """
     Uniform Time Warping
+    
+    Parameters
+        ----------
+        x : numpy.Array
+            Size m_x by n
+        y : numpy.Array
+            Size m_y by n
+        div : function
+            Takes two m by n arrays and returns a m by 1 array
+            containing the distances between rows 1, rows 2, ...,
+            rows m of the two arrays. Does not need to be a metric
+            in the mathematical sense
+        
+        Returns
+        -------
+        dis : float
+            The UTW distance between x and y according to
+            distance function div
     """
     if x.shape[0] > y.shape[0]:
         z = x, y
@@ -18,9 +36,12 @@ def utw(x, y, metric):
     n1 = x.shape[0]
     n2 = y.shape[0]
     i_half, j_half, i_whole, j_whole = distance_coordinates(n1, n2)
-    d = np.sum([metric(x[i,:], y[j,:]) for i, j in zip(i_half, j_half)]) / 2. + \
-        np.sum([metric(x[i,:], y[j,:]) for i, j in zip(i_whole, j_whole)]) 
-    return d
+    dis = 0
+    if i_half.size > 0:
+        dis = dis + np.sum(div(x[i_half,:], y[j_half,:])) / 2. 
+    if i_whole.size > 0:
+        dis = dis + np.sum(div(x[i_whole,:], y[j_whole,:]))
+    return dis
 
    
 def distance_coordinates(n1, n2):
@@ -40,7 +61,7 @@ def distance_coordinates(n1, n2):
     
 
 def test():
-    metric = lambda x, y: np.sum(np.abs(x-y))
+    metric = lambda x, y: np.sum(np.abs(x-y), axis=1)
     x = np.array([[0, 0],
                   [0, -1],
                   [0, 0],
@@ -54,3 +75,5 @@ def test():
                   [1, 1]])
     assert(utw(x, y, metric) == 26.5)
     assert(utw(y, x, metric) == 26.5)
+    
+test()
