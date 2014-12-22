@@ -489,6 +489,66 @@ class Task(object):
             iA = np.divide(indices, len(B) * len(X))
             triplets = np.column_stack((A[iA], B[iB], X[iX]))
 
+            # reindexing by regressors
+
+            # reg = (self.regressors.by_regressors +
+            #        self.regressors.on_across_by_regressors +
+            #        self.regressors.A_regressors +
+            #        self.regressors.B_regressors +
+            #        self.regressors.X_regressors)
+            
+            Breg = [reg[iB] for regs in self.regressors.B_regressors for reg in regs]
+            Xreg = [reg[iX] for regs in self.regressors.X_regressors for reg in regs]
+            regs = np.array(Breg + Xreg).T
+            
+            n_regs = np.max(regs, 0) + 1
+            new_index = regs[:, 0].astype(ind_type)
+            for i in range(1, len(n_regs)):
+                new_index = regs[:, i] + n_regs[i] * new_index
+
+            permut = np.argsort(new_index)
+            # TODO: replace with empty array and fill it
+            new_permut = []
+            i_unique = 0
+            key_reg = new_index[permut[0]]
+            reg_block = np.empty((len(permut), 2))
+            i_start = 0
+            for i, p in enumerate(permut[1:]):
+                i += 1
+                if new_index[p] != key_reg:
+                    reg_block[i_unique] = [i_start, i]
+                    count = i - i_start
+                    if self.threshold and count > self.threshold:
+                        # sampling this 'on across by' block
+                        sampled_block_indexes = (
+                            i_start + \
+                            sampler.sample_without_replacement(
+                                self.threshold, count, dtype=ind_type))
+                        new_permut.extend(permut[sampled_block_indexes])
+                    else:
+                        new_permut.extend(permut[i_start:i])
+                    i_start = i
+                    i_unique += 1
+                    key_reg = new_index[p]
+
+            reg_block[i_unique] = [i_start, i + 1]
+            reg_block = np.resize(reg_block, (i_unique + 1, 2))
+            if self.threshold and i + 1 - i_start > self.threshold:
+                # sampling this 'on across by' block
+                sampled_block_indexes = (
+                    i_start + \
+                    sampler.sample_without_replacement(
+                        self.threshold, count, dtype=ind_type))
+                new_permut.extend(permut[sampled_block_indexes])
+            else:
+                new_permut.extend(permut[i_start:i+1])
+
+            # TODO add other regs, remove reg_block ?
+            iA = iA[new_permut]
+            iB = iB[new_permut]
+            iX = iX[new_permut]
+            triplets = triplets[new_permut]
+
             # apply triplets filters
             if self.filters.ABX:
                 triplets = self.filters.ABX_filter(
@@ -501,6 +561,7 @@ class Task(object):
                     indices = self.sampler.sample(size, dtype=ind_type)
                     triplets = triplets[indices, :]
         else:
+            # empty block...
             triplets = np.empty(shape=(0, 3), dtype=self.types[by])
             indices = np.empty(shape=size, dtype=np.uint8)
             iA = indices
@@ -556,7 +617,7 @@ class Task(object):
     # to be sure that no other random number generation calls to it are
     # altering the sequence)
     # FIXME in case of sampling, get rid of blocks with no samples ?
-    def generate_triplets(self, output=None, sample=None):
+    def generate_triplets(self, output=None, sample=None, threshold=None):
         """Generate all possible triplets for the whole task and the \
 associated pairs
 
@@ -598,6 +659,11 @@ associated pairs
         else:
             self.sampling = False
             self.n_triplets = self.total_n_triplets
+
+        if threshold is not None:
+            self.threshold = True
+        else:
+            self.threshold = False
 
         if self.verbose > 0:
             display = progress_display.ProgressDisplay()
@@ -941,6 +1007,7 @@ def verifydb(filename, features=None, verbose=0):
             print("Features file coherency could not be verified because"
                   " it was not provided")
 
+
 """
 Command-line API
 
@@ -965,7 +1032,7 @@ if __name__ == '__main__':
         usage="""%(prog)s database [output] -o ON [-a ACROSS [ACROSS ...]] \
 [-b BY [BY ...]] [-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT\
 _OR_PROPORTION] [--stats-only] [-h] [-v VERBOSE_LEVEL] [--no_verif] \
-[--features FEATURE_FILE]""",
+[--features FEATURE_FILE] [--threshold THRESHOLD]""",
         description='ABX task specification')
     message = """must be defined by the database you are using (e.g. speaker \
 or phonemes, if your database contains columns defining these attributes)"""
@@ -992,6 +1059,10 @@ or phonemes, if your database contains columns defining these attributes)"""
                     help='optional: if a real number in ]0;1[: sampling '
                          'proportion, if a strictly positive integer: number '
                          'of triplets to be sampled')
+    g2.add_argument('-t', '--threshold', default=None, type=int,
+                    help='optional: threshold on the maximal size of a block of'
+                         ' triplets sharing the same regressors, triplets may '
+                         'be sampled')
     # Regressors specification
     g3 = parser.add_argument_group('Regressors specification')
     g3.add_argument('-r', '--reg', nargs='+', default=[],
@@ -1014,18 +1085,21 @@ or phonemes, if your database contains columns defining these attributes)"""
     if args.stats_only:
         assert args.output, "The output file was not provided"
     if not args.stats_only and os.path.exists(args.output):
-        print("WARNING: Overwriting task file " + args.output)
+        warnings.warn(UserWarning, "WARNING: Overwriting task file " + args.output)
         os.remove(args.output)
     if not args.no_verif and (not args.features or not os.path.exists(args.features)):
-        print("WARNING: Cannot verify the consistency of the item file {0} "
-              "with the features file because the features file was not "
-              "provided")
+        warnings.warn(UserWarning, "Cannot verify the consistency of the item file "
+                      "with the features file because the features file was not "
+                      "provided or not found. The program will still work")
+    if args.sample and args.threshold:
+        warnings.warn(UserWarning, 'The use of sampling AND threshold is not '
+                      'tested yet')
     task = Task(args.database, args.on, args.across,
                 args.by, args.filt, args.reg, args.verbose, not args.no_verif,
                 args.features)
 
     if not(args.stats_only):
         # generate triplets and unique pairs
-        task.generate_triplets(args.output, args.sample)
+        task.generate_triplets(args.output, args.sample, args.threshold)
     else:
         task.print_stats()
