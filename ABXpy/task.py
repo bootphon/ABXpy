@@ -1086,12 +1086,12 @@ or phonemes, if your database contains columns defining these attributes)"""
         warnings.warn(UserWarning, "WARNING: Overwriting task file " + args.output)
         os.remove(args.output)
     if not args.no_verif and (not args.features or not os.path.exists(args.features)):
-        warnings.warn(UserWarning, "Cannot verify the consistency of the item file "
+        warnings.warn("Cannot verify the consistency of the item file "
                       "with the features file because the features file was not "
-                      "provided or not found. The program will still work")
+                      "provided or not found. The program will still work", UserWarning)
     if args.sample and args.threshold:
-        warnings.warn(UserWarning, 'The use of sampling AND threshold is not '
-                      'tested yet')
+        warnings.warn('The use of sampling AND threshold is not '
+                      'tested yet', UserWarning)
     task = Task(args.database, args.on, args.across,
                 args.by, args.filt, args.reg, args.verbose, not args.no_verif,
                 args.features)
