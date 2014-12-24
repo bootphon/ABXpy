@@ -489,66 +489,6 @@ class Task(object):
             iA = np.divide(indices, len(B) * len(X))
             triplets = np.column_stack((A[iA], B[iB], X[iX]))
 
-            # reindexing by regressors
-
-            # reg = (self.regressors.by_regressors +
-            #        self.regressors.on_across_by_regressors +
-            #        self.regressors.A_regressors +
-            #        self.regressors.B_regressors +
-            #        self.regressors.X_regressors)
-            
-            Breg = [reg[iB] for regs in self.regressors.B_regressors for reg in regs]
-            Xreg = [reg[iX] for regs in self.regressors.X_regressors for reg in regs]
-            regs = np.array(Breg + Xreg).T
-            
-            n_regs = np.max(regs, 0) + 1
-            new_index = regs[:, 0].astype(ind_type)
-            for i in range(1, len(n_regs)):
-                new_index = regs[:, i] + n_regs[i] * new_index
-
-            permut = np.argsort(new_index)
-            # TODO: replace with empty array and fill it
-            new_permut = []
-            i_unique = 0
-            key_reg = new_index[permut[0]]
-            reg_block = np.empty((len(permut), 2))
-            i_start = 0
-            for i, p in enumerate(permut[1:]):
-                i += 1
-                if new_index[p] != key_reg:
-                    reg_block[i_unique] = [i_start, i]
-                    count = i - i_start
-                    if self.threshold and count > self.threshold:
-                        # sampling this 'on across by' block
-                        sampled_block_indexes = (
-                            i_start + \
-                            sampler.sample_without_replacement(
-                                self.threshold, count, dtype=ind_type))
-                        new_permut.extend(permut[sampled_block_indexes])
-                    else:
-                        new_permut.extend(permut[i_start:i])
-                    i_start = i
-                    i_unique += 1
-                    key_reg = new_index[p]
-
-            reg_block[i_unique] = [i_start, i + 1]
-            reg_block = np.resize(reg_block, (i_unique + 1, 2))
-            if self.threshold and i + 1 - i_start > self.threshold:
-                # sampling this 'on across by' block
-                sampled_block_indexes = (
-                    i_start + \
-                    sampler.sample_without_replacement(
-                        self.threshold, count, dtype=ind_type))
-                new_permut.extend(permut[sampled_block_indexes])
-            else:
-                new_permut.extend(permut[i_start:i+1])
-
-            # TODO add other regs, remove reg_block ?
-            iA = iA[new_permut]
-            iB = iB[new_permut]
-            iX = iX[new_permut]
-            triplets = triplets[new_permut]
-
             # apply triplets filters
             if self.filters.ABX:
                 triplets = self.filters.ABX_filter(
@@ -560,6 +500,64 @@ class Task(object):
                         size, is_signed=False)
                     indices = self.sampler.sample(size, dtype=ind_type)
                     triplets = triplets[indices, :]
+
+            if with_regressors:
+                # reindexing by regressors
+                Breg = [reg[iB] for regs in self.regressors.B_regressors for reg in regs]
+                Xreg = [reg[iX] for regs in self.regressors.X_regressors for reg in regs]
+                regs = np.array(Breg + Xreg).T
+
+                if len(regs) != 0:
+                    n_regs = np.max(regs, 0) + 1
+                    new_index = regs[:, 0].astype(ind_type)
+                    for i in range(1, len(n_regs)):
+                        new_index = regs[:, i] + n_regs[i] * new_index
+
+                    permut = np.argsort(new_index)
+                    # TODO: replace with empty array and fill it
+                    new_permut = []
+                    i_unique = 0
+                    key_reg = new_index[permut[0]]
+                    reg_block = np.empty((len(permut), 2))
+                    i_start = 0
+                    i = 0
+                    for i, p in enumerate(permut[1:]):
+                        i += 1
+                        if new_index[p] != key_reg:
+                            reg_block[i_unique] = [i_start, i]
+                            count = i - i_start
+                            if self.threshold and count > self.threshold:
+                                # sampling this 'on across by' block
+                                sampled_block_indexes = (
+                                    i_start + \
+                                    sampler.sample_without_replacement(
+                                        self.threshold, count, dtype=ind_type))
+                                new_permut.extend(permut[sampled_block_indexes])
+                            else:
+                                new_permut.extend(permut[i_start:i])
+                            i_start = i
+                            i_unique += 1
+                            key_reg = new_index[p]
+
+                    reg_block[i_unique] = [i_start, i + 1]
+                    reg_block = np.resize(reg_block, (i_unique + 1, 2))
+                    if self.threshold and i + 1 - i_start > self.threshold:
+                        # sampling this 'on across by' block
+                        sampled_block_indexes = (
+                            i_start + \
+                            sampler.sample_without_replacement(
+                                self.threshold, count, dtype=ind_type))
+                        new_permut.extend(permut[sampled_block_indexes])
+                    else:
+                        new_permut.extend(permut[i_start:i+1])
+
+                    # TODO add other regs, replace reg_block by indexes for collapse
+                    iA = iA[new_permut]
+                    iB = iB[new_permut]
+                    iX = iX[new_permut]
+                    triplets = triplets[new_permut]
+
+
         else:
             # empty block...
             triplets = np.empty(shape=(0, 3), dtype=self.types[by])
