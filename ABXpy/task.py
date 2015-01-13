@@ -475,6 +475,7 @@ class Task(object):
         # A, B, X can then be combined efficiently in a full (or randomly
         # sampled) factorial design
         size = len(A) * len(B) * len(X)
+        on_across_block_index = [0]
 
         if size > 0:
             ind_type = type_fitting.fit_integer_type(size, is_signed=False)
@@ -502,6 +503,7 @@ class Task(object):
                     triplets = triplets[indices, :]
 
             if with_regressors:
+                on_across_block_index = [0]
                 # reindexing by regressors
                 Breg = [reg[iB] for regs in self.regressors.B_regressors for reg in regs]
                 Xreg = [reg[iX] for regs in self.regressors.X_regressors for reg in regs]
@@ -533,15 +535,20 @@ class Task(object):
                                     sampler.sample_without_replacement(
                                         self.threshold, count, dtype=ind_type))
                                 new_permut.extend(permut[sampled_block_indexes])
+                                on_across_block_index.append(
+                                    on_across_block_index[-1] + self.threshold)
                             else:
                                 new_permut.extend(permut[i_start:i])
+                                on_across_block_index.append(
+                                    on_across_block_index[-1] + count)
                             i_start = i
                             i_unique += 1
                             key_reg = new_index[p]
 
                     reg_block[i_unique] = [i_start, i + 1]
                     reg_block = np.resize(reg_block, (i_unique + 1, 2))
-                    if self.threshold and i + 1 - i_start > self.threshold:
+                    count = i + 1 - i_start
+                    if self.threshold and count > self.threshold:
                         # sampling this 'on across by' block
                         sampled_block_indexes = (
                             i_start + \
@@ -605,7 +612,7 @@ class Task(object):
             #                        self.regressors.ABX_regressors):
             #    for name, reg in zip(names, regs):
             #        regressors[name] = reg[indices,:]
-            return triplets, regressors
+            return triplets, regressors, np.reshape(np.array(on_across_block_index), (len(on_across_block_index), 1))
         else:
             return triplets
 
@@ -659,7 +666,7 @@ associated pairs
             self.n_triplets = self.total_n_triplets
 
         if threshold is not None:
-            self.threshold = True
+            self.threshold = threshold
         else:
             self.threshold = False
 
@@ -686,17 +693,20 @@ associated pairs
                         filename=output, datasets=datasets,
                         indexes=indexes,
                         group='/regressors/' + str(by) + '/')) as out_regs:
+                    #out_index = h5io.H5IO(filename=output, datasets=datasets, group='/on_across_block_index/' + str(by) + '/')
                     if sample is not None:
-                        n_rows = np.uint64(
-                            round(sample * (self.by_stats[by]['nb_triplets'] /
+                        n_rows = np.uint64(round(sample * (self.by_stats[by]['nb_triplets'] /
                                             np.float(self.total_n_triplets))))
                     else:
                         n_rows = self.by_stats[by]['nb_triplets']
                     # not fixed_size datasets are necessary only when sampling
                     # is performed
-                    out = fh.add_dataset(group='triplets', dataset=str(
-                            by), n_rows=n_rows, n_columns=3,
+                    out = fh.add_dataset(group='triplets', dataset=str(by),
+                                         n_rows=n_rows, n_columns=3,
                                          item_type=self.types[by], fixed_size=False)
+                    out_index = fh.add_dataset(group='on_across_block_index',
+                                               dataset=str(by), n_rows=n_rows, n_columns=1,
+                                               item_type=self.types[by], fixed_size=False)
                     # allow to get by values as well as values of other
                     # variables that are determined by these
                     by_values = dict(db.iloc[0])
@@ -716,10 +726,12 @@ associated pairs
                             self.regressors.set_on_across_by_regressors(
                                 on_across_by_values)
                             on, across = on_across_from_key(block_key)
-                            triplets, regressors = self.on_across_triplets(
-                                by, on, across, block, on_across_by_values)
+                            triplets, regressors, on_across_block_index = (
+                                self.on_across_triplets(
+                                    by, on, across, block, on_across_by_values))
                             out.write(triplets)
                             out_regs.write(regressors, indexed=True)
+                            out_index.write(on_across_block_index)
                             if self.verbose > 0:
                                 display.update(
                                     'sampled_triplets', triplets.shape[0])
@@ -1083,7 +1095,7 @@ or phonemes, if your database contains columns defining these attributes)"""
     if args.stats_only:
         assert args.output, "The output file was not provided"
     if not args.stats_only and os.path.exists(args.output):
-        warnings.warn(UserWarning, "WARNING: Overwriting task file " + args.output)
+        warnings.warn("Overwriting task file " + args.output, UserWarning)
         os.remove(args.output)
     if not args.no_verif and (not args.features or not os.path.exists(args.features)):
         warnings.warn("Cannot verify the consistency of the item file "
