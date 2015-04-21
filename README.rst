@@ -3,7 +3,7 @@ Zerospeech2015 Challenge
 
 This repository contains the code necessary to replicate the track 1 evaluation of the Zerospeech2015 challenge.
 
-The complete description of the challenge can be found `here <http://www.lscp.net/persons/dupoux/bootphon/zerospeech2014/website/>`
+The complete description of the challenge can be found `here <http://www.lscp.net/persons/dupoux/bootphon/zerospeech2014/website/>`_.
 
 Instructions
 ------------
@@ -11,14 +11,14 @@ Instructions
 Installation:
 ~~~~~~~~~~~~~
 
-.. code:: python
+.. code:: bash
 
 	  python setup.py build && python setup.py install
 
 Preparation (only once):
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. code:: python
+.. code:: bash
 	  
 	  python bin/prepare.py
 
@@ -28,23 +28,23 @@ Preparation (only once):
 Run:
 ~~~~
 
-.. code:: python
+.. code:: bash
 
 	  python bin/{sample, english, xitsonga}_eval1.py FEATURES_FOLDER OUTPUT_FOLDER
 
 FEATURES_FOLDER::
 
-Our evaluation system requires that your unsupervised subword modeling system outputs a vector of feature values for each frame. For each utterance in the set (e.g. s2801a.wav), an ASCII features file with the same name (e.g. s2801a.fea) as the utterance should be generated with the following format:
+  Our evaluation system requires that your unsupervised subword modeling system outputs a vector of feature values for each frame. For each utterance in the set (e.g. s2801a.wav), an ASCII features file with the same name (e.g. s2801a.fea) as the utterance should be generated with the following format:
 
      <time> <val1>    ... <valN>
      <time> <val1>    ... <valN>
 
-example:
+  example:
 
      0.0125 12.3 428.8 -92.3 0.021 43.23         
      0.0225 19.0 392.9 -43.1 10.29 40.02
 
-.. note:: Note: the time is in seconds. It corresponds to the center of the frame of each feature. In this example, there are frames every 10ms and the first frame spans a duration of 25ms starting at the beginning of the file, hence, the first frame is centered at .0125 seconds and the second 10ms later. It is not required that the frames be regularly spaced, in fact the only requirement is that the timestamp of frame n+1 is strictly larger than the timestamp of frame n. The frame timestamps are used by the evaluation software to determine which features correspond to a particular triphone among the sequence of features for a whole sentence on the basis of manual phone-level alignments for that sentence.
+.. note:: The time is in seconds. It corresponds to the center of the frame of each feature. In this example, there are frames every 10ms and the first frame spans a duration of 25ms starting at the beginning of the file, hence, the first frame is centered at .0125 seconds and the second 10ms later. It is not required that the frames be regularly spaced, in fact the only requirement is that the timestamp of frame n+1 is strictly larger than the timestamp of frame n. The frame timestamps are used by the evaluation software to determine which features correspond to a particular triphone among the sequence of features for a whole sentence on the basis of manual phone-level alignments for that sentence.
 
 There are 3 scripts, one for each dataset: sample, english and xitsonga.
 
@@ -68,7 +68,7 @@ Optionnal arguments:
 Examples:
 ~~~~~~~~~
 
-.. code:: python
+.. code:: bash
 
 	  python bin/sample_eval1.py MFCC MFCCscore -j 4
 	  python bin/sample_eval1.py HTKposteriors HTKscore -kl -j 4 --csv
