@@ -55,5 +55,10 @@ setup(
         "pandas >= 0.13.1",
         "scipy >= 0.13.0",
     ],
+    scripts=[
+        "bin/prepare_eval1.py",
+        "bin/english_eval1.py",
+        "bin/xitsonga_eval1.py",
+        "bin/sample_eval1.py",],
     cmdclass = {'test': PyTest},
 )
