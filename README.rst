@@ -31,6 +31,14 @@ Run:
 
 	  python bin/{sample, english, xitsonga}_eval1.py FEATURES_FOLDER OUTPUT_FOLDER
 
+Scripts:
+~~~~~~~~
+
+There are 3 scripts, one for each dataset: sample, english and xitsonga.
+
+Two examples of features are provided for the sample set: MFCC and HTKposteriors.
+
+
 FEATURES_FOLDER:
 ~~~~~~~~~~~~~~~~
 
@@ -49,10 +57,6 @@ example:
      0.0225 19.0 392.9 -43.1 10.29 40.02
 
 .. note:: The time is in seconds. It corresponds to the center of the frame of each feature. In this example, there are frames every 10ms and the first frame spans a duration of 25ms starting at the beginning of the file, hence, the first frame is centered at .0125 seconds and the second 10ms later. It is not required that the frames be regularly spaced.
-
-There are 3 scripts, one for each dataset: sample, english and xitsonga.
-
-Two examples of features are provided for the sample set: MFCC and HTKposteriors
 
 OUTPUT_FOLDER:
 ~~~~~~~~~~~~~~
