@@ -35,13 +35,13 @@ Run:
 
 FEATURES_FOLDER:
 
-Our evaluation system requires that your unsupervised subword modeling system outputs a vector of feature values for each frame. For each utterance in the set (e.g. s2801a.wav), an ASCII features file with the same name (e.g. s2801a.fea) as the utterance should be generated with the following format:
+  Our evaluation system requires that your unsupervised subword modeling system outputs a vector of feature values for each frame. For each utterance in the set (e.g. s2801a.wav), an ASCII features file with the same name (e.g. s2801a.fea) as the utterance should be generated with the following format:
 
 ::
      <time> <val1>    ... <valN>
      <time> <val1>    ... <valN>
 
-example:
+  example:
 
 ::
      0.0125 12.3 428.8 -92.3 0.021 43.23         
