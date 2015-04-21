@@ -148,7 +148,8 @@ A and X share the same 'on' attribute; A and B share the same 'across' attribute
 
 Example of use
 --------------
-	TODO
+
+See examples/complete_run.sh for a command line run and examples/complete_run.py for a python utilisation.
 
 Installation
 ------------
