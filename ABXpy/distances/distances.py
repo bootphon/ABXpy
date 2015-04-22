@@ -13,6 +13,8 @@ import os
 import time
 import traceback
 import sys
+import warnings
+import pickle
 try:
     import h5features
 except ImportError:
@@ -42,6 +44,7 @@ def create_distance_jobs(pair_file, distance_file, n_cpu):
             by_n_pairs.append(fh['unique_pairs'][by_dset].shape[0])
     # initializing output datasets
     with h5py.File(distance_file) as fh:
+        fh.attrs.create('done', False)
         g = fh.create_group('distances')
         for n, by_dset in zip(by_n_pairs, by_dsets):
             g.create_dataset(by_dset, shape=(n, 1), dtype=np.float)
@@ -198,13 +201,32 @@ def run_distance_job(job_description, distance_file, distance,
         for i in range(n_pairs):
             dataA = features[pairs[i, 0]]
             dataB = features[pairs[i, 1]]
+            if dataA.shape[0] == 0:
+                warnings.warn('No features found for file {}, {} - {}'
+                              .format(items['file'][pairs[i, 0]],
+                                      items['onset'][pairs[i, 0]],
+                                      items['offset'][pairs[i, 0]]),
+                              UserWarning)
+            if dataB.shape[0] == 0:
+                warnings.warn('No features found for file {}, {} - {}'
+                              .format(items['file'][pairs[i, 1]],
+                                      items['onset'][pairs[i, 1]],
+                                      items['offset'][pairs[i, 1]]),
+                              UserWarning)
             try:
                 dis[i, 0] = distance(dataA, dataB)
-            except ValueError as e:
-                raise ValueError(
-                    "Error with the files {0} and {1}: {2}"
+            except:
+                sys.stderr.write(
+                    'Error when calculating the distance between item {}, {} - {} '
+                    'and item {}, {} - {}\n'
                     .format(items['file'][pairs[i, 0]],
-                            items['file'][pairs[i, 1]], e.value))
+                            items['onset'][pairs[i, 0]],
+                            items['offset'][pairs[i, 0]],
+                            items['file'][pairs[i, 0]],
+                            items['onset'][pairs[i, 0]],
+                            items['offset'][pairs[i, 0]]),
+                )
+                raise
         if synchronize:
             distance_file_lock.acquire()
         with h5py.File(distance_file) as fh:
@@ -220,6 +242,9 @@ def run_distance_job(job_description, distance_file, distance,
 def compute_distances(feature_file, feature_group, pair_file, distance_file,
                       distance, n_cpu=None, mem=1000,
                       feature_file_as_list=False):
+    with h5py.File(distance_file) as fh:
+        fh.attrs.create('distance', pickle.dumps(distance))
+
     if n_cpu is None:
         n_cpu = multiprocessing.cpu_count()
     if not(feature_file_as_list):
@@ -254,7 +279,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
                                            splitted_features,
                                            i, distance_file_lock))
                 results.append(result)
-                time.sleep(1)
+                time.sleep(10)
             pool.close()
             # wait for results
             # using 'get' allow detecting exceptions in child processes
@@ -270,9 +295,14 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
             pool.close()  # in case it wasn't done before
             # recommended in multiprocessing doc to avoid zombie process (?)
             pool.join()
+            if all(finished_jobs):
+                with h5py.File(distance_file) as fh:
+                    fh.attrs.modify('done', True)
     else:
         run_distance_job(jobs[0], distance_file, distance,
                          feature_files, feature_groups, splitted_features, 1)
+        with h5py.File(distance_file) as fh:
+            fh.attrs.modify('done', True)
 
 
 # hack to get details of exceptions in child processes
@@ -302,6 +332,9 @@ class Features_Accessor(object):
                                   items['onset'], items['offset']):
             t = np.where(np.logical_and(self.times[f] >= on,
                                         self.times[f] <= off))[0]
+            # if len(t) == 0:
+            #     raise IOError('No features found for file {}, at '
+            #                   'time {}-{}'.format(f, on, off))
             features[ix] = self.features[f][t, :]
         return features
 
