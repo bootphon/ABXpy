@@ -30,7 +30,8 @@ def cosine_distance(x, y):
 
     d[ix, :] = 1.
     d[:, iy] = 1.
-    d[ix, iy] = 0.
+    for i in ix:
+        d[i, iy] = 0.
     assert np.all(d >= 0)
     return d
 
