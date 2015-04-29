@@ -299,6 +299,8 @@ class Task(object):
 
         self.types = types
 
+        self.reg_block_indices = []
+        self.by_block_indices = []
         # compute some statistics about the task
         self.compute_statistics()
 
@@ -679,15 +681,32 @@ associated pairs
                 'triplets', 'Triplets considered:', self.total_n_triplets)
             display.add(
                 'sampled_triplets', 'Triplets sampled:', self.n_triplets)
+
+        self.current_index = 0
         # fill output file with list of needed ABX triplets, it is done
         # independently for each 'by' value
-        for by, db in self.by_dbs.iteritems():
-            # class for efficiently writing to datasets of the output file
-            # (using a buffer under the hood)
-            if self.verbose > 0:
-                print("Writing ABX triplets to task file...")
-            with np2h5.NP2H5(h5file=output) as fh:
-                # FIXME test if not fixed size impacts performance a lot
+
+        with np2h5.NP2H5(h5file=output) as fh:
+            # FIXME test if not fixed size impacts performance a lot
+            out = fh.add_dataset(group='triplets', dataset='data',
+                                 n_rows=self.total_n_triplets, n_columns=3,
+                                 item_type=type_fitting.fit_integer_type(self.total_n_triplets),
+                                 fixed_size=False)
+
+            out_block_index = fh.add_dataset(group='triplets', dataset='on_across_block_index',
+                                              n_rows=self.stats['nb_blocks'], n_columns=1,
+                                              fixed_size=False)  #TODO add item type
+            out_by_index = fh.add_dataset(group='triplets', dataset='by_index',
+                                          n_rows=self.stats['nb_by_levels'], n_columns=1,
+                                          fixed_size=False)
+
+            for by, db in self.by_dbs.iteritems():
+                # class for efficiently writing to datasets of the output file
+                # (using a buffer under the hood)
+                self.by_block_indices.append(self.current_index)
+                if self.verbose > 0:
+                    print("Writing ABX triplets to task file...")
+
                 datasets, indexes = self.regressors.get_regressor_info()
                 with (h5io.H5IO(
                         filename=output, datasets=datasets,
@@ -697,16 +716,13 @@ associated pairs
                     if sample is not None:
                         n_rows = np.uint64(round(sample * (self.by_stats[by]['nb_triplets'] /
                                             np.float(self.total_n_triplets))))
+                    elif self.threshold:
+                        n_rows = 0
                     else:
                         n_rows = self.by_stats[by]['nb_triplets']
                     # not fixed_size datasets are necessary only when sampling
                     # is performed
-                    out = fh.add_dataset(group='triplets', dataset=str(by),
-                                         n_rows=n_rows, n_columns=3,
-                                         item_type=self.types[by], fixed_size=False)
-                    out_index = fh.add_dataset(group='on_across_block_index',
-                                               dataset=str(by), n_rows=n_rows, n_columns=1,
-                                               item_type=self.types[by], fixed_size=False)
+
                     # allow to get by values as well as values of other
                     # variables that are determined by these
                     by_values = dict(db.iloc[0])
@@ -731,7 +747,10 @@ associated pairs
                                     by, on, across, block, on_across_by_values))
                             out.write(triplets)
                             out_regs.write(regressors, indexed=True)
-                            out_index.write(on_across_block_index)
+                            out_block_index.write(on_across_block_index)
+                            self.current_index += triplets.shape[0]
+                            fh.file['triplets'].attrs[str(by)] = (self.by_block_indices[-1],
+                                                             self.current_index)
                             if self.verbose > 0:
                                 display.update(
                                     'sampled_triplets', triplets.shape[0])
@@ -740,6 +759,8 @@ associated pairs
                                                 ['block_sizes'][block_key]))
                         if self.verbose > 0:
                             display.display()
+            aux = np.array(self.by_block_indices)
+            out_by_index.write(aux.reshape((aux.size, 1)))
         if self.verbose > 0:
             print("done.")
         self.generate_pairs(output)
@@ -760,94 +781,106 @@ associated pairs
             output = basename + '.abx'
         # list all pairs
         all_empty = True
-        for by, db in self.by_dbs.iteritems():
-            # FIXME maybe care about this case earlier ?
-            if self.verbose > 0:
-                print("Writing AX/BX pairs to task file...")
-            with h5py.File(output) as fh:
-                not_empty = fh['/triplets/' + str(by)].size
-            if not_empty:
-                all_empty = False
-                max_ind = np.max(db.index.values)
-                pair_key_type = type_fitting.fit_integer_type(
-                    (max_ind + 1) ** 2 - 1, is_signed=False)
-                with h52np.H52NP(output) as f_in:
-                    with np2h5.NP2H5(output) as f_out:
-                        inp = f_in.add_dataset('triplets', str(by))
-                        out = f_out.add_dataset(
-                            'pairs', str(by), n_columns=1,
-                            item_type=pair_key_type, fixed_size=False)
-                        # FIXME repace this by a for loop by making h52np
-                        # implement the iterable pattern with next() outputing
-                        # inp.read()
-                        try:
-                            while True:
-                                triplets = pair_key_type(inp.read())
-                                n = triplets.shape[0]
-                                ind = np.arange(n)
-                                i1 = 2 * ind
-                                i2 = 2 * ind + 1
-                                # would need to amend np2h5 and h52np to remove
-                                # the second dim...
-                                pairs = np.empty(
-                                    shape=(2 * n, 1), dtype=pair_key_type)
-                                # FIXME change the encoding (and type_fitting)
-                                # so that A,B and B,A have the same code ...
-                                # (take a=min(a,b), b=max(a,b))
-                                # FIXME but allow a flag to control the
-                                # behavior to be able to enforce A,X and B,X
-                                # order when using assymetrical distance
-                                # functions
-                                pairs[i1, 0] = triplets[:, 0] + (
-                                    max_ind + 1) * triplets[:, 2]  # AX
-                                pairs[i2, 0] = triplets[:, 1] + (
-                                    max_ind + 1) * triplets[:, 2]  # BX
-                                # FIXME do a unique here already? Do not store
-                                # the inverse mapping ? (could sort triplets on
-                                # pair1, complete pair1, sort on pair2,
-                                # complete pair 2 and shuffle ?)
-                                out.write(pairs)
-                        except StopIteration:
-                            pass
-                # sort pairs
-                handler = h5_handler.H5Handler(output, '/pairs/', str(by))
-                # memory: available RAM in Mo, could be a param
-                memory = 1000
-                # estimate of the amount of data to be sorted
+        self.pairs_by_block_indices = []
+        pairs_by_block_index = 0
+        with np2h5.NP2H5(output) as f_out:
+            out_unique_pairs = f_out.add_dataset(
+                'unique_pairs', 'data', n_columns=1,
+                item_type=np.int64, fixed_size=False)
+            for n_by, (by, db) in enumerate(self.by_dbs.iteritems()):
+                self.pairs_by_block_indices.append(pairs_by_block_index)
+                # FIXME maybe care about this case earlier ?
+                if self.verbose > 0:
+                    print("Writing AX/BX pairs to task file...")
                 with h5py.File(output) as fh:
-                    n = fh['/pairs/' + str(by)].shape[0]
-                    i = fh['/pairs/' + str(by)].dtype.itemsize
-                amount = n * i  # in bytes
-                # harmonize units to Ko:
-                memory = 1000 * memory
-                amount = amount / 1000.
-                # be conservative: aim at using no more than 3/4 the available
-                # memory
-                # if enough memory take one chunk (this will do an unnecessary
-                # full write and read of the file... could be optimized easily)
-                if amount <= 0.75 * memory:
-                    # would it be beneficial to have a large o_buffer_size as
-                    # well ?
-                    handler.sort(buffer_size=amount)
-                # else take around 30 chunks if possible (this seems efficient
-                # given the current implem, using a larger number of chunks
-                # efficiently might be possible if the reading chunks part of
-                # the sort was cythonized ?)
-                elif amount / 30. <= 0.75 * memory:
-                    handler.sort(buffer_size=amount / 30.)
-                # else take minimum number of chunks possible given the
-                # available RAM
-                else:
-                    handler.sort(buffer_size=0.75 * memory)
+                    not_empty = fh['/triplets/data'].size
+                if not_empty:
+                    all_empty = False
+                    max_ind = np.max(db.index.values)
+                    pair_key_type = type_fitting.fit_integer_type(
+                        (max_ind + 1) ** 2 - 1, is_signed=False)
+                    with h52np.H52NP(output) as f_in:
+                        with np2h5.NP2H5(output) as f_out:
+                            # inp = f_in.add_dataset('triplets', '0')
+                            try:
+                                inp = f_in.file['triplets']['data'][self.by_block_indices[n_by]:self.by_block_indices[n_by+1]]
+                            except IndexError:
+                                inp = f_in.file['triplets']['data'][self.by_block_indices[n_by]:]
+                            out = f_out.add_dataset(
+                                'pairs', str(by), n_columns=1,
+                                item_type=pair_key_type, fixed_size=False)
+                            # FIXME repace this by a for loop by making h52np
+                            # implement the iterable pattern with next() outputing
+                            # inp.read()
+                            try:
+                                # while True:
+                                for a in [1]:
+                                    triplets = pair_key_type(inp)
+                                    n = triplets.shape[0]
+                                    ind = np.arange(n)
+                                    i1 = 2 * ind
+                                    i2 = 2 * ind + 1
+                                    # would need to amend np2h5 and h52np to remove
+                                    # the second dim...
+                                    pairs = np.empty(
+                                        shape=(2 * n, 1), dtype=pair_key_type)
+                                    # FIXME change the encoding (and type_fitting)
+                                    # so that A,B and B,A have the same code ...
+                                    # (take a=min(a,b), b=max(a,b))
+                                    # FIXME but allow a flag to control the
+                                    # behavior to be able to enforce A,X and B,X
+                                    # order when using assymetrical distance
+                                    # functions
+                                    pairs[i1, 0] = triplets[:, 0] + (
+                                        max_ind + 1) * triplets[:, 2]  # AX
+                                    pairs[i2, 0] = triplets[:, 1] + (
+                                        max_ind + 1) * triplets[:, 2]  # BX
+                                    # FIXME do a unique here already? Do not store
+                                    # the inverse mapping ? (could sort triplets on
+                                    # pair1, complete pair1, sort on pair2,
+                                    # complete pair 2 and shuffle ?)
+                                    out.write(pairs)
+                            except StopIteration:
+                                pass
+                    # sort pairs
+                    handler = h5_handler.H5Handler(output, '/pairs/', str(by))
+                    # memory: available RAM in Mo, could be a param
+                    memory = 1000
+                    # estimate of the amount of data to be sorted
+                    with h5py.File(output) as fh:
+                        n = fh['/pairs/' + str(by)].shape[0]
+                        i = fh['/pairs/' + str(by)].dtype.itemsize
+                    amount = n * i  # in bytes
+                    # harmonize units to Ko:
+                    memory = 1000 * memory
+                    amount = amount / 1000.
+                    # be conservative: aim at using no more than 3/4 the available
+                    # memory
+                    # if enough memory take one chunk (this will do an unnecessary
+                    # full write and read of the file... could be optimized easily)
+                    if amount <= 0.75 * memory:
+                        # would it be beneficial to have a large o_buffer_size as
+                        # well ?
+                        handler.sort(buffer_size=amount)
+                    # else take around 30 chunks if possible (this seems efficient
+                    # given the current implem, using a larger number of chunks
+                    # efficiently might be possible if the reading chunks part of
+                    # the sort was cythonized ?)
+                    elif amount / 30. <= 0.75 * memory:
+                        handler.sort(buffer_size=amount / 30.)
+                    # else take minimum number of chunks possible given the
+                    # available RAM
+                    else:
+                        handler.sort(buffer_size=0.75 * memory)
 
-                # FIXME should have a unique function directly instead of
-                # sorting + unique ?
-                with h52np.H52NP(output) as f_in:
-                    with np2h5.NP2H5(output) as f_out:
+                    # FIXME should have a unique function directly instead of
+                    # sorting + unique ?
+                    with h52np.H52NP(output) as f_in:
                         inp = f_in.add_dataset('pairs', str(by))
-                        out = f_out.add_dataset(
-                            'unique_pairs', str(by), n_columns=1,
-                            item_type=pair_key_type, fixed_size=False)
+                        # out = f_out.add_dataset(
+                        #     'unique_pairs', 'data', n_columns=1,
+                        #     item_type=pair_key_type, fixed_size=False)
+                        out = out_unique_pairs
                         try:
                             last = -1
                             while True:
@@ -862,18 +895,19 @@ associated pairs
                                     out.write(pairs)
                         except StopIteration:
                             pass
-                with h5py.File(output) as fh:
-                    del fh['/pairs/' + str(by)]
-                # store for ulterior decoding
-                with h5py.File(output) as fh:
-                    fh['/unique_pairs'].attrs[str(by)] = max_ind + 1
-                store = pd.HDFStore(output)
-                # use append to make use of table format, which is better at
-                # handling strings without much space (fixed-size format)
-                store.append('/feat_dbs/' + str(by), self.feat_dbs[by],
-                             expectedrows=len(self.feat_dbs[by]))
-                store.close()
-                # FIXME generate inverse mapping to triplets (1 and 2) ?
+                    with h5py.File(output) as fh:
+                        del fh['/pairs/' + str(by)]
+                        fh['/unique_pairs'].attrs[str(by)] = (max_ind + 1, pairs_by_block_index,
+                                                              pairs_by_block_index + pairs.shape[0])
+                    # store for ulterior decoding
+                    pairs_by_block_index += pairs.shape[0]
+                    store = pd.HDFStore(output)
+                    # use append to make use of table format, which is better at
+                    # handling strings without much space (fixed-size format)
+                    store.append('/feat_dbs/' + str(by), self.feat_dbs[by],
+                                 expectedrows=len(self.feat_dbs[by]))
+                    store.close()
+                    # FIXME generate inverse mapping to triplets (1 and 2) ?
         if not(all_empty):
             with h5py.File(output) as fh:
                 del fh['/pairs/']

@@ -38,10 +38,11 @@ def create_distance_jobs(pair_file, distance_file, n_cpu):
 
     # getting 'by' datasets characteristics
     with h5py.File(pair_file) as fh:
-        by_dsets = [by_dset for by_dset in fh['unique_pairs']]
+        by_dsets = [by_dset for by_dset in fh['feat_dbs']]
         by_n_pairs = []  # number of distances to be computed for each by db
         for by_dset in by_dsets:
-            by_n_pairs.append(fh['unique_pairs'][by_dset].shape[0])
+            attrs = fh['unique_pairs'].attrs[by_dset]
+            by_n_pairs.append(attrs[2] - attrs[1])
     # initializing output datasets
     with h5py.File(distance_file) as fh:
         fh.attrs.create('done', False)
@@ -182,8 +183,9 @@ def run_distance_job(job_description, distance_file, distance,
         # load pairs to be computed
         # indexed relatively to the above dataframe
         with h5py.File(pair_file) as fh:
-            pair_list = fh['unique_pairs/' + by][start:stop, 0]
-            base = fh['unique_pairs'].attrs[by]
+            attrs = fh['unique_pairs'].attrs[by]
+            pair_list = fh['unique_pairs/data'][attrs[1]:attrs[2]][start:stop, 0]
+            base = attrs[0]
         A = np.mod(pair_list, base)
         B = pair_list // base
         pairs = np.column_stack([A, B])

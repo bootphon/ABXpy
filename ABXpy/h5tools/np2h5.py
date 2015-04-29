@@ -80,7 +80,7 @@ class NP2H5(object):
             else:
                 raise
 
-    def add_dataset(self, group, dataset, n_rows=0, n_columns=None, chunk_size=100, buf_size=100, item_type=np.int64, overwrite=False, fixed_size=True):
+    def add_dataset(self, group, dataset, n_rows=0, n_columns=None, chunk_size=10, buf_size=100, item_type=np.int64, overwrite=False, fixed_size=True):
         if n_columns is None:
             raise ValueError(
                 'You have to specify the number of columns of the dataset.')

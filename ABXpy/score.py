@@ -84,46 +84,45 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
     #bys = [by for by in t['triplets']]
     # FIXME skip empty by datasets, this should not be necessary anymore when
     # empty datasets are filtered at the task file generation level
-    with h5py.File(distance_file) as d:
-        bys = [by for by in d['distances']]
+    with h5py.File(task_file) as t:
+        bys = [by for by in t['feat_dbs']]
     for by in bys:
         with h5py.File(task_file) as t, h5py.File(distance_file) as d:
-            n = t['triplets'][by].shape[0]
+            trip_attrs = t['triplets'].attrs[by]
+            n = trip_attrs[1] - trip_attrs[0]
             # FIXME here we make the assumption
             # that this fits into memory ...
             dis = d['distances'][by][...]
             dis = np.reshape(dis, dis.shape[0])
             # FIXME idem + only unique_pairs used ?
-            pairs = t['unique_pairs'][by][...]
+            pair_attrs = t['unique_pairs'].attrs[by]
+            pairs = t['unique_pairs']['data'][pair_attrs[1]:pair_attrs[2]][...]
             pairs = np.reshape(pairs, pairs.shape[0])
-            base = t['unique_pairs'].attrs[by]
+            base = pair_attrs[0]
             pair_key_type = type_fitting.fit_integer_type((base) ** 2 - 1,
                                                           is_signed=False)
         with h52np.H52NP(task_file) as t:
             with np2h5.NP2H5(score_file) as s:
-                inp = t.add_dataset('triplets', by)
+                # inp = t.add_dataset('triplets', by)
+                inp = t.file['triplets']['data'][trip_attrs[0]:trip_attrs[1]]
                 out = s.add_dataset('scores', by, n_rows=n, n_columns=1,
                                     item_type=np.int8)
-                try:  # FIXME replace this by a for loop by making h52np
-                    # implement the iterable pattern with next() outputing
-                    # inp.read()
-                    while True:  # FIXME keep the pairs in the file ?
-                        triplets = pair_key_type(inp.read())
-                        pairs_AX = triplets[:, 0] + base * triplets[:, 2]
-                        # FIXME change the encoding (and type_fitting) so that
-                        # A,B and B,A have the same code ... (take a=min(a,b),
-                        # b=max(a,b))
-                        pairs_BX = triplets[:, 1] + base * triplets[:, 2]
-                        dis_AX = dis[np.searchsorted(pairs, pairs_AX)]
-                        dis_BX = dis[np.searchsorted(pairs, pairs_BX)]
-                        scores = (np.int8(dis_AX < dis_BX) -
-                                  np.int8(dis_AX > dis_BX))
-                        # 1 if X closer to A, -1 if X closer to B, 0 if equal
-                        # distance (this doesn't use 0, 1/2, 1 to use the
-                        # compact np.int8 data format)
-                        out.write(np.reshape(scores, (scores.shape[0], 1)))
-                except StopIteration:
-                    pass
+                triplets = pair_key_type(inp[:])
+                pairs_AX = triplets[:, 0] + base * triplets[:, 2]
+                # FIXME change the encoding (and type_fitting) so that
+                # A,B and B,A have the same code ... (take a=min(a,b),
+                # b=max(a,b))
+                pairs_BX = triplets[:, 1] + base * triplets[:, 2]
+                dis_AX = dis[np.searchsorted(pairs, pairs_AX)]
+                dis_BX = dis[np.searchsorted(pairs, pairs_BX)]
+                scores = (np.int8(dis_AX < dis_BX) -
+                          np.int8(dis_AX > dis_BX))
+                print scores.shape
+                # 1 if X closer to A, -1 if X closer to B, 0 if equal
+                # distance (this doesn't use 0, 1/2, 1 to use the
+                # compact np.int8 data format)
+                out.write(np.reshape(scores, (scores.shape[0], 1)))
+
 
 # FIXME write command-line interface
 # detects whether the script was called from command-line
