@@ -749,8 +749,8 @@ associated pairs
                             out_regs.write(regressors, indexed=True)
                             out_block_index.write(on_across_block_index)
                             self.current_index += triplets.shape[0]
-                            fh.file['triplets'].attrs[str(by)] = (self.by_block_indices[-1],
-                                                             self.current_index)
+                            fh.file['triplets'].attrs[str(by)] = (
+                                self.by_block_indices[-1], self.current_index)
                             if self.verbose > 0:
                                 display.update(
                                     'sampled_triplets', triplets.shape[0])
@@ -759,8 +759,17 @@ associated pairs
                                                 ['block_sizes'][block_key]))
                         if self.verbose > 0:
                             display.display()
+
             aux = np.array(self.by_block_indices)
             out_by_index.write(aux.reshape((aux.size, 1)))
+
+            # removing empty bys:
+            attrs  = fh.file['triplets'].attrs[str(by)]
+            print self.by_dbs.keys()
+            if attrs[0] == attrs[1]:
+                del fh.file['triplets'].attrs[str(by)]
+                del self.by_dbs[by]
+
         if self.verbose > 0:
             print("done.")
         self.generate_pairs(output)
@@ -788,7 +797,7 @@ associated pairs
             if self.verbose > 0:
                 print("Writing AX/BX pairs to task file...")
             with h5py.File(output) as fh:
-                triplets_attrs = fh['/triplets'].attrs[by]
+                triplets_attrs = fh['/triplets'].attrs[str(by)]
             if triplets_attrs[0] == triplets_attrs[1]:
                 # subdataset is empty
                 continue
@@ -924,12 +933,17 @@ associated pairs
 
         # Now merge all datasets
         by_index = 0
-        with np2h5.NP2H5(output) as f_out:
+        with np2h5.NP2H5(output) as f_out:            
             n_rows = sum(n_pairs_dict.itervalues())
             out_unique_pairs = f_out.add_dataset(
                 'unique_pairs', 'data', n_columns=1,
                 item_type=np.int64, fixed_size=False)
             for n_by, (by, db) in enumerate(self.by_dbs.iteritems()):
+                triplets_attrs = f_out.file['/triplets'].attrs[str(by)]
+                if triplets_attrs[0] == triplets_attrs[1]:
+                    # subdataset is empty
+                    continue
+
                 with h52np.H52NP(output) as f_in:
                     inp = f_in.add_dataset('unique_pairs', str(by))
                     try:
