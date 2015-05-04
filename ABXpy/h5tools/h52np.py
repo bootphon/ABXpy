@@ -79,7 +79,7 @@ class H52NPbuffer(object):
         # get info from dataset
         # fail if dataset do not exist
         if not(group + '/' + dataset in parent.file):
-            raise IOError('Dataset %s already exists in file %s!' %
+            raise IOError('Dataset %s does not exists in file %s!' %
                           (dataset, parent.filename))
         dset = parent.file[group][dataset]
         self.n_rows = dset.shape[0]

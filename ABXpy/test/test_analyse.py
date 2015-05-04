@@ -78,7 +78,7 @@ def test_frozen_analyze():
                                features=feature_file)
         task.generate_triplets(taskfilename)
         distances.compute_distances(feature_file, '/features/', taskfilename,
-                                    distance_file, dtw_cosine_distance, n_cpu=1)
+                                    distance_file, dtw_cosine_distance, n_cpu=3)
         score.score(taskfilename, distance_file, scorefilename)
         analyze.analyze(taskfilename, scorefilename, analyzefilename)
 
