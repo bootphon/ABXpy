@@ -184,7 +184,7 @@ def run_distance_job(job_description, distance_file, distance,
         # indexed relatively to the above dataframe
         with h5py.File(pair_file) as fh:
             attrs = fh['unique_pairs'].attrs[by]
-            pair_list = fh['unique_pairs/data'][attrs[1]+start:attrs[2]+stop, 0]
+            pair_list = fh['unique_pairs/data'][attrs[1]+start:attrs[1]+stop, 0]
             base = attrs[0]
 
         A = np.mod(pair_list, base)

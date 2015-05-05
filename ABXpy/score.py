@@ -114,10 +114,10 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
                 # b=max(a,b))
                 pairs_BX = triplets[:, 1] + base * triplets[:, 2]
                 dis_AX = dis[np.searchsorted(pairs, pairs_AX)]
+
                 dis_BX = dis[np.searchsorted(pairs, pairs_BX)]
                 scores = (np.int8(dis_AX < dis_BX) -
                           np.int8(dis_AX > dis_BX))
-                print scores.shape
                 # 1 if X closer to A, -1 if X closer to B, 0 if equal
                 # distance (this doesn't use 0, 1/2, 1 to use the
                 # compact np.int8 data format)

@@ -765,7 +765,6 @@ associated pairs
 
             # removing empty bys:
             attrs  = fh.file['triplets'].attrs[str(by)]
-            print self.by_dbs.keys()
             if attrs[0] == attrs[1]:
                 del fh.file['triplets'].attrs[str(by)]
                 del self.by_dbs[by]
@@ -803,6 +802,7 @@ associated pairs
                 continue
             all_empty = False
             max_ind = np.max(db.index.values)
+            max_ind_dict[by] = max_ind
             pair_key_type = type_fitting.fit_integer_type(
                 (max_ind + 1) ** 2 - 1, is_signed=False)
             with h52np.H52NP(output) as f_in:
@@ -921,7 +921,6 @@ associated pairs
 
                     with h5py.File(output) as fh:
                         del fh['/pairs/' + str(by)]
-                    max_ind_dict[by] = max_ind
                     # store for ulterior decoding
                     store = pd.HDFStore(output)
                     # use append to make use of table format, which is better at
@@ -936,7 +935,7 @@ associated pairs
         with np2h5.NP2H5(output) as f_out:            
             n_rows = sum(n_pairs_dict.itervalues())
             out_unique_pairs = f_out.add_dataset(
-                'unique_pairs', 'data', n_columns=1,
+                'unique_pairs', 'data', n_rows=n_rows, n_columns=1,
                 item_type=np.int64, fixed_size=False)
             for n_by, (by, db) in enumerate(self.by_dbs.iteritems()):
                 triplets_attrs = f_out.file['/triplets'].attrs[str(by)]
@@ -946,17 +945,19 @@ associated pairs
 
                 with h52np.H52NP(output) as f_in:
                     inp = f_in.add_dataset('unique_pairs', str(by))
+                    aux = 0
                     try:
-                        pairs = inp.read()
-                        out_unique_pairs.write(pairs)
+                        while True:
+                            pairs = inp.read()
+                            out_unique_pairs.write(pairs)
                     except StopIteration:
                         pass
 
                 with h5py.File(output) as fh:
                     fh['/unique_pairs'].attrs[str(by)] = (
-                        max_ind_dict[by] + 1, by_index, by_index + pairs.size)
+                        max_ind_dict[by] + 1, by_index, by_index + n_pairs_dict[by])
                     del fh['unique_pairs'][str(by)]
-                by_index += n_pairs
+                by_index += n_pairs_dict[by]
 
         if not(all_empty):
             with h5py.File(output) as fh:
