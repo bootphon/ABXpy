@@ -108,6 +108,7 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
                 out = s.add_dataset('scores', by, n_rows=n, n_columns=1,
                                     item_type=np.int8)
                 triplets = pair_key_type(inp[:])
+
                 pairs_AX = triplets[:, 0] + base * triplets[:, 2]
                 # FIXME change the encoding (and type_fitting) so that
                 # A,B and B,A have the same code ... (take a=min(a,b),

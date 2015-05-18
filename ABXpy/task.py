@@ -891,6 +891,8 @@ associated pairs
                                 n_pairs += np.unique(pairs).size
                                 if pairs[0, 0] == last:
                                     n_pairs -= 1
+                                if pairs.size > 0:
+                                    last = pairs[-1, 0]
                         except StopIteration:
                             pass
                     n_pairs_dict[by] = n_pairs
