@@ -43,12 +43,12 @@ def create_distance_jobs(pair_file, distance_file, n_cpu):
         for by_dset in by_dsets:
             attrs = fh['unique_pairs'].attrs[by_dset]
             by_n_pairs.append(attrs[2] - attrs[1])
+            total_n_pairs = fh['unique_pairs/data'].shape[0]
     # initializing output datasets
     with h5py.File(distance_file) as fh:
         fh.attrs.create('done', False)
         g = fh.create_group('distances')
-        for n, by_dset in zip(by_n_pairs, by_dsets):
-            g.create_dataset(by_dset, shape=(n, 1), dtype=np.float)
+        g.create_dataset('data', shape=(total_n_pairs, 1), dtype=np.float)
     """
     #### Load balancing ####
     Heuristic: each process should have approximately
@@ -233,7 +233,7 @@ def run_distance_job(job_description, distance_file, distance,
         if synchronize:
             distance_file_lock.acquire()
         with h5py.File(distance_file) as fh:
-            fh['distances/' + by][start:stop, :] = dis
+            fh['distances/data'][attrs[1]+start:attrs[1]+stop, :] = dis
         if synchronize:
             distance_file_lock.release()
 

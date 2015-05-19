@@ -89,13 +89,13 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
     for by in bys:
         with h5py.File(task_file) as t, h5py.File(distance_file) as d:
             trip_attrs = t['triplets'].attrs[by]
+            pair_attrs = t['unique_pairs'].attrs[by]
             n = trip_attrs[1] - trip_attrs[0]
             # FIXME here we make the assumption
             # that this fits into memory ...
-            dis = d['distances'][by][...]
+            dis = d['distances']['data'][pair_attrs[1]:pair_attrs[2]][...]
             dis = np.reshape(dis, dis.shape[0])
             # FIXME idem + only unique_pairs used ?
-            pair_attrs = t['unique_pairs'].attrs[by]
             pairs = t['unique_pairs']['data'][pair_attrs[1]:pair_attrs[2]][...]
             pairs = np.reshape(pairs, pairs.shape[0])
             base = pair_attrs[0]
