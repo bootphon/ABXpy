@@ -183,8 +183,6 @@ class Task(object):
 
         if verbose:
             print("Verifying input...")
-        if verify:
-            verifydb(db_name, features, verbose)
 
         # open database
         db, db_hierarchy, feat_db = database.load(db_name, features_info=True)
