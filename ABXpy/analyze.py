@@ -209,21 +209,21 @@ def analyze(task_file, score_file, result_file):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog='collapse_results.py',
+        prog='analyze.py',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description='Collapse results of ABX on by conditions.',
+        description='Collapse results of ABX score on type of ABX triplet.',
         epilog="""Example usage:
 
-$ ./collapse_results.py abx.score abx.task abx_collapsed.txt
+$ ./analyze.py abx.score abx.task abx.csv
 
-collapses the scores in abx.score by the conditions in abx.task and outputs
-to plain text format in abx_collapsed.txt.""")
+compute the average the scores in abx.score by type of ABX triplet
+and output the results in tab separated csv format.""")
     parser.add_argument('scorefile', metavar='SCORE',
                         help='score file in hdf5 format')
     parser.add_argument('taskfile', metavar='TASK',
                         help='task file in hdf5 format')
     parser.add_argument('output', metavar='OUTPUT',
-                        help='plain text output file')
+                        help='output file in csv format')
     return vars(parser.parse_args())
 
 
@@ -231,11 +231,11 @@ if __name__ == '__main__':
     args = parse_args()
     score_file = args['scorefile']
     if not path.exists(score_file):
-        print 'No such file:', score_file
+        print('No such file: {}'.format(score_file))
         exit()
     task_file = args['taskfile']
     if not path.exists(task_file):
-        print 'No such file:', task_file
+        print('No such file: {}'.format(task_file))
         exit()
     result_file = args['output']
     # if not path.exists(outfile):

@@ -8,7 +8,7 @@ It can also be used in a command line. See task --help for the documentation
 Usage
 -----
 
-Form the command line:
+From the command line:
 
 .. code-block:: bash
 
@@ -917,29 +917,6 @@ def on_across_from_key(key):
         across = across[0]
     return on, across
 
-
-def verifydb(filename, features=None, verbose=0):
-    if verbose:
-        print("Opening item file")
-    with open(filename) as f:
-        cols = str.split(f.readline())
-        assert len(cols) > 4, 'the syntax of the item file is incorrect'
-        assert cols[0] == '#file', 'The first column must be named #file'
-        assert cols[1] == 'onset', 'The second column must be named onset'
-        assert cols[2] == 'offset', 'The third column must be named offset'
-
-        if features:
-            if verbose:
-                print("Opening features file")
-            h5f = h5py.File(features)
-            files = h5f['features']['files'][:]
-            for line in f:
-                source = str.split(line, ' ')[0]
-                assert source in files, ("The file " + source + " cannot "
-                                         "be found in the feature file")
-        elif verbose:
-            print("Features file coherency could not be verified because"
-                  " it was not provided")
 
 """
 Command-line API
