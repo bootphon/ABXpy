@@ -30,8 +30,7 @@ def test_score():
         scorefilename = 'test_items/data.score'
         taskfilename = 'test_items/data.abx'
         items.generate_db_and_feat(3, 3, 1, item_file, 2, 3, feature_file)
-        task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2',
-                               features=feature_file)
+        task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
         task.generate_triplets()
         distances.compute_distances(feature_file, '/features/', taskfilename,
                                     distance_file, dtw_cosine_distance)
