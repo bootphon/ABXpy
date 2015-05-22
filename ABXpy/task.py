@@ -156,7 +156,7 @@ class Task(object):
     """
 
     def __init__(self, db_name, on, across=None, by=None, filters=None,
-                 regressors=None, verbose=0, verify=True, features=None):
+                 regressors=None, verbose=0):
 
         self.verbose = verbose
         assert os.path.exists(db_name), ('the item file {0} was not found:'
@@ -183,8 +183,6 @@ class Task(object):
 
         if verbose:
             print("Verifying input...")
-        if verify:
-            verifydb(db_name, features, verbose)
 
         # open database
         db, db_hierarchy, feat_db = database.load(db_name, features_info=True)
@@ -993,13 +991,8 @@ or phonemes, if your database contains columns defining these attributes)"""
     if not args.stats_only and os.path.exists(args.output):
         print("WARNING: Overwriting task file " + args.output)
         os.remove(args.output)
-    if not args.no_verif and (not args.features or not os.path.exists(args.features)):
-        print("WARNING: Cannot verify the consistency of the item file {0} "
-              "with the features file because the features file was not "
-              "provided")
     task = Task(args.database, args.on, args.across,
-                args.by, args.filt, args.reg, args.verbose, not args.no_verif,
-                args.features)
+                args.by, args.filt, args.reg, args.verbose)
 
     if not(args.stats_only):
         # generate triplets and unique pairs
