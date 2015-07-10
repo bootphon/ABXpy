@@ -848,7 +848,7 @@ associated pairs
                             pass
 
                     # sort pairs
-                    handler = h5_handler.H5Handler(output, '/pairs/', str(by))
+                    handler = h5_handler.H5Handler(output_tmp, '/pairs/', str(by))
                     # memory: available RAM in Mo, could be a param
                     memory = 1000
                     # estimate of the amount of data to be sorted
@@ -946,7 +946,6 @@ associated pairs
 
                     with h52np.H52NP(output_tmp) as f_in:
                         inp = f_in.add_dataset('unique_pairs', str(by))
-                        aux = 0
                         try:
                             while True:
                                 pairs = inp.read()

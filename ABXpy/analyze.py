@@ -41,39 +41,6 @@ import ABXpy.misc.type_fitting as type_fitting
 import os
 
 
-# FIXME by_columns should be stored as attributes into the task file
-# def analyze(task_file, score_file, analyze_file, by_columns=None):
-#     """Analyse the results of a task
-
-#     Parameters
-#     ----------
-#     task_file : string, hdf5 file
-#         the file containing the triplets and pairs of the task
-#     score_file : string, hdf5 file
-#         the file containing the score of a task
-#     analyse_file: string, csv file
-#         the file that will contain the analysis
-#     """
-#     # FIXME memory issues ?
-#     bys = []
-#     by_scores = []
-#     with h5py.File(score_file) as s:
-#         for by in s['scores']:
-#             scores = s['scores'][by][...]
-#             scores = np.float64(np.reshape(scores, scores.shape[0]))
-#             score = np.mean((scores + 1) / 2.)
-#             bys.append(by)
-#             by_scores.append(score)
-#     df = pandas.DataFrame({'by level': bys, 'average ABX score': by_scores})
-#     if not(by_columns is None):  # FIXME ugly fix
-#         by_levels = np.array(map(ast.literal_eval, df['by level']))
-#         d = dict(zip(by_columns, zip(*by_levels)))
-#         for key in d:
-#             df[key] = d[key]
-#         del df['by level']
-#     df.to_csv(analyze_file, sep='\t')
-
-
 def npdecode(keys, max_ind):
     """Vectorized implementation of the decoding of the labels:
     i = (a1*n2 + a2)*n3 + a3 ...
@@ -104,19 +71,22 @@ def collapse(scorefile, taskfile, fid):
     # wf_tmp = open('tmp_pandas.txt', 'wb')
     scorefid = h5py.File(scorefile)
     taskfid = h5py.File(taskfile)
-    nkeys = len(scorefid['scores'].keys())
     # results = []
-    for key_idx, key in enumerate(scorefid['scores'].keys()):
-        print 'collapsing {0}/{1}'.format(key_idx + 1, nkeys)
-        context = key
+    bys = taskfid['feat_dbs'].keys()
+    nbys = len(bys)
+    for by_idx, by in enumerate(bys):
+        print 'collapsing {0}/{1}'.format(by_idx + 1, nbys)
+        context = by
+        trip_attrs = taskfid['triplets'].attrs[by]
 
-        tfrk = taskfid['regressors'][key]
+
+        tfrk = taskfid['regressors'][by]
 
         tmp = tfrk[u'indexed_data']
         indices = np.array(tmp)
         if indices.size == 0:
             continue
-        tmp = scorefid['scores'][key]
+        tmp = scorefid['scores'][trip_attrs[0]:trip_attrs[1]]
         scores_arr = np.array(tmp)
         tmp = np.ascontiguousarray(indices).view(
             np.dtype((np.void, indices.dtype.itemsize * indices.shape[1])))
