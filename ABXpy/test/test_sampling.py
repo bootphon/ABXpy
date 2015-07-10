@@ -106,8 +106,7 @@ def test_simple_uniformity():
 def test_sampling_task():
     items.generate_testitems(4, 6, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', 'c1', ['c2', 'c3'],
-                               verify=False)
+        task = ABXpy.task.Task('data.item', 'c0', 'c1', ['c2', 'c3'])
         print "stats computed"
         # stats = task.stats
         task.generate_triplets(sample=0.2)
