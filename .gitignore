@@ -68,3 +68,5 @@ test/__pycache__
 # Emacs
 *~
 \#*\#
+/test_items/data.abx
+/test_items/data.distance
