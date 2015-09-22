@@ -4,20 +4,17 @@
 
 import os
 import sys
-package_path = os.path.dirname(os.path.dirname(
-    os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
-import ABXpy.task
 import h5py
 import numpy as np
+
+import ABXpy.task
 import ABXpy.misc.items as items
 
 error_pairs = "pairs incorrectly generated"
 error_triplets = "triplets incorrectly generated"
 
 
-# not optimise, but unimportant
+# not optimized, but unimportant
 def tables_equivalent(t1, t2):
     assert t1.shape == t2.shape
     for a1 in t1:

@@ -54,13 +54,12 @@ attribute; A,B and X share the same 'by' attribute
 # make sure the rest of the ABXpy package is accessible
 import os
 import sys
-package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
 import h5py
 import numpy as np
 import pandas as pd
 import warnings
+import tempfile
+
 import ABXpy.database.database as database
 import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.h5tools.h52np as h52np
@@ -71,7 +70,6 @@ import ABXpy.sideop.filter_manager as filter_manager
 import ABXpy.sideop.regressor_manager as regressor_manager
 import ABXpy.sampling.sampler as sampler
 import ABXpy.misc.progress_display as progress_display
-import tempfile
 
 # FIXME many of the fixmes should be presented as feature requests in a
 # github instead of fixmes
@@ -916,6 +914,101 @@ def on_across_from_key(key):
     return on, across
 
 
+def task_parser():
+    """Define and parse command line arguments for task specification.
+
+    For more details, have a 'python task.py --help'
+    """
+    import argparse
+
+    # TODO
+    # using lists as default value in the parser might be dangerous ?
+    # probably not as long as it is not used more than once ?
+    # parser (the usage string is specified explicitly because the default
+    # does not show that the mandatory arguments must come before the
+    # optional ones; otherwise parsing is not possible because optional
+    # arguments can have various numbers of inputs)
+    parser = argparse.ArgumentParser(
+        usage="""%(prog)s database [output] -o ON [-a ACROSS [ACROSS ...]] \
+[-b BY [BY ...]] [-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT\
+_OR_PROPORTION] [--stats-only] [-h] [-v VERBOSE_LEVEL] [--no_verif] \
+[--features FEATURE_FILE]""",
+        description='ABX task specification')
+    
+    message = """must be defined by the database you are using (e.g. speaker \
+or phonemes, if your database contains columns defining these attributes)"""
+    
+    # I/O files
+    g1 = parser.add_argument_group('I/O files')
+
+    g1.add_argument('database',
+                    help='main file of the database defining the items used to form ABX '
+                    'triplets and their attributes')
+    
+    g1.add_argument('output', nargs='?', default=None,
+                    help='optional: output file, where the results of the '
+                         'analysis will be put')
+    
+    # Task specification
+    g2 = parser.add_argument_group('Task specification')
+    
+    g2.add_argument('-o', '--on', required=True,
+                    help='ON attribute, ' + message)
+    
+    g2.add_argument('-a', '--across',  nargs='+', default=[],
+                    help='optional: ACROSS attribute(s), ' + message)
+    
+    g2.add_argument('-b', '--by', nargs='+', default=[],
+                    help='optional: BY attribute(s), ' + message)
+    
+    g2.add_argument('-f', '--filter', nargs='+', default=[],
+                    help='optional: filter specification(s), ' + message)
+
+    g2.add_argument('-s', '--sample', default=None, type=float,
+                    help='optional: if a real number in ]0;1[: sampling '
+                         'proportion, if a strictly positive integer: number '
+                         'of triplets to be sampled')
+
+    # Regressors specification
+    g3 = parser.add_argument_group('Regressors specification')
+
+    g3.add_argument('-r', '--regressor', nargs='+', default=[],
+                    help='optional: regressor specification(s), ' + message)
+    
+    # Computation parameters
+    g4 = parser.add_argument_group('Computation parameters')
+
+    g4.add_argument('--stats_only', default=False, action='store_true',
+                    help='add this flag if you only want some statistics '
+                         'about the specified task')
+
+    g4.add_argument('-v', '--verbose', default=0,
+                    help='optional: level of verbosity required on the '
+                         'standard output')
+
+    g4.add_argument('--no_verif', default=False, action='store_true',
+                    help='optional: skip the verification of the database '
+                         'file consistancy')
+
+    g4.add_argument('--features',
+                    help='optional: feature file, verify the consistency '
+                         'of the feature file with the item file')
+
+    # Parse the parameters
+    args = parser.parse_args()
+
+    # Consistency checks
+    if args.stats_only:
+        assert args.output, "The output file was not provided"
+
+    if not args.stats_only and os.path.exists(args.output):
+        print("WARNING: Overwriting existing task file " + args.output)
+        os.remove(args.output)
+    
+    return args
+    
+
+
 """
 Command-line API
 
@@ -925,77 +1018,19 @@ Example call:
 # FIXME maybe some problems if wanting to pass some code directly on the
 # command-line if it contains something like s = "'a'==1 and 'b'==2" ? but
 # not a big deal ?
-# detects whether the script was called from command-line
+# TODO detects whether the script was called from command-line
 if __name__ == '__main__':
 
-    import argparse
+    # Parse input arguments
+    args = task_parser()
 
-    # using lists as default value in the parser might be dangerous ?
-    # probably not as long as it is not used more than once ?
-    # parser (the usage string is specified explicitly because the default
-    # does not show that the mandatory arguments must come before the
-    # mandatory ones; otherwise parsing is not possible beacause optional
-    # arguments can have various numbers of inputs)
-    parser = argparse.ArgumentParser(
-        usage="""%(prog)s database [output] -o ON [-a ACROSS [ACROSS ...]] \
-[-b BY [BY ...]] [-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT\
-_OR_PROPORTION] [--stats-only] [-h] [-v VERBOSE_LEVEL] [--no_verif] \
-[--features FEATURE_FILE]""",
-        description='ABX task specification')
-    message = """must be defined by the database you are using (e.g. speaker \
-or phonemes, if your database contains columns defining these attributes)"""
-    # I/O files
-    g1 = parser.add_argument_group('I/O files')
-    g1.add_argument(
-        'database',
-        help='main file of the database defining the items used to form ABX '
-             'triplets and their attributes')
-    g1.add_argument('output', nargs='?', default=None,
-                    help='optional: output file, where the results of the '
-                         'analysis will be put')
-    # Task specification
-    g2 = parser.add_argument_group('Task specification')
-    g2.add_argument(
-        '-o', '--on', required=True, help='ON attribute, ' + message)
-    g2.add_argument('-a', '--across',  nargs='+', default=[],
-                    help='optional: ACROSS attribute(s), ' + message)
-    g2.add_argument('-b', '--by', nargs='+', default=[],
-                    help='optional: BY attribute(s), ' + message)
-    g2.add_argument('-f', '--filt', nargs='+', default=[],
-                    help='optional: filter specification(s), ' + message)
-    g2.add_argument('-s', '--sample', default=None, type=float,
-                    help='optional: if a real number in ]0;1[: sampling '
-                         'proportion, if a strictly positive integer: number '
-                         'of triplets to be sampled')
-    # Regressors specification
-    g3 = parser.add_argument_group('Regressors specification')
-    g3.add_argument('-r', '--reg', nargs='+', default=[],
-                    help='optional: regressor specification(s), ' + message)
-    # Computation parameters
-    g4 = parser.add_argument_group('Computation parameters')
-    g4.add_argument('--stats_only', default=False, action='store_true',
-                    help='add this flag if you only want some statistics '
-                         'about the specified task')
-    g4.add_argument('-v', '--verbose', default=0,
-                    help='optional: level of verbosity required on the '
-                         'standard output')
-    g4.add_argument('--no_verif', default=False, action='store_true',
-                    help='optional: skip the verification of the database '
-                         'file consistancy')
-    g4.add_argument('--features',
-                    help='optional: feature file, verify the consistency '
-                         'of the feature file with the item file')
-    args = parser.parse_args()
+    # Create a task instance with parsed parameters
+    task = Task(args.database, args.on, args.across, args.by,
+                args.filter, args.regressor, args.verbose) # .filter -> conflict here ?
+
+    # Do the requested processing
     if args.stats_only:
-        assert args.output, "The output file was not provided"
-    if not args.stats_only and os.path.exists(args.output):
-        print("WARNING: Overwriting task file " + args.output)
-        os.remove(args.output)
-    task = Task(args.database, args.on, args.across,
-                args.by, args.filt, args.reg, args.verbose)
-
-    if not(args.stats_only):
-        # generate triplets and unique pairs
-        task.generate_triplets(args.output, args.sample)
-    else:
         task.print_stats()
+    else:
+        task.generate_triplets(args.output, args.sample)
+        
