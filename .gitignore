@@ -11,6 +11,7 @@ __pycache__/
 
 # C extensions
 *.so
+/ABXpy/distances/metrics/install/dtw.c
 
 # Distribution / packaging
 .Python
@@ -67,4 +68,3 @@ test/__pycache__
 # Emacs
 *~
 \#*\#
-/ABXpy/distances/metrics/install/dtw.c

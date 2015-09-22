@@ -75,14 +75,13 @@ def fullrun(working_dir = 'data'):
     task = ABXpy.task.Task(files['item'], 'c0', 'c1', 'c2')
     task.generate_triplets()
     
-    # distances.compute_distances(files['feature'], '/features/', files['task'],
-    #                             files['distance'], dtw_cosine_distance)
+    distances.compute_distances(files['feature'], '/features/', files['task'],
+                                files['distance'], dtw_cosine_distance)
     
-    # score.score(files['task'], files['distance'], files['score'])
-    
-    #analyze.analyze(files['score'], files['task'], files['analyze'])
-    return items
+    score.score(files['task'], files['distance'], files['score'])
 
-    
+    # TODO a bug here. Want to open regressor field in task file...
+    analyze.analyze(files['score'], files['task'], files['analyze'])
+ 
 
 fullrun()
