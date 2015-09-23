@@ -191,7 +191,7 @@ def test_filter_on_B():
             pass
 
 
-# testing with simple filter on B, verifying triplet generation
+# testing with simple filter on C, verifying triplet generation
 def test_filter_on_C():
     items.generate_testitems(2, 2, name='data.item')
     try:
@@ -214,10 +214,27 @@ def test_filter_on_C():
         except:
             pass
 
+def test_task_parser():
+    """Test case for the task_parser() method"""
+    
+    by1 = ABXpy.task.task_parser('db -o c0 -b c0 -b c1').by
+    by2 = ABXpy.task.task_parser('db -o c0 -b c0 c1').by
+    assert by1 == by2 == ['c0', 'c1']
 
-# test_basic()
-# test_multiple_across()
-# test_no_across()
-# test_multiple_bys()
-# test_filter()
-# test_filter_on_C()
+    ac1 = ABXpy.task.task_parser('db -o c0 -a c0 -a c1 -a c2').across
+    ac2 = ABXpy.task.task_parser('db -o c0 -a c0 c1 c2').across
+    ac3 = ABXpy.task.task_parser('db -o c0 -a c0 c1 -a c2').across
+    assert ac1 == ac2 == ac3 == ['c0', 'c1', 'c2']
+
+def main():
+    # test_basic()
+    # test_multiple_across()
+    # test_no_across()
+    # test_multiple_bys()
+    # test_filter()
+    # test_filter_on_C()
+    test_task_parser()
+
+if __name__ == '__main__':
+    main()
+

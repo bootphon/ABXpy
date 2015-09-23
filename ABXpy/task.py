@@ -1,6 +1,6 @@
-"""This module is used for creating a new task and preprocessing.
+"""This module allows to specify, initialize and preprocess an ABX task.
 
-This module contains the functions to specify and initialise a new ABX task,
+This module contains the functions to specify and initialize a new ABX task,
 compute and display the statistics, and generate the ABX triplets and pairs.
 
 It can also be used in a command line. See task --help for the documentation
@@ -24,9 +24,9 @@ In python:
 
     import ABXpy.task
     # create a new task and compute the statistics
-    myTask = ABXpy.task.Task('data.item', 'on_label', 'across_feature', \
+    myTask = ABXpy.task.Task('my_data.item', 'on_label', 'across_feature', \
 'by_label', filters=my_filters, regressors=my_regressors)
-    print myTask.stats  # display statistics
+    print myTask.stats          # display statistics
     myTask.generate_triplets()  # generate a h5db file 'data.abx'containing \
 all the triplets and pairs
 
@@ -51,68 +51,80 @@ attribute; A,B and X share the same 'by' attribute
 """
 # -*- coding: utf-8 -*-
 
-# make sure the rest of the ABXpy package is accessible
-import os
-import sys
+import argparse
 import h5py
 import numpy as np
+import os
 import pandas as pd
-import warnings
+import sys
 import tempfile
+import warnings
 
 import ABXpy.database.database as database
 import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.h5tools.h52np as h52np
 import ABXpy.h5tools.h5_handler as h5_handler
 import ABXpy.h5tools.h5io as h5io
+import ABXpy.misc.progress_display as progress_display
 import ABXpy.misc.type_fitting as type_fitting
+import ABXpy.sampling.sampler as sampler
 import ABXpy.sideop.filter_manager as filter_manager
 import ABXpy.sideop.regressor_manager as regressor_manager
-import ABXpy.sampling.sampler as sampler
-import ABXpy.misc.progress_display as progress_display
 
 # FIXME many of the fixmes should be presented as feature requests in a
 # github instead of fixmes
-"""
-# FIXME get a memory and speed efficient mechanism for storing a task on disk
-and loading it back (pickling doesn't work well)
-# FIXME filter out empty  'on-across-by' blocks and empty 'by' blocks as soon
-as possible (i.e. when computing stats)
+
+# FIXME get a memory and speed efficient mechanism for storing a task
+# on disk and loading it back (pickling doesn't work well)
+
+# FIXME filter out empty 'on-across-by' blocks and empty 'by' blocks
+# as soon as possible (i.e. when computing stats)
+
 # FIXME generate unique_pairs in separate file
-# FIXME find a better scheme for naming 'by' datasets in HDF5 files (to remove
-    the current warning)
+
+# FIXME find a better scheme for naming 'by' datasets in HDF5 files
+# (to remove the current warning)
+
 # FIXME efficiently dealing with case where there is no across
-# FIXME syntax to specify names for side-ops when computing them on the fly or
-at the very least number of output (default is one)
-# FIXME implementing file locking, md5 hash and path for integrity checks and
-logging warnings using the standard logging library of python + a verbose stuff
+
+# FIXME syntax to specify names for side-ops when computing them on
+# the fly or at the very least number of output (default is one)
+
+# FIXME implementing file locking, md5 hash and path for integrity
+# checks and logging warnings using the standard logging library of
+# python + a verbose stuff
+
 # FIXME putting metadata in h5files + pretty print it
-# FIXME dataset size for task file seems too big when filtering so as to get
-only 3 different talkers ???
-# FIXME allow specifying regressors and filters from within python using
-something like (which should be integrated with the existing dbfun stuff):
+
+# FIXME dataset size for task file seems too big when filtering so as
+# to get only 3 different talkers ???
+
+# FIXME allow specifying regressors and filters from within python
+# using something like (which should be integrated with the existing
+# dbfun stuff):
 # class ABX_context(object):
 #		def __init__(self, db):
-                        # init fields with None
+#                   init fields with None
 #	context = ABX_context(db_file)
 # def new_filter(context):
 #	return [True for e in context.talker_A]
+
 # FIXME allow other ways of providing the hierarchical db (directly in
 # pandas format, etc.)
-"""
 
+### More complicated FIXMES
 
-"""More complicated FIXMES
-# FIXME taking by datasets as the basic unit was a mistake, because cases
-where there many small by datasets happen. Find a way to group them when
-needed both in the computations and in the h5 files
-# FIXME allow by sampling customization depending on the analyzes to be
-# carried out
-"""
+# FIXME taking by datasets as the basic unit was a mistake, because
+# cases where there many small by datasets happen. Find a way to group
+# them when needed both in the computations and in the h5 files
+
+# FIXME allow by sampling customization depending on the analyzes to
+# be carried out
+
+# TODO Is the verification stage really needed in task management ?
 
 
 class Task(object):
-
     """
     Define an ABX task for a given database.
 
@@ -131,34 +143,43 @@ class Task(object):
     ----------
     db_name : str
         the filename of database on which the ABX task is applied.
+
     on : str
         the 'on' attribute of the ABX task. A and X share the same 'on'
         attribute and B has a different one.
+
     across : list, optional
         a list of strings containing the 'across' attributes of the ABX
         task. A and B share the same 'across' attributes and X has a
         different one.
+
     by : list, optional
         a list of strings containing the 'by' attributes of the ABX task. A,B
         and X share the same 'by' attributes.
+
     filters : list, optional
         a list of string specifying a filter on A, B or X.
+
     regressors : list, optional
         a list of string specifying a filter on A, B or X.
+
     verbose : int, optional
-        display additionnal information is set superior to 0.
-    verify : str, optionnal
-        verify the correctness of the database file, do by default.
-    features : str, otpionnal
+        display additionnal information if set greater than 0.
+
+    verify : str, optional
+        verify the correctness of the database file, done by default.
+
+    features : str, optional
         the features file. Add it to verify the consistency with the item file
     """
 
     def __init__(self, db_name, on, across=None, by=None, filters=None,
-                 regressors=None, verbose=0):
+                 regressors=None, verbose=False):
 
         self.verbose = verbose
-        assert os.path.exists(db_name), ('the item file {0} was not found:'
-                                         .format(db_name))
+
+        # TODO assert a valid file, not a path
+        assert os.path.exists(db_name), 'Items file {0} was not found:'.format(db_name)
 
         if across is None:
             across = []
@@ -169,17 +190,17 @@ class Task(object):
         if regressors is None:
             regressors = []
 
-        # check parameters
-        # using several 'on' isn't supported by the toolbox
-        assert isinstance(on, basestring), \
-            'ON attribute must be specified by a string'
+        # check parameters using several 'on' isn't supported by the
+        # toolbox
+        assert isinstance(on, basestring), 'ON attribute must be specified by a string'
         on = [on]
         if isinstance(across, basestring):
             across = [across]
         if isinstance(by, basestring):
             by = [by]
 
-        if verbose:
+        # TODO Make this verif step a separate method
+        if self.verbose:
             print("Verifying input...")
 
         # open database
@@ -189,10 +210,12 @@ class Task(object):
         cols = set(db.columns)
         message = ' argument is invalid, check that all \
             the provided attributes are defined in the database ' + db_name
+
         # the argument of issuperset needs to be a list ...
         assert cols.issuperset(on), 'ON' + message
         assert cols.issuperset(across), 'ACROSS' + message
         assert cols.issuperset(by), 'BY' + message
+
         # FIXME add additional checks, for example that columns
         # in BY, ACROSS, ON are not the same ? (see task structure notes)
         # also that location columns are not used
@@ -201,7 +224,8 @@ class Task(object):
                 column names'
             assert '#' not in col, col + ': you cannot use \'#\' in \
                 column names'
-        if verbose:
+
+        if self.verbose:
             print("Input verified")
 
         # if 'by' or 'across' are empty create appropriate dummy columns
@@ -218,8 +242,8 @@ class Task(object):
         self.filters = filter_manager.FilterManager(db_hierarchy,
                                                     on, across, by,
                                                     filters)
-        self.regressors = regressor_manager.RegressorManager(db,
-                                                             db_hierarchy,
+        
+        self.regressors = regressor_manager.RegressorManager(db, db_hierarchy,
                                                              on, across, by,
                                                              regressors)
 
@@ -234,12 +258,12 @@ class Task(object):
         self.antiacross_blocks = {}
         by_groups = db.groupby(by)
 
-        if self.verbose > 0:
+        if self.verbose:
             display = progress_display.ProgressDisplay()
             display.add('block', 'Preprocessing by block', len(by_groups))
 
         for by_key, by_frame in by_groups:
-            if self.verbose > 0:
+            if self.verbose:
                 display.update('block', 1)
                 display.display()
 
@@ -299,6 +323,7 @@ class Task(object):
         # compute some statistics about the task
         self.compute_statistics()
 
+    
     def compute_statistics(self, approximate=False):
         """Compute the statistics of the task
 
@@ -554,8 +579,8 @@ class Task(object):
     # altering the sequence)
     # FIXME in case of sampling, get rid of blocks with no samples ?
     def generate_triplets(self, output=None, sample=None):
-        """Generate all possible triplets for the whole task and the \
-associated pairs
+        """Generate all possible triplets for the whole task and the
+        associated pairs
 
         Generate the triplets and the pairs for an ABXpy.Task and store it in
         a h5db file.
@@ -886,7 +911,8 @@ associated pairs
             try:
                 self.compute_nb_levels()
             except ValueError:
-                warnings.warn("Filters not fully supported, nb_levels per by block wont be calculated", RuntimeWarning)
+                warnings.warn("Filters not fully supported, nb_levels per by block wont be calculated",
+                              RuntimeWarning)
             for by, stats in self.by_stats.iteritems():
                 stream.write('### by level: %s ###\n' % str(by))
                 stream.write('nb_triplets: %d\n' % stats['nb_triplets'])
@@ -914,29 +940,46 @@ def on_across_from_key(key):
     return on, across
 
 
-def task_parser():
+def task_parser(input_args = None):
     """Define and parse command line arguments for task specification.
 
     For more details, have a 'python task.py --help'
-    """
-    import argparse
 
-    # TODO
-    # using lists as default value in the parser might be dangerous ?
-    # probably not as long as it is not used more than once ?
-    # parser (the usage string is specified explicitly because the default
+    Parameters
+    ----------
+
+    input_args: str, optional. The argument string to be parsed. By
+    default, the argument string is taken from sys.argv.
+
+    Return
+    ------
+
+    a Namespace object built up from attributes parsed out of the
+    argument string, as returned by argparse.parse_args().
+
+    """
+    # TODO using lists as default value in the parser might be
+    # dangerous ?  probably not as long as it is not used more than
+    # once ?
+
+    # The usage string is specified explicitly because the default
     # does not show that the mandatory arguments must come before the
-    # optional ones; otherwise parsing is not possible because optional
-    # arguments can have various numbers of inputs)
+    # optional ones; otherwise parsing is not possible because
+    # optional arguments can have various numbers of inputs
     parser = argparse.ArgumentParser(
-        usage="""%(prog)s database [output] -o ON [-a ACROSS [ACROSS ...]] \
-[-b BY [BY ...]] [-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT\
-_OR_PROPORTION] [--stats-only] [-h] [-v VERBOSE_LEVEL] [--no_verif] \
-[--features FEATURE_FILE]""",
-        description='ABX task specification')
+        prog = 'task.py',
+        description = 'Specify and initialize a new ABX task, compute and display the '
+        'statistics, and generate the ABX triplets and pairs.',
+        usage = '%(prog)s database [output] [--help] [--verbose] '
+        '-o ON [-a ACROSS [ACROSS ...]] [-b BY [BY ...]] '
+        '[-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT_OR_PROPORTION] '
+        '[--stats-only] [--no_verif] [--features FEATURE_FILE]')
     
-    message = """must be defined by the database you are using (e.g. speaker \
-or phonemes, if your database contains columns defining these attributes)"""
+    message = 'must be defined by the database you are using (e.g. speaker '
+    'or phonemes, if your database contains columns defining these attributes)'
+
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='increase output verbosity')
     
     # I/O files
     g1 = parser.add_argument_group('I/O files')
@@ -944,21 +987,23 @@ or phonemes, if your database contains columns defining these attributes)"""
     g1.add_argument('database',
                     help='main file of the database defining the items used to form ABX '
                     'triplets and their attributes')
-    
+
+    # TODO what if output file non provided ? Test/document it
     g1.add_argument('output', nargs='?', default=None,
                     help='optional: output file, where the results of the '
-                         'analysis will be put')
+                         'analysis will be put. If the --stats-only is used '
+                         'this argument is mandatory.')
     
     # Task specification
     g2 = parser.add_argument_group('Task specification')
     
-    g2.add_argument('-o', '--on', required=True,
+    g2.add_argument('-o', '--on', required=True, action='append',
                     help='ON attribute, ' + message)
     
-    g2.add_argument('-a', '--across',  nargs='+', default=[],
+    g2.add_argument('-a', '--across',  nargs='+', default=[], action='append',
                     help='optional: ACROSS attribute(s), ' + message)
     
-    g2.add_argument('-b', '--by', nargs='+', default=[],
+    g2.add_argument('-b', '--by', nargs='+', default=[], action='append',
                     help='optional: BY attribute(s), ' + message)
     
     g2.add_argument('-f', '--filter', nargs='+', default=[],
@@ -982,10 +1027,6 @@ or phonemes, if your database contains columns defining these attributes)"""
                     help='add this flag if you only want some statistics '
                          'about the specified task')
 
-    g4.add_argument('-v', '--verbose', default=0,
-                    help='optional: level of verbosity required on the '
-                         'standard output')
-
     g4.add_argument('--no_verif', default=False, action='store_true',
                     help='optional: skip the verification of the database '
                          'file consistancy')
@@ -994,20 +1035,27 @@ or phonemes, if your database contains columns defining these attributes)"""
                     help='optional: feature file, verify the consistency '
                          'of the feature file with the item file')
 
+    # if input_args is given, split the string
+    if input_args:
+        input_args = input_args.split()
+       
     # Parse the parameters
-    args = parser.parse_args()
+    args = parser.parse_args(input_args)
 
     # Consistency checks
     if args.stats_only:
-        assert args.output, "The output file was not provided"
-
-    if not args.stats_only and os.path.exists(args.output):
+        assert args.output, "Error: --stats-only requires an output file to be provided."
+    elif args.output and os.path.exists(args.output):
         print("WARNING: Overwriting existing task file " + args.output)
         os.remove(args.output)
     
+    # since BY and ACROSS can accept several arguments, we need to
+    # join sublists in a unique top-level list (i.e. [[1], [2,3]] becomes [1,2,3])
+    args.by = sum(args.by, [])
+    args.across = sum(args.across, [])
+    
     return args
     
-
 
 """
 Command-line API
@@ -1025,8 +1073,9 @@ if __name__ == '__main__':
     args = task_parser()
 
     # Create a task instance with parsed parameters
+    # TODO .filter -> conflict here ?
     task = Task(args.database, args.on, args.across, args.by,
-                args.filter, args.regressor, args.verbose) # .filter -> conflict here ?
+                args.filter, args.regressor, args.verbose)
 
     # Do the requested processing
     if args.stats_only:
