@@ -3,14 +3,14 @@
 This module contains the functions to specify and initialize a new ABX task,
 compute and display the statistics, and generate the ABX triplets and pairs.
 
-It can also be used in a command line. See task --help for the documentation
-
 Usage
 -----
 
 From the command line:
 
 .. code-block:: bash
+
+    python task.py --help
 
     python task.py my_data.item -o column1 -a column2 column3 -b column4 \
 column5 -f "[attr == 0 for attr in column3_X]"
@@ -23,12 +23,16 @@ In python:
 .. code-block:: python
 
     import ABXpy.task
+
     # create a new task and compute the statistics
     myTask = ABXpy.task.Task('my_data.item', 'on_label', 'across_feature', \
 'by_label', filters=my_filters, regressors=my_regressors)
-    print myTask.stats          # display statistics
-    myTask.generate_triplets()  # generate a h5db file 'data.abx'containing \
-all the triplets and pairs
+
+    # display statistics
+    print myTask.stats
+
+    # generate a h5db file 'data.abx'containing all the triplets and pairs
+    myTask.generate_triplets()
 
 Example
 -------
@@ -49,18 +53,18 @@ An example of ABX triplet:
 A and X share the same 'on' attribute; A and B share the same 'across'
 attribute; A,B and X share the same 'by' attribute
 """
-# -*- coding: utf-8 -*-
 
 import argparse
 import h5py
 import numpy as np
 import os
 import pandas as pd
+import pprint
 import sys
 import tempfile
 import warnings
 
-import ABXpy.database.database as database
+import ABXpy.database.database  as database
 import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.h5tools.h52np as h52np
 import ABXpy.h5tools.h5_handler as h5_handler
@@ -128,8 +132,7 @@ class Task(object):
     """
     Define an ABX task for a given database.
 
-    Attributes
-    ----------
+    Attributes:
     `stats` : dict. Contain several statistics about the task. The main \
         3 attributes are:
 
@@ -139,8 +142,7 @@ class Task(object):
     - nb_by_levels the number of blocks of ABX triplets sharing the same \
     'by' attribute.
 
-    Parameters
-    ----------
+    Parameters:
     db_name : str
         the filename of database on which the ABX task is applied.
 
@@ -173,8 +175,8 @@ class Task(object):
         the features file. Add it to verify the consistency with the item file
     """
 
-    def __init__(self, db_name, on, across=None, by=None, filters=None,
-                 regressors=None, verbose=False):
+    def __init__(self, db_name, on, across=None, by=None,
+                 filters=None, regressors=None, verbose=False):
 
         self.verbose = verbose
 
@@ -190,8 +192,7 @@ class Task(object):
         if regressors is None:
             regressors = []
 
-        # check parameters using several 'on' isn't supported by the
-        # toolbox
+        # check parameters using several 'on' isn't supported by the toolbox
         assert isinstance(on, basestring), 'ON attribute must be specified by a string'
         on = [on]
         if isinstance(across, basestring):
@@ -331,10 +332,11 @@ class Task(object):
         set to false. The other statistics can only be approxrimate in the case
         where there are A, B, X or ABX filters.
 
-        Parameters
-        ----------
-        Approximate : bool
-            approximate the number of triplets
+        Parameters: 
+
+        approximate : bool, optional. Approximate the number of
+        triplets, default is False.
+
         """
         self.stats = {}
         self.stats['approximate'] = bool(self.filters.A or self.filters.B or
@@ -434,8 +436,8 @@ class Task(object):
         task, this function will generate the complete set of triplets and \
         the regressors.
 
-        Parameters
-        ----------
+        Parameters:
+
         by : int
             The block index
         on, across : int
@@ -447,8 +449,8 @@ class Task(object):
         with_regressors : bool, optional
             By default, true
 
-        Returns
-        -------
+        Returns:
+        
         triplets : numpy.Array
             the set of triplets generated
         regressors : numpy.Array
@@ -580,19 +582,20 @@ class Task(object):
     # FIXME in case of sampling, get rid of blocks with no samples ?
     def generate_triplets(self, output=None, sample=None):
         """Generate all possible triplets for the whole task and the
-        associated pairs
+        associated pairs.
 
         Generate the triplets and the pairs for an ABXpy.Task and store it in
         a h5db file.
 
-        Parameters
-        ----------
-        output : filename, optional
-                 The output file. If not specified, it will automatically
-                 create a new file with the same name as the input file.
+        Parameters:
+        
+        output : filename, optional. The output file. If not
+                 specified, it will automatically create a new file
+                 with the same name as the input file.
 
-        sample : bool, optional
-                 apply the function on a sample of the task
+        sample : bool, optional. Apply the function on a sample of
+                 the task
+
         """
 
         # FIXME change this to a random file name to avoid overwriting problems
@@ -663,13 +666,12 @@ class Task(object):
                     # iterate over on/across blocks
                     for block_key, block in (self.on_across_blocks[by]
                                              .groups.iteritems()):
-                        if self.verbose > 0:
+                        if self.verbose:
                             display.update('block', 1)
                         # allow to get on, across, by values as well as values
                         # of other variables that are determined by these
                         on_across_by_values = dict(db.ix[block[0]])
-                        if ((self.filters
-                             .on_across_by_filter(on_across_by_values))):
+                        if ((self.filters.on_across_by_filter(on_across_by_values))):
                             # instantiate on_across_by regressors here
                             self.regressors.set_on_across_by_regressors(
                                 on_across_by_values)
@@ -678,15 +680,15 @@ class Task(object):
                                 by, on, across, block, on_across_by_values)
                             out.write(triplets)
                             out_regs.write(regressors, indexed=True)
-                            if self.verbose > 0:
+                            if self.verbose:
                                 display.update(
                                     'sampled_triplets', triplets.shape[0])
                                 display.update('triplets',
                                                (self.by_stats[by]
                                                 ['block_sizes'][block_key]))
-                        if self.verbose > 0:
+                        if self.verbose:
                             display.display()
-        if self.verbose > 0:
+        if self.verbose:
             print("done.")
         self.generate_pairs(output)
 
@@ -710,7 +712,7 @@ class Task(object):
             _, output_tmp = tempfile.mkstemp()
             for by, db in self.by_dbs.iteritems():
                 # FIXME maybe care about this case earlier ?
-                if self.verbose > 0:
+                if self.verbose:
                     print("Writing AX/BX pairs to task file...")
                 with h5py.File(output) as fh:
                     not_empty = fh['/triplets/' + str(by)].size
@@ -822,7 +824,7 @@ class Task(object):
                     # FIXME generate inverse mapping to triplets (1 and 2) ?
         finally:
             os.remove(output_tmp)
-        if self.verbose > 0:
+        if self.verbose:
             print("done.")
 
     # number of triplets when triplets with same on, across, by are counted as
@@ -892,18 +894,34 @@ class Task(object):
                                        for stats in self.by_stats.values()])
 
     def print_stats(self, filename=None, summarized=True):
-        if filename is None:
+        """Print basic statistics on the task to a file.
+
+        This is a simple wrapper to Task.print_stats_to_stream().
+
+        Parameters:
+        
+        filename: str, optional. The file where to write
+            statistics. If not provided, write on stdout.
+
+        summarized: bool, optional. Write shorter statistics if True
+            (default), complete stats if False.
+        """
+        if not filename:
             self.print_stats_to_stream(sys.stdout, summarized)
         else:
-            with open(filename, 'w') as h:
-                self.print_stats_to_stream(h, summarized)
+            with open(filename, 'w') as f:
+                self.print_stats_to_stream(f, summarized)
 
-    def print_stats_to_stream(self, stream, summarized):
-        import pprint
+                
+    def print_stats_to_stream(self, stream=sys.stdout, summarized=True):
+        """Print basic statistics on the task to a stream.
+
+        TODO comment...
+        """
         stream.write('\n\n###### Global stats ######\n\n')
         pprint.pprint(self.stats, stream)
         stream.write('\n\n###### by blocks stats ######\n\n')
-        if not(summarized):
+        if summarized:
             for by, stats in self.by_stats.iteritems():
                 stream.write('### by level: %s ###\n' % str(by))
                 pprint.pprint(stats, stream)
@@ -943,25 +961,24 @@ def on_across_from_key(key):
 def task_parser(input_args = None):
     """Define and parse command line arguments for task specification.
 
-    For more details, have a 'python task.py --help'
+    For more details on the command line options, have a:
+    
+    .. code-block:: bash
+    
+        'python task.py --help'
 
-    Parameters
-    ----------
+    Parameters: 
 
-    input_args: str, optional. The argument string to be parsed. By
-    default, the argument string is taken from sys.argv.
+    input_args -- str, optional. The argument string to be
+    parsed. By default, the argument string is taken from sys.argv.
 
-    Return
-    ------
+    Return:
 
     a Namespace object built up from attributes parsed out of the
     argument string, as returned by argparse.parse_args().
 
+    TODO document the structure
     """
-    # TODO using lists as default value in the parser might be
-    # dangerous ?  probably not as long as it is not used more than
-    # once ?
-
     # The usage string is specified explicitly because the default
     # does not show that the mandatory arguments must come before the
     # optional ones; otherwise parsing is not possible because
@@ -1046,40 +1063,48 @@ def task_parser(input_args = None):
     if args.stats_only:
         assert args.output, "Error: --stats-only requires an output file to be provided."
     elif args.output and os.path.exists(args.output):
-        print("WARNING: Overwriting existing task file " + args.output)
+        if args.verbose:
+            print("WARNING: Overwriting existing task file " + args.output)
         os.remove(args.output)
     
-    # since BY and ACROSS can accept several arguments, we need to
+    # because BY and ACROSS can accept several arguments, we need to
     # join sublists in a unique top-level list (i.e. [[1], [2,3]] becomes [1,2,3])
     args.by = sum(args.by, [])
     args.across = sum(args.across, [])
+
+    # Task.__init__ need args.on being a unique string, not a list
+    assert len(args.on) == 1, 'Error: --on requires a unique string'
+    args.on = args.on[0]
     
     return args
-    
 
-"""
-Command-line API
 
-Example call:
-    task.py ./test.token --on word --across talker --by length --write_triplets
-"""
 # FIXME maybe some problems if wanting to pass some code directly on the
 # command-line if it contains something like s = "'a'==1 and 'b'==2" ? but
 # not a big deal ?
 # TODO detects whether the script was called from command-line
-if __name__ == '__main__':
+def main():
+    """ Command line API of the Task class
+    
+    Example call:
+    .. code-block:: bash
 
+        task.py ./data.item --on word --across talker --by length --write_triplets
+    """
     # Parse input arguments
     args = task_parser()
 
     # Create a task instance with parsed parameters
-    # TODO .filter -> conflict here ?
+    # TODO args.filter -> conflict here ?
     task = Task(args.database, args.on, args.across, args.by,
                 args.filter, args.regressor, args.verbose)
 
-    # Do the requested processing
+    # Do the requested processing depending on --stats-only
     if args.stats_only:
         task.print_stats()
     else:
         task.generate_triplets(args.output, args.sample)
+
         
+if __name__ == '__main__':
+    main()

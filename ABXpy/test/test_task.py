@@ -214,17 +214,25 @@ def test_filter_on_C():
         except:
             pass
 
-def test_task_parser():
-    """Test case for the task_parser() method"""
+class TestTaskParser:
+    """test of task.task_parser()"""
     
-    by1 = ABXpy.task.task_parser('db -o c0 -b c0 -b c1').by
-    by2 = ABXpy.task.task_parser('db -o c0 -b c0 c1').by
-    assert by1 == by2 == ['c0', 'c1']
+    def setup(self):
+        self.parser = ABXpy.task.task_parser
+        
+    def test_by(self):
+        by1 = self.parser('db -o c0 -b c0 -b c1').by
+        by2 = self.parser('db -o c0 -b c0 c1').by
+        assert by1 == by2 == ['c0', 'c1']
 
-    ac1 = ABXpy.task.task_parser('db -o c0 -a c0 -a c1 -a c2').across
-    ac2 = ABXpy.task.task_parser('db -o c0 -a c0 c1 c2').across
-    ac3 = ABXpy.task.task_parser('db -o c0 -a c0 c1 -a c2').across
-    assert ac1 == ac2 == ac3 == ['c0', 'c1', 'c2']
+    def test_across(self):
+        ac1 = self.parser('db -o c0 -a c0 -a c1 -a c2').across
+        ac2 = self.parser('db -o c0 -a c0 c1 c2').across
+        ac3 = self.parser('db -o c0 -a c0 c1 -a c2').across
+        assert ac1 == ac2 == ac3 == ['c0', 'c1', 'c2']
+
+    def test_on(self):
+        assert self.parser('db -o 1').on == '1'
 
 def main():
     # test_basic()
