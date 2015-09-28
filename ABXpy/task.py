@@ -127,6 +127,7 @@ import ABXpy.sideop.regressor_manager as regressor_manager
 
 # TODO Is the verification stage really needed in task management ?
 
+# TODO replace verbose with the standard logging
 
 class Task(object):
     """
@@ -165,8 +166,8 @@ class Task(object):
     regressors : list, optional
         a list of string specifying a filter on A, B or X.
 
-    verbose : int, optional
-        display additionnal information if set greater than 0.
+    verbose : bool, optional
+        display additionnal information if True.
 
     verify : str, optional
         verify the correctness of the database file, done by default.
@@ -175,25 +176,16 @@ class Task(object):
         the features file. Add it to verify the consistency with the item file
     """
 
-    def __init__(self, db_name, on, across=None, by=None,
-                 filters=None, regressors=None, verbose=False):
+    def __init__(self, db_name, on, across=[], by=[],
+                 filters=[], regressors=[], verbose=False):
 
         self.verbose = verbose
 
         # TODO assert a valid file, not a path
         assert os.path.exists(db_name), 'Items file {0} was not found:'.format(db_name)
 
-        if across is None:
-            across = []
-        if by is None:
-            by = []
-        if filters is None:
-            filters = []
-        if regressors is None:
-            regressors = []
-
-        # check parameters using several 'on' isn't supported by the toolbox
-        assert isinstance(on, basestring), 'ON attribute must be specified by a string'
+        # using several 'on' isn't supported by the toolbox
+        assert isinstance(on, basestring), 'ON attribute must be specified by a unique string'
         on = [on]
         if isinstance(across, basestring):
             across = [across]
@@ -990,10 +982,11 @@ def task_parser(input_args = None):
         usage = '%(prog)s database [output] [--help] [--verbose] '
         '-o ON [-a ACROSS [ACROSS ...]] [-b BY [BY ...]] '
         '[-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT_OR_PROPORTION] '
-        '[--stats-only] [--no_verif] [--features FEATURE_FILE]')
+        '[--stats-only] [--no-verif] [--features FEATURE_FILE]'
+    )
     
-    message = 'must be defined by the database you are using (e.g. speaker '
-    'or phonemes, if your database contains columns defining these attributes)'
+    message = 'must be columns defined by the database you are using (e.g. speaker '
+    'or phonemes, if your database contains such columns)'
 
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='increase output verbosity')
@@ -1040,11 +1033,11 @@ def task_parser(input_args = None):
     # Computation parameters
     g4 = parser.add_argument_group('Computation parameters')
 
-    g4.add_argument('--stats_only', default=False, action='store_true',
+    g4.add_argument('--stats-only', default=False, action='store_true',
                     help='add this flag if you only want some statistics '
                          'about the specified task')
 
-    g4.add_argument('--no_verif', default=False, action='store_true',
+    g4.add_argument('--no-verif', default=False, action='store_true',
                     help='optional: skip the verification of the database '
                          'file consistancy')
 
@@ -1061,14 +1054,16 @@ def task_parser(input_args = None):
 
     # Consistency checks
     if args.stats_only:
+        # TODO: silly condition, can write stats on stdout...
         assert args.output, "Error: --stats-only requires an output file to be provided."
     elif args.output and os.path.exists(args.output):
         if args.verbose:
             print("WARNING: Overwriting existing task file " + args.output)
         os.remove(args.output)
     
-    # because BY and ACROSS can accept several arguments, we need to
-    # join sublists in a unique top-level list (i.e. [[1], [2,3]] becomes [1,2,3])
+    # BY and ACROSS can accept several arguments either with '--by 1 2
+    # 3' or '--by 1 --by 2 3'. Thus we need to join sublists in a
+    # unique top-level list (i.e. [[1], [2,3]] becomes [1,2,3])
     args.by = sum(args.by, [])
     args.across = sum(args.across, [])
 
