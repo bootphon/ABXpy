@@ -1,19 +1,13 @@
-
-# make sure the rest of the ABXpy package is accessible
+"""Load a database from disk."""
 import os
 import sys
-package_path = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
-# remove this dependency to ABXpy and create separate repository for this ?
-
 import pandas
 import numpy
+
 import ABXpy.misc.tinytree as tinytree
 
 
-#FIXME use just one isolated | as a separator instead of two #
+# FIXME: use just one isolated | as a separator instead of two #
 
 # custom read_table that ignore empty entries at the end of a file (they
 # can result from trailing white spaces at the end for example)
@@ -25,7 +19,7 @@ def read_table(filename):
 
 # function that loads a database
 
-
+# TODO: properly deals with errors on loading file
 def load(filename, features_info=False):
     # reading the main database using pandas (it is now a DataFrame)
     ext = '.item'
