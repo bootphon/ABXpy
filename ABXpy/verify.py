@@ -17,6 +17,7 @@ In python:
     # create a new task and compute the statistics
     ABXpy.verify.check('my_data.item', 'my_data.h5f')
 """
+
 import argparse
 
 

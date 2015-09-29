@@ -108,16 +108,16 @@ import ABXpy.sideop.regressor_manager as regressor_manager
 # using something like (which should be integrated with the existing
 # dbfun stuff):
 # class ABX_context(object):
-#		def __init__(self, db):
-#                   init fields with None
-#	context = ABX_context(db_file)
+#  def __init__(self, db):
+#  init fields with None
+# context = ABX_context(db_file)
 # def new_filter(context):
-#	return [True for e in context.talker_A]
+# return [True for e in context.talker_A]
 
 # FIXME: allow other ways of providing the hierarchical db (directly in
 # pandas format, etc.)
 
-### More complicated FIXMES
+# More complicated FIXMES
 
 # FIXME: taking by datasets as the basic unit was a mistake, because
 # cases where there many small by datasets happen. Find a way to group
@@ -128,11 +128,12 @@ import ABXpy.sideop.regressor_manager as regressor_manager
 
 # TODO: replace verbose with the standard logging
 
+
 class Task(object):
-    """
-    Define an ABX task for a given database.
+    """Define an ABX task for a given database.
 
     Attributes:
+
     `stats` : dict. Contain several statistics about the task. The main \
         3 attributes are:
 
@@ -141,47 +142,43 @@ class Task(object):
     - nb_triplets the number of triplets considered.
     - nb_by_levels the number of blocks of ABX triplets sharing the same \
     'by' attribute.
-
-    Parameters:
-    items_file : str
-        the filename of database on which the ABX task is applied.
-
-    on : str
-        the 'on' attribute of the ABX task. A and X share the same 'on'
-        attribute and B has a different one.
-
-    across : list, optional
-        a list of strings containing the 'across' attributes of the ABX
-        task. A and B share the same 'across' attributes and X has a
-        different one.
-
-    by : list, optional
-        a list of strings containing the 'by' attributes of the ABX task. A,B
-        and X share the same 'by' attributes.
-
-    filters : list, optional
-        a list of string specifying a filter on A, B or X.
-
-    regressors : list, optional
-        a list of string specifying a filter on A, B or X.
-
-    verbose : bool, optional
-        display additionnal information if True.
-
-    verify : str, optional
-        verify the correctness of the database file, done by default.
-
-    features : str, optional
-        the features file. Add it to verify the consistency with the item file
     """
 
     def __init__(self, items_file, on, across=[], by=[],
                  filters=[], regressors=[], verbose=False):
-        """Initialize an ABX task with the provided item file and attributes.
+        """Initialize an ABX task with the provided attributes.
+
+        Parameters
+
+        items_file : str
+            the filename of database on which the ABX task is applied.
+
+        on : str
+            the 'on' attribute of the ABX task. A and X share the same
+            'on' attribute and B has a different one.
+
+        across : list, optional
+            a list of strings containing the 'across' attributes of
+            the ABX task. A and B share the same 'across' attributes
+            and X has a different one.
+
+        by : list, optional
+            a list of strings containing the 'by' attributes of the
+            ABX task. A,B and X share the same 'by' attributes.
+
+        filters : list, optional
+            a list of string specifying a filter on A, B or X.
+
+        regressors : list, optional
+            a list of string specifying a filter on A, B or X.
+
+        verbose : bool, optional
+            display additionnal information if True.
+
         """
 
-        # Store input arguments as class attributes, filters and
-        # regressors are processed later.
+        # Store input arguments as class attributes.
+        # Filters and regressors are processed later.
         self.items_file = items_file
         self.on = on
         self.across = across
@@ -189,10 +186,15 @@ class Task(object):
         self.verbose = verbose
 
         # Load the database from the item file
-        self.db, self.db_hierarchy, feat_db = \
-        ABXpy.database.database.load(items_file, features_info=True)
+        # This function checks for correctness of items_file.
+        try:
+            self.db, self.db_hierarchy, feat_db = ABXpy.database.database.load(
+                items_file, features_info=True)
+        except IOError as err:
+            print err
+            exit
 
-        # Check input is consistent, correct it if possible
+        # Check input parameters are consistent, correct it when possible
         self._check_input_consistency()
 
         # if 'by' or 'across' are empty create appropriate dummy columns
@@ -206,13 +208,13 @@ class Task(object):
         # note that this additional columns are not in the db_hierarchy,
         # but I don't think this is problematic
 
-        self.filters = filter_manager.FilterManager(self.db_hierarchy,
-                                                    self.on, self.across, self.by,
-                                                    filters)
+        self.filters = filter_manager.FilterManager(
+            self.db_hierarchy, self.on, self.across, self.by,
+            filters)
 
-        self.regressors = regressor_manager.RegressorManager(self.db, self.db_hierarchy,
-                                                             self.on, self.across, self.by,
-                                                             regressors)
+        self.regressors = regressor_manager.RegressorManager(
+            self.db, self.db_hierarchy, self.on, self.across, self.by,
+            regressors)
 
         self.sampling = False
 
@@ -285,9 +287,8 @@ class Task(object):
         # compute some statistics about the task
         self.compute_statistics()
 
-
     def _check_input_consistency(self):
-        """Verify the consistency of the provided input database and arguments.
+        """Verify the consistency of the provided input arguments.
 
         This method should be considered as private and not used by
         front-end users.
@@ -298,9 +299,8 @@ class Task(object):
         if self.verbose:
             logging.info('Verifying input consistency...')
 
-        # using several 'on' isn't supported by the toolbox
         assert isinstance(self.on, basestring), 'ON attribute must be a string'
-        self.on = self.on.split()
+        self.on = self.on.split()  # from str to list
         assert len(self.on) == 1, 'ON attribute must specifies a unique column'
 
         if isinstance(self.across, basestring):
@@ -331,10 +331,8 @@ class Task(object):
         if self.verbose:
             logging.info("Input is consistent")
 
-
-
     def compute_statistics(self, approximate=False):
-        """Compute the statistics of the task
+        """Compute the statistics of the task.
 
         The number of ABX triplets is exact in most cases if approximate is
         set to false. The other statistics can only be approxrimate in the case
@@ -344,23 +342,23 @@ class Task(object):
 
         approximate : bool, optional. Approximate the number of
         triplets, default is False.
-
         """
         self.stats = {}
-        self.stats['approximate'] = bool(self.filters.A or self.filters.B or
-                                         self.filters.X or self.filters.ABX)
-        self.stats['approximate_nb_triplets'] = approximate and self.stats[
-            'approximate']
+
+        is_approximate = bool(self.filters.A or self.filters.B or
+                              self.filters.X or self.filters.ABX)
+        self.stats['approximate'] = is_approximate
+        self.stats['approximate_nb_triplets'] = approximate and is_approximate
         self.stats['nb_by_levels'] = len(self.by_dbs)
         self.by_stats = {}
 
-        if self.verbose > 0:
+        if self.verbose:
             display = progress_display.ProgressDisplay()
             display.add('block', 'Computing statistics for by block',
                         self.stats['nb_by_levels'])
 
         for by in self.by_dbs:
-            if self.verbose > 0:
+            if self.verbose:
                 display.update('block', 1)
                 display.display()
             stats = {}
@@ -413,7 +411,7 @@ class Task(object):
                     stats['nb_on_pairs'] += n_A * n_X
                     if ((approximate or
                          not(self.filters.A or self.filters.B or
-                         self.filters.X or self.filters.ABX)) and
+                             self.filters.X or self.filters.ABX)) and
                             type(across) != tuple):
                         stats['nb_triplets'] += n_A * n_B * n_X
                         stats['block_sizes'][block_key] = n_A * n_B * n_X
@@ -468,8 +466,8 @@ class Task(object):
         # block and A and B have the 'across' feature of the block
         A = np.array(on_across_block, dtype=self.types[by])
         on_set = set(self.on_blocks[by].groups[on])
-        # FIXME: quick fix to process case whith no across, but better done in a
-        # separate loop ...
+        # FIXME: quick fix to process case whith no across, but better
+        # done in a separate loop ...
         if self.across == ['#across']:
             # in this case A is a singleton and B can be anything in the by
             # block that doesn't have the same 'on' as A
@@ -606,8 +604,8 @@ class Task(object):
 
         """
 
-        # FIXME: change this to a random file name to avoid overwriting problems
-        # default name for output file
+        # FIXME: change this to a random file name to avoid
+        # overwriting problems default name for output file
         if output is None:
             (basename, _) = os.path.splitext(self.items_file)
             output = basename + '.abx'
@@ -665,12 +663,16 @@ class Task(object):
                     # is performed
                     out = fh.add_dataset(group='triplets', dataset=str(
                             by), n_rows=n_rows, n_columns=3,
-                                         item_type=self.types[by], fixed_size=False)
+                                         item_type=self.types[by],
+                                         fixed_size=False)
+
                     # allow to get by values as well as values of other
                     # variables that are determined by these
                     by_values = dict(db.iloc[0])
+
                     # instantiate by regressors here
                     self.regressors.set_by_regressors(by_values)
+
                     # iterate over on/across blocks
                     for block_key, block in (self.on_across_blocks[by]
                                              .groups.iteritems()):
@@ -679,7 +681,8 @@ class Task(object):
                         # allow to get on, across, by values as well as values
                         # of other variables that are determined by these
                         on_across_by_values = dict(db.ix[block[0]])
-                        if ((self.filters.on_across_by_filter(on_across_by_values))):
+                        if self.filters.on_across_by_filter(
+                                on_across_by_values):
                             # instantiate on_across_by regressors here
                             self.regressors.set_on_across_by_regressors(
                                 on_across_by_values)
@@ -700,17 +703,17 @@ class Task(object):
             print("done.")
         self.generate_pairs(output)
 
-    # FIXME: clean this function (maybe do a few well-separated sub-functions
-    # for getting the pairs and unique them)
+    # FIXME: clean this function (maybe do a few well-separated
+    # sub-functions for getting the pairs and unique them)
     def generate_pairs(self, output=None):
         """Generate the pairs associated to the triplet list
 
-        .. note:: This function is called by generate_triplets and should not
-            be used independantly
-        """
+        .. note:: This function is called by generate_triplets and
+            should not be used independantly
 
-        # FIXME: change this to a random file name to avoid overwriting problems
-        # default name for output file
+        """
+        # FIXME: change this to a random file name to avoid
+        # overwriting problems default name for output file
         if output is None:
             (basename, _) = os.path.splitext(self.items_file)
             output = basename + '.abx'
@@ -736,7 +739,8 @@ class Task(object):
                                 'pairs', str(by), n_columns=1,
                                 item_type=pair_key_type, fixed_size=False)
                             # FIXME: repace this by a for loop by making h52np
-                            # implement the iterable pattern with next() outputing
+                            # implement the iterable pattern with
+                            # next() outputing
                             # inp.read()
                             try:
                                 while True:
@@ -745,30 +749,38 @@ class Task(object):
                                     ind = np.arange(n)
                                     i1 = 2 * ind
                                     i2 = 2 * ind + 1
-                                    # would need to amend np2h5 and h52np to remove
-                                    # the second dim...
+                                    # would need to amend np2h5 and
+                                    # h52np to remove the second
+                                    # dim...
                                     pairs = np.empty(
                                         shape=(2 * n, 1), dtype=pair_key_type)
-                                    # FIXME: change the encoding (and type_fitting)
-                                    # so that A,B and B,A have the same code ...
+                                    # FIXME: change the encoding (and
+                                    # type_fitting) so that A,B and
+                                    # B,A have the same code ...
                                     # (take a=min(a,b), b=max(a,b))
-                                    # FIXME: but allow a flag to control the
-                                    # behavior to be able to enforce A,X and B,X
-                                    # order when using assymetrical distance
+                                    # FIXME: but allow a flag to
+                                    # control the behavior to be able
+                                    # to enforce A,X and B,X order
+                                    # when using assymetrical distance
                                     # functions
                                     pairs[i1, 0] = triplets[:, 0] + (
                                         max_ind + 1) * triplets[:, 2]  # AX
                                     pairs[i2, 0] = triplets[:, 1] + (
                                         max_ind + 1) * triplets[:, 2]  # BX
-                                    # FIXME: do a unique here already? Do not store
-                                    # the inverse mapping ? (could sort triplets on
-                                    # pair1, complete pair1, sort on pair2,
+                                    # FIXME: do a unique here already?
+                                    # Do not store the inverse mapping
+                                    # ? (could sort triplets on pair1,
+                                    # complete pair1, sort on pair2,
                                     # complete pair 2 and shuffle ?)
                                     out.write(pairs)
                             except StopIteration:
                                 pass
+
                     # sort pairs
-                    handler = h5_handler.H5Handler(output_tmp, '/pairs/', str(by))
+                    handler = h5_handler.H5Handler(output_tmp,
+                                                   '/pairs/',
+                                                   str(by))
+
                     # memory: available RAM in Mo, could be a param
                     memory = 1000
                     # estimate of the amount of data to be sorted
@@ -779,18 +791,20 @@ class Task(object):
                     # harmonize units to Ko:
                     memory = 1000 * memory
                     amount = amount / 1000.
-                    # be conservative: aim at using no more than 3/4 the available
-                    # memory
-                    # if enough memory take one chunk (this will do an unnecessary
-                    # full write and read of the file... could be optimized easily)
+                    # be conservative: aim at using no more than 3/4
+                    # the available memory if enough memory take one
+                    # chunk (this will do an unnecessary full write
+                    # and read of the file... could be optimized
+                    # easily)
                     if amount <= 0.75 * memory:
-                        # would it be beneficial to have a large o_buffer_size as
-                        # well ?
+                        # would it be beneficial to have a large
+                        # o_buffer_size as well ?
                         handler.sort(buffer_size=amount)
-                    # else take around 30 chunks if possible (this seems efficient
-                    # given the current implem, using a larger number of chunks
-                    # efficiently might be possible if the reading chunks part of
-                    # the sort was cythonized ?)
+                    # else take around 30 chunks if possible (this
+                    # seems efficient given the current implem, using
+                    # a larger number of chunks efficiently might be
+                    # possible if the reading chunks part of the sort
+                    # was cythonized ?)
                     elif amount / 30. <= 0.75 * memory:
                         handler.sort(buffer_size=amount / 30.)
                     # else take minimum number of chunks possible given the
@@ -812,7 +826,8 @@ class Task(object):
                                     pairs = inp.read()
                                     pairs = np.unique(pairs)
                                     # unique alters the shape
-                                    pairs = np.reshape(pairs, (pairs.shape[0], 1))
+                                    pairs = np.reshape(pairs,
+                                                       (pairs.shape[0], 1))
                                     if pairs[0, 0] == last:
                                         pairs = pairs[1:]
                                     if pairs.size > 0:
@@ -824,8 +839,8 @@ class Task(object):
                     with h5py.File(output) as fh:
                         fh['/unique_pairs'].attrs[str(by)] = max_ind + 1
                     store = pd.HDFStore(output)
-                    # use append to make use of table format, which is better at
-                    # handling strings without much space (fixed-size format)
+                    # use append to make use of table format, which better
+                    # handles strings without much space (fixed-size format)
                     store.append('/feat_dbs/' + str(by), self.feat_dbs[by],
                                  expectedrows=len(self.feat_dbs[by]))
                     store.close()
@@ -920,7 +935,6 @@ class Task(object):
             with open(filename, 'w') as f:
                 self.print_stats_to_stream(f, summarized)
 
-
     def print_stats_to_stream(self, stream=sys.stdout, summarized=True):
         """Print basic statistics on the task to a stream.
 
@@ -937,7 +951,8 @@ class Task(object):
             try:
                 self.compute_nb_levels()
             except ValueError:
-                warnings.warn("Filters not fully supported, nb_levels per by block wont be calculated",
+                warnings.warn('Filters not fully supported, '
+                              'nb_levels per by block wont be calculated',
                               RuntimeWarning)
             for by, stats in self.by_stats.iteritems():
                 stream.write('### by level: %s ###\n' % str(by))
@@ -966,7 +981,7 @@ def on_across_from_key(key):
     return on, across
 
 
-def task_parser(input_args = None):
+def task_parser(input_args=None):
     """Define and parse command line arguments for task specification.
 
     For more details on the command line options, have a:
@@ -992,17 +1007,18 @@ def task_parser(input_args = None):
     # optional ones; otherwise parsing is not possible because
     # optional arguments can have various numbers of inputs
     parser = argparse.ArgumentParser(
-        prog = 'task.py',
-        description = 'Specify and initialize a new ABX task, compute and display the '
-        'statistics, and generate the ABX triplets and pairs.',
-        usage = '%(prog)s database [output] [--help] [--verbose] '
+        prog='task.py',
+        description='Specify and initialize a new ABX task, compute and '
+        'display the statistics, and generate the ABX triplets and pairs.',
+        usage='%(prog)s database [output] [--help] [--verbose] '
         '-o ON [-a ACROSS [ACROSS ...]] [-b BY [BY ...]] '
-        '[-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT_OR_PROPORTION] '
+        '[-f FILT [FILT ...]] [-r REG [REG ...]] '
+        '[-s SAMPLING_AMOUNT_OR_PROPORTION] '
         '[--stats-only] [--no-verif] [--features FEATURE_FILE]'
     )
 
-    message = 'must be columns defined by the database you are using (e.g. speaker '
-    'or phonemes, if your database contains such columns)'
+    message = 'must be columns defined by the database you are using '
+    '(e.g. speaker or phonemes, if your database contains such columns)'
 
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='increase output verbosity')
@@ -1011,8 +1027,8 @@ def task_parser(input_args = None):
     g1 = parser.add_argument_group('I/O files')
 
     g1.add_argument('database',
-                    help='main file of the database defining the items used to form ABX '
-                    'triplets and their attributes')
+                    help='main file of the database defining the items used to'
+                    ' form ABX triplets and their attributes')
 
     # TODO what if output file non provided ? Test/document it
     g1.add_argument('output', nargs='?', default=None,
@@ -1071,7 +1087,9 @@ def task_parser(input_args = None):
     # Consistency checks
     if args.stats_only:
         # TODO: silly condition, can write stats on stdout...
-        assert args.output, "Error: --stats-only requires an output file to be provided."
+        assert args.output, 'Error: --stats-only requires an output '
+        'file to be provided.'
+
     elif args.output and os.path.exists(args.output):
         if args.verbose:
             print("WARNING: Overwriting existing task file " + args.output)
@@ -1100,7 +1118,7 @@ def main():
     Example call:
     .. code-block:: bash
 
-        task.py ./data.item --on word --across talker --by length --write_triplets
+        task.py ./data.item --on word --across talker --by length
     """
     # Parse input arguments
     args = task_parser()
