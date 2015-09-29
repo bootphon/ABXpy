@@ -65,7 +65,7 @@ import sys
 import tempfile
 import warnings
 
-import ABXpy.database.database
+import ABXpy.database.database as abx_database
 import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.h5tools.h52np as h52np
 import ABXpy.h5tools.h5_handler as h5_handler
@@ -176,7 +176,6 @@ class Task(object):
             display additionnal information if True.
 
         """
-
         # Store input arguments as class attributes.
         # Filters and regressors are processed later.
         self.items_file = items_file
@@ -185,28 +184,23 @@ class Task(object):
         self.by = by
         self.verbose = verbose
 
-        # Load the database from the item file
-        # This function checks for correctness of items_file.
-        try:
-            self.db, self.db_hierarchy, feat_db = ABXpy.database.database.load(
-                items_file, features_info=True)
-        except IOError as err:
-            print err
-            exit
+        # Store the database in class attributes
+        self._load_items_file()
 
-        # Check input parameters are consistent, correct it when possible
+        # Check input parameters are consistent with database, correct
+        # it when possible
         self._check_input_consistency()
 
-        # if 'by' or 'across' are empty create appropriate dummy columns
-        # (note that '#' is forbidden in user names for columns)
+        # If 'by' or 'across' are empty create appropriate dummy
+        # columns (note that '#' is forbidden in user names for
+        # columns).  Note that this additional columns are not in the
+        # db_hierarchy, but I don't think this is problematic
         if not by:
             self.db['#by'] = 0
             self.by = ['#by']
         if not across:
             self.db['#across'] = range(len(self.db))
             self.across = ['#across']
-        # note that this additional columns are not in the db_hierarchy,
-        # but I don't think this is problematic
 
         self.filters = filter_manager.FilterManager(
             self.db_hierarchy, self.on, self.across, self.by,
@@ -242,7 +236,7 @@ class Task(object):
             # apply 'by' filters
             if self.filters.by_filter(by_values):
                 # get analogous feat_db
-                by_feat_db = feat_db.iloc[by_frame.index]
+                by_feat_db = self.feat_db.iloc[by_frame.index]
 
                 # drop indexes
                 by_frame = by_frame.reset_index(drop=True)
@@ -287,6 +281,28 @@ class Task(object):
         # compute some statistics about the task
         self.compute_statistics()
 
+    def _load_items_file(self):
+        """Load the provided items file from disk.
+
+        This method should be considered as private and not used by
+        front-end users.
+
+        Initializes the following Task attributes from the loaded
+        file: self.db, self.db_hierarchy, self.feat_db.
+
+        If the items file cannot be loaded, this method exits the
+        program with an error code (errno 2).
+        """
+        try:
+            # Load the database from the items file
+            self.db, self.db_hierarchy, self.feat_db = abx_database.load(
+                self.items_file, features_info=True)
+
+        except IOError, e:
+            # If loading raises an exception, exit the program
+            logging.error(e)
+            sys.exit(e)
+
     def _check_input_consistency(self):
         """Verify the consistency of the provided input arguments.
 
@@ -295,7 +311,6 @@ class Task(object):
 
         TODO: comment!
         """
-
         if self.verbose:
             logging.info('Verifying input consistency...')
 
@@ -1010,12 +1025,11 @@ def task_parser(input_args=None):
         prog='task.py',
         description='Specify and initialize a new ABX task, compute and '
         'display the statistics, and generate the ABX triplets and pairs.',
-        usage='%(prog)s database [output] [--help] [--verbose] '
-        '-o ON [-a ACROSS [ACROSS ...]] [-b BY [BY ...]] '
+        usage='%(prog)s database [output] -o ON [--help] [--verbose] '
+        '[-a ACROSS [ACROSS ...]] [-b BY [BY ...]] '
         '[-f FILT [FILT ...]] [-r REG [REG ...]] '
         '[-s SAMPLING_AMOUNT_OR_PROPORTION] '
-        '[--stats-only] [--no-verif] [--features FEATURE_FILE]'
-    )
+        '[--stats-only] [--no-verif] [--features FEATURE_FILE]')
 
     message = 'must be columns defined by the database you are using '
     '(e.g. speaker or phonemes, if your database contains such columns)'
@@ -1039,6 +1053,7 @@ def task_parser(input_args=None):
     # Task specification
     g2 = parser.add_argument_group('Task specification')
 
+    # TODO: force str and remove append on --on
     g2.add_argument('-o', '--on', required=True, action='append',
                     help='ON attribute, ' + message)
 
