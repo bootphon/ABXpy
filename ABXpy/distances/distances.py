@@ -15,20 +15,15 @@ import traceback
 import sys
 import warnings
 import pickle
-try:
-    import h5features
-except ImportError:
-    sys.path.insert(0, os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.realpath(__file__))))), 'h5features'))
-    import h5features
 
-# FIXME Enforce single process usage when using python compiled with OMP
+import h5features
+
+# FIXME: Enforce single process usage when using python compiled with OMP
 # enabled
 
-# FIXME detect when multiprocessed jobs crashed
-# FIXME do a separate functions: generic load_balancing
-# FIXME write distances in a separate file
+# FIXME: detect when multiprocessed jobs crashed
+# FIXME: do a separate functions: generic load_balancing
+# FIXME: write distances in a separate file
 
 
 def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
@@ -45,7 +40,7 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
     block_ceil_size: int
         maximum size in RAM of a block in Mb
     """
-    # FIXME check (given an optional checking function)
+    # FIXME: check (given an optional checking function)
     # that all features required in feat_dbs are indeed present in feature
     # files
 
@@ -175,8 +170,8 @@ def run_distance_job(job_description, distance_file, distance,
         start = job_description['start'][b]
         stop = job_description['stop'][b]
         if splitted_features:
-            # FIXME modify feature_file/feature_group to adapt to 'by'
-            # FIXME any change needed when several feature files before
+            # FIXME: modify feature_file/feature_group to adapt to 'by'
+            # FIXME: any change needed when several feature files before
             # splitting ?
             times = {}
             features = {}
@@ -251,7 +246,7 @@ def run_distance_job(job_description, distance_file, distance,
 
 
 # mem in megabytes
-# FIXME allow several feature files?
+# FIXME: allow several feature files?
 # and/or have an external utility for concatenating them?
 # get rid of the group in feature file (never used ?)
 def compute_distances(feature_file, feature_group, pair_file, distance_file,
@@ -268,7 +263,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
     else:
         feature_files = feature_file
         feature_groups = feature_group
-    # FIXME if there are other datasets in feature_file this is not accurate
+    # FIXME: if there are other datasets in feature_file this is not accurate
     mem_needed = 0
     for feature_file in feature_files:
         feature_size = os.path.getsize(feature_file) / float(2 ** 20)
@@ -321,7 +316,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
 
 
 # hack to get details of exceptions in child processes
-# FIXME use as a decorator?
+# FIXME: use as a decorator?
 class print_exception(object):
 
     def __init__(self, fun):

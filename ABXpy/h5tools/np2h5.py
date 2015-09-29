@@ -12,7 +12,7 @@ It needs to be used within a 'with' statement, so as to handle buffer flushing a
 
 Buffer size should be chosen according to speed/memory trade-off. Due to cache issues there is probably an optimal size.
 
-The size of the dataset to be written must be known in advance, excepted when overwriting an existing dataset. 
+The size of the dataset to be written must be known in advance, excepted when overwriting an existing dataset.
 Not writing exactly the expected amount of data causes an Exception to be thrown excepted is the fixed_size option was set to False when adding the dataset.
 """
 
@@ -74,7 +74,7 @@ class NP2H5(object):
         except:
             # raise the first exception
             if eValue is not None:
-                # FIXME the first exception will be raised, but could log a
+                # FIXME: the first exception will be raised, but could log a
                 # warning here ...
                 pass
             else:

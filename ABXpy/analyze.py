@@ -25,7 +25,7 @@ In python:
     # Prerequisite: calculate a task data.abx, and a score data.score
     ABXpy.analyze.analyze(data.score, data.abx, data.csv)
 """
-# -*- coding: utf-8 -*-
+
 """
 Created on Mon Oct 14 12:28:22 2013
 
@@ -33,15 +33,12 @@ Created on Mon Oct 14 12:28:22 2013
 """
 import h5py
 import numpy as np
-# import pandas
-# import ast
 import argparse
-import os.path as path
-import ABXpy.misc.type_fitting as type_fitting
 import os
 
+import ABXpy.misc.type_fitting as type_fitting
 
-# FIXME by_columns should be stored as attributes into the task file
+# FIXME: by_columns should be stored as attributes into the task file
 # def analyze(task_file, score_file, analyze_file, by_columns=None):
 #     """Analyse the results of a task
 
@@ -54,7 +51,7 @@ import os
 #     analyse_file: string, csv file
 #         the file that will contain the analysis
 #     """
-#     # FIXME memory issues ?
+#     # FIXME: memory issues ?
 #     bys = []
 #     by_scores = []
 #     with h5py.File(score_file) as s:
@@ -230,15 +227,15 @@ and output the results in tab separated csv format.""")
 if __name__ == '__main__':
     args = parse_args()
     score_file = args['scorefile']
-    if not path.exists(score_file):
+    if not os.path.exists(score_file):
         print('No such file: {}'.format(score_file))
         exit()
     task_file = args['taskfile']
-    if not path.exists(task_file):
+    if not os.path.exists(task_file):
         print('No such file: {}'.format(task_file))
         exit()
     result_file = args['output']
-    # if not path.exists(outfile):
+    # if not os.path.exists(outfile):
     # print 'No such file:', outfile
     # exit()
     if os.path.exists(result_file):

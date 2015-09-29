@@ -5,20 +5,14 @@ Created on Mon Dec 16 05:00:10 2013
 @author: Thomas Schatz
 """
 
-# make sure the rest of the ABXpy package is accessible
+import numpy as np
 import os
 import sys
-package_path = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
 
 import ABXpy.sideop.side_operations_manager as side_operations_manager
 import ABXpy.dbfun.dbfun_compute as dbfun_compute
 import ABXpy.dbfun.dbfun_lookuptable as dbfun_lookuptable
 import ABXpy.dbfun.dbfun_column as dbfun_column
-
-import numpy as np
 
 
 class FilterManager(side_operations_manager.SideOperationsManager):
@@ -80,7 +74,7 @@ class FilterManager(side_operations_manager.SideOperationsManager):
     def X_filter(self, on_across_by_values, db, indices):
         return vectorial_filter(lambda context: self.evaluate_X(on_across_by_values, db, indices, context), indices)
 
-    # FIXME implement ABX_filter
+    # FIXME:implement ABX_filter
     def ABX_filter(self, on_across_by_values, db, triplets):
         raise ValueError('ABX filters not implemented')
 

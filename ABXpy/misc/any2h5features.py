@@ -15,10 +15,11 @@ Created on Fri May  2 09:33:20 2014
 
 @author: Thomas Schatz
 """
-import h5features
+
 import os
 import numpy as np
 
+import h5features
 
 def any_to_h5features(path, files, h5_filename, h5_groupname, batch_size=500, load=np.load):
     """Append a list of npz files to a h5features file.

@@ -44,7 +44,7 @@ setup(
               'ABXpy.distances', 'ABXpy.h5tools', 'ABXpy.misc',
               'ABXpy.sampling', 'ABXpy.sideop', 'ABXpy.distances.metrics'],
     # url='http://pypi.python.org/pypi/ABXpy/',
-    license='license/LICENSE.txt',
+    license='LICENSE.txt',
     description='ABX discrimination task.',
     long_description=open('README.rst').read(),
     ext_modules=cythonize(extension),

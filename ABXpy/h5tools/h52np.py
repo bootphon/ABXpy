@@ -6,16 +6,15 @@ Created on Fri Oct 25 16:30:23 2013
 """
 
 
+"""Class for reading efficiently h5 files, with functions useful for merging sorted datasets.
 """
-Class for reading efficiently h5 files, with functions useful for merging sorted datasets. 
+# FIXME: Some code is shared by H52NP and NP2H5: could have a superclass:
+# optionally_h5_context_manager who would consist in implementing
+# __init__, __enter__, __exit__ where a filename or a file handle can be
+# passed and the file should be handled by the context manager only if a
+# filename is passed.
 
-Some code is shared by H52NP and NP2H5: could have a superclass: optionally_h5_context_manager 
-who would consist in implementing __init__, __enter__, __exit__ where a filename or a file handle can be passed
-and the file should be handled by the context manager only if a filename is passed.
-
-Also the functionalities specific to sorted datasets could be put in a subclass.
-
-"""
+# FIXME: Also the functionalities specific to sorted datasets could be put in a subclass.
 
 import numpy as np
 import bisect
@@ -127,10 +126,13 @@ class H52NPbuffer(object):
             if amount_in_buffer > needed:  # enough data in buffer
                 next_buf_ix = self.buf_ix + needed
                 amount_found = amount
-            else:							# not enough data in buffer (or just enough)
+            else:
+                # not enough data in buffer (or just enough)
                 next_buf_ix = self.buf_len
                 amount_found = amount_found + amount_in_buffer
-            data.append(np.copy(self.buf[self.buf_ix:next_buf_ix, :])) # the np.copy is absolutely necessary here to avoid ugly side effects...
+
+            # the np.copy is absolutely necessary here to avoid ugly side effects...
+            data.append(np.copy(self.buf[self.buf_ix:next_buf_ix, :]))
             self.buf_ix = next_buf_ix
             # fill buffer or not, according to refill policy and current buffer
             # state

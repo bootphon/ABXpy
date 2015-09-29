@@ -26,7 +26,7 @@ class SideOperationsManager(object):
         self.extensions = ['', '_A', '_B', '_X', '_AB', '_AX', '_1', '_2']
         self.all_cols = {
             node.name for tree in db_hierarchy for node in tree.preOrder()}
-        # FIXME add some checks that the original column names will not cause
+        # FIXME: add some checks that the original column names will not cause
         # parsing problems
         self.extended_cols = [
             col + ext for col in self.all_cols for ext in self.extensions]
@@ -203,7 +203,7 @@ class SideOperationsManager(object):
         we do not try to batch the _2 because we think they are potentially too small, instead if necessary we should batch several consecutive calls
         """
         # set up db_variables
-        # FIXME could/should group these three contexts ???? + ABX ????
+        # FIXME: could/should group these three contexts ???? + ABX ????
         # in the remaining elements _2 is considered as _B for a on descendant,
         # _X for a across descendant, so we only have remaining columns with
         # _A, _B or _X
@@ -280,12 +280,12 @@ class SideOperationsManager(object):
         for radical, extension in self.across_context[stage]:
             context[radical + extension] = [on_across_values[radical]]
         return context
-    # FIXME use a single function for set_by and set_on and set_across ?
+    # FIXME: use a single function for set_by and set_on and set_across ?
 
     def set_A_B_X_context(self, context_field, context, stage, db, indices):
         field = getattr(self, context_field)
         for radical, extension in field[stage]:
-            # FIXME might be faster to index once for all the columns ???
+            # FIXME: might be faster to index once for all the columns ???
             context[radical + extension] = list(db[radical][indices])
         return context
 
@@ -359,7 +359,7 @@ class SideOperationsManager(object):
     def evaluate_X(self, *args):
         return self.evaluate_A_B_X('X', *args)
 
-    # FIXME implement evaluate_ABX
+    # FIXME: implement evaluate_ABX
     # are db, indices the correct args ? or indices_A, indices_B, indices_X ? -> no triplets!!!
     # def evaluate_ABX(self, on_key, across_key, by_key, db, indices, context = None):
     #    if context is None: context = {}

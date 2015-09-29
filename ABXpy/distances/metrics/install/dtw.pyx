@@ -4,11 +4,12 @@ Created on Tue Jan 21 14:15:44 2014
 
 @author: Thomas Schatz adapted from Gabriel Synaeve's code
 
-The "feature" dimension is along the columns and the "time" dimension along the lines of arrays x and y.
-    
+The "feature" dimension is along the columns and the "time" dimension
+along the lines of arrays x and y.
+
 The function do not verify its arguments, common problems are:
     shape of one array is n instead of (n,1)
-    an array is not of the correct type DTYPE_t 
+    an array is not of the correct type DTYPE_t
     the feature dimension of the two array do not match
     the feature and time dimension are exchanged
     the dist_array is not of the correct size or type
@@ -19,20 +20,22 @@ cimport numpy as np
 cimport cython
 ctypedef np.float64_t CTYPE_t # cost type
 ctypedef np.intp_t IND_t # array index type
-CTYPE = np.float64 # cost type 
+CTYPE = np.float64 # cost type
 
 
 def dtw(x, y, metric):
     if x.shape[0] == 0 or y.shape[0] == 0:
         raise ValueError('Cannot compute distance between empty representations')
     else:
-        return _dtw(x.shape[0], y.shape[0], metric(x,y)) 
-    
- 
+        return _dtw(x.shape[0], y.shape[0], metric(x,y))
+
+
 # There was a bug at initialization in both Dan Ellis DTW and Gabriel's code:
-#   Dan Ellis: do not take into account distance between the first frame of x and the first frame of y
-#   Gabriel: init cost[0,:] and cost[:,0] by dist_array[0,:], resp. dist_array[:,0] instead of their cumsum 
-#FIXME retest negligeability of min ?
+#   Dan Ellis: do not take into account distance between the first
+#   frame of x and the first frame of y
+#   Gabriel: init cost[0,:] and cost[:,0] by dist_array[0,:],
+#   resp. dist_array[:,0] instead of their cumsum FIXME retest
+#   negligeability of min ?
 cpdef _dtw(IND_t N, IND_t M, CTYPE_t[:,:] dist_array):
     cdef IND_t i, j
     cdef CTYPE_t[:,:] cost = np.empty((N, M), dtype=CTYPE)
@@ -46,8 +49,8 @@ cpdef _dtw(IND_t N, IND_t M, CTYPE_t[:,:] dist_array):
     for i in range(1,N):
         for j in range(1,M):
             cost[i,j] = dist_array[i,j] + min(cost[i-1,j], cost[i-1,j-1], cost[i,j-1])
-    return cost[N-1,M-1] 
-   
+    return cost[N-1,M-1]
+
 """
 import numpy as np
 cimport numpy as np
@@ -55,7 +58,7 @@ cimport cython
 ctypedef np.float64_t DTYPE_t # feature type (could be int)
 ctypedef np.float64_t CTYPE_t # cost type
 ctypedef np.intp_t IND_t # array index type
-CTYPE = np.float64 # cost type 
+CTYPE = np.float64 # cost type
 
 cpdef DTW(DTYPE_t[:,:] x, DTYPE_t[:,:] y, CTYPE_t[:,:] dist_array):
     cdef IND_t N = x.shape[0]
@@ -70,5 +73,5 @@ cpdef DTW(DTYPE_t[:,:] x, DTYPE_t[:,:] y, CTYPE_t[:,:] dist_array):
     for i in range(1, N):
         for j in range(1, M):
             cost[i,j] = dist_array[i,j] + min(cost[i-1,j], cost[i-1,j-1], cost[i,j-1])
-    return cost[N-1,M-1] 
+    return cost[N-1,M-1]
 """
