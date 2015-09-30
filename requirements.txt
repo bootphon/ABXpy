@@ -9,3 +9,4 @@ h5features
 numpydoc
 mock
 pytest==2.6
+tinytree

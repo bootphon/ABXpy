@@ -5,8 +5,6 @@ import numpy
 import os.path
 import pandas
 import tinytree
-#import ABXpy.misc.tinytree as tinytree
-
 
 def load(filename, features_info=False):
     """Load an ABX database from its filename.
