@@ -144,13 +144,13 @@ class Task(object):
     'by' attribute.
     """
 
-    def __init__(self, items_file, on, across=[], by=[],
+    def __init__(self, db_file, on, across=[], by=[],
                  filters=[], regressors=[], verbose=False):
         """Initialize an ABX task with the provided attributes.
 
         Parameters
 
-        items_file : str
+        db_file : str
             the filename of database on which the ABX task is applied.
 
         on : str
@@ -176,20 +176,22 @@ class Task(object):
             display additionnal information if True.
 
         """
+        self.verbose = verbose
+
+        # Load the ABX database in class attributes
+        self.db_file = db_file
+        self._load_database()
+        logging.info('{} loaded.'.format(self.db_file))
+
         # Store input arguments as class attributes.
         # Filters and regressors are processed later.
-        self.items_file = items_file
         self.on = on
         self.across = across
         self.by = by
-        self.verbose = verbose
 
-        # Store the database in class attributes
-        self._load_items_file()
-
-        # Check input parameters are consistent with database, correct
-        # it when possible
-        self._check_input_consistency()
+        # Check that those parameters are consistent with the database
+        self._check_parameters_consistency()
+        logging.info('task parameters are consistent.')
 
         # If 'by' or 'across' are empty create appropriate dummy
         # columns (note that '#' is forbidden in user names for
@@ -230,8 +232,8 @@ class Task(object):
                 display.update('block', 1)
                 display.display()
 
-            # allow to get by values as well as values of other variables
-            # that are determined by these
+            # allow to get by values as well as values of other
+            # variables that are determined by these
             by_values = dict(by_frame.iloc[0])
             # apply 'by' filters
             if self.filters.by_filter(by_values):
@@ -281,36 +283,41 @@ class Task(object):
         # compute some statistics about the task
         self.compute_statistics()
 
-    def _load_items_file(self):
-        """Load the provided items file from disk.
+    def _load_database(self):
+        """Load a database from the provided filename.
 
-        This method should be considered as private and not used by
-        front-end users.
+        Load a database from self.db_file and initilizes self.db,
+        self.db_hierarchy, self.feat_db.
 
-        Initializes the following Task attributes from the loaded
-        file: self.db, self.db_hierarchy, self.feat_db.
+        If the file cannot be loaded, this method raises an
+        IOError exception.
 
-        If the items file cannot be loaded, this method exits the
-        program with an error code (errno 2).
         """
         try:
             # Load the database from the items file
             self.db, self.db_hierarchy, self.feat_db = abx_database.load(
-                self.items_file, features_info=True)
+                self.db_file, features_info=True)
 
         except IOError, e:
             # If loading raises an exception, exit the program
             logging.error(e)
             sys.exit(e)
 
-    def _check_input_consistency(self):
-        """Verify the consistency of the provided input arguments.
+    def _check_parameters_consistency(self):
+        """Verify the consistency of the task parameters on the database.
 
         This method should be considered as private and not used by
         front-end users.
 
-        TODO: comment!
+        The following conditions are checked. The ON parameter is
+        a unique string.  ON, ACROSS and BY corresponds to column
+        headers in the items file. Columns names in the items file
+        have no '_' or '#'.
+
+        Moreover ACROSS and BY are transformed into lists of str, in
+        case they was str.
         """
+        # TODO: from assert to exceptions
         if self.verbose:
             logging.info('Verifying input consistency...')
 
@@ -327,7 +334,7 @@ class Task(object):
         # check that required columns are present
         cols = set(self.db.columns)
         message = ' argument is invalid, check all the provided attributes'
-        ' are defined in the database ' + self.items_file
+        ' are defined in the database ' + self.db_file
 
         # the argument of issuperset needs to be a list ...
         assert cols.issuperset(self.on),     'ON' + message
@@ -622,7 +629,7 @@ class Task(object):
         # FIXME: change this to a random file name to avoid
         # overwriting problems default name for output file
         if output is None:
-            (basename, _) = os.path.splitext(self.items_file)
+            (basename, _) = os.path.splitext(self.db_file)
             output = basename + '.abx'
 
         # FIXME: use an object that guarantees that the stream will not be
@@ -730,7 +737,7 @@ class Task(object):
         # FIXME: change this to a random file name to avoid
         # overwriting problems default name for output file
         if output is None:
-            (basename, _) = os.path.splitext(self.items_file)
+            (basename, _) = os.path.splitext(self.db_file)
             output = basename + '.abx'
         # list all pairs
         all_empty = True
