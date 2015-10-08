@@ -20,7 +20,7 @@ def cmp(f1, f2):
     return filecmp.cmp(f1, f2, shallow=True)
 
 def h5cmp(f1, f2):
-    """Compare two h5 files.
+    """Compare two HDF5 files.
 
     Return True if f1 and f2 are equal, False else. Equality is
     checked with the 'h5diff' external process.
@@ -33,5 +33,4 @@ def h5cmp(f1, f2):
 
     if out:
         return False
-    else:
-        return True
+    return True

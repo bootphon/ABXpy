@@ -5,7 +5,7 @@ The npz files must respect the following conventions:
 They must contains 2 arrays:
 
 - a 1D-array named 'times'
-- a 2D-array named 'features', the 'feature' dimension along the columns and\
+- a 2D-array named 'features', the 'feature' dimension along the columns and
  the 'time' dimension along the lines
 
 """
@@ -21,7 +21,8 @@ import numpy as np
 
 import h5features
 
-def any_to_h5features(path, files, h5_filename, h5_groupname, batch_size=500, load=np.load):
+def any_to_h5features(path, files, h5_filename, h5_groupname,
+                      batch_size=500, load=np.load):
     """Append a list of npz files to a h5features file.
 
     Files must have a relative name to a directory precised by the 'path'
@@ -29,17 +30,23 @@ def any_to_h5features(path, files, h5_filename, h5_groupname, batch_size=500, lo
 
     Parameters
     ----------
+
     path : str
         Path of the directory where the numpy files are stored.
+
     files : list of filename
         List of file to convert and append.
+
     h5_filename : filename
         The output h5features file.
+
     h5_groupname : str
         Name of the h5 group where to store the numpy files (use '/features/')
         for h5features files)
+
     batch_size : int
         Size of the writing buffer (in number of npz files). By default 500.
+
     """
     features = []
     times = []
