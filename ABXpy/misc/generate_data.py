@@ -74,7 +74,7 @@ def item(base, n, repeats=0, name=''):
 
 
 def feature(n_items, n_feat=2, max_frames=3, name='', group='features'):
-    """Random feature generator.
+   """Random ABX features generator.
 
     Generate random features for a set of items, given the feature
     vector size and the maximum number of frames in items.
@@ -82,18 +82,19 @@ def feature(n_items, n_feat=2, max_frames=3, name='', group='features'):
     Parameters
     ----------
 
-    n_items : int
-        number of items for which to generate features
+    n_items : int -- number of items for which to generate features
 
-    n_feat : int, optional
-        dimension of the generated feature vector. Default is n_feat = 2
+    n_feat : int, optional -- dimension of the generated feature
+        vector. Default is n_feat = 2
 
-    max_frame : int, optional
-        number of frames for each item is randomly choosen in [1,max_frame]
+    max_frame : int, optional -- number of frames for each item is
+        randomly choosen in [1,max_frame]
 
-    name : str, optional
-        the name of the file to write. If no name is given (by
-        default), no file is written. Write a HDF5 file.
+    name : str, optional -- the name of the file to write. If no name
+        is given (by default), no file is written. Write a HDF5 file.
+
+    group : str, optional -- the name of the HDF5 group to write
+        on. Ignored if name==''. Default is 'features'.
 
     Return
     ------
@@ -115,8 +116,10 @@ def feature(n_items, n_feat=2, max_frames=3, name='', group='features'):
 
     # Write to file if required
     if name != '' :
-        # h5feature doesn't support rewritting an existing file...
-        if os.path.isfile(name): os.remove(name)
+        # h5features doesn't support rewritting an existing file...
+        if os.path.isfile(name):
+            os.remove(name)
+
         h5features.write(name, group, items, times, features)
 
     return items, times, features
