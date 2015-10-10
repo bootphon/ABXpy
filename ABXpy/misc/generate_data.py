@@ -73,7 +73,7 @@ def item(base, n, repeats=0, name=''):
     return res
 
 
-def feature(n_items, n_feat=2, max_frames=3, name=''):
+def feature(n_items, n_feat=2, max_frames=3, name='', group='features'):
     """Random feature generator.
 
     Generate random features for a set of items, given the feature
@@ -111,14 +111,13 @@ def feature(n_items, n_feat=2, max_frames=3, name=''):
         n_frames = np.random.randint(max_frames) + 1
         features.append(np.random.randn(n_frames, n_feat))
         times.append(np.linspace(0, 1, n_frames))
-        # TODO Naming files by hand is dangerous -> make a link with item() ?
         items.append('s%d' % i)
 
     # Write to file if required
     if name != '' :
         # h5feature doesn't support rewritting an existing file...
         if os.path.isfile(name): os.remove(name)
-        h5features.write(name, 'features', items, times, features)
+        h5features.write(name, group, items, times, features)
 
     return items, times, features
 
@@ -130,11 +129,12 @@ def item_and_feature(base, n, repeats=0, name_item='', n_feat=2,
     Wrapper around item() and feature() methods
     """
     # TODO dirty code here ! Clean up
-    
+
     items = item(base, n, repeats, name_item)
 
     n_files = (base ** n) * (repeats + 1)
-    items_name, times, features = feature(n_files, n_feat, max_frames, name_feature)
+    items_name, times, features = feature(n_files, n_feat, max_frames,
+                                          name_feature)
 
     return items, items_name, times, features
 
