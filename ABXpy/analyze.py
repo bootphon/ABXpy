@@ -77,7 +77,7 @@ def collapse(scorefile, taskfile, fid):
     for by_idx, by in enumerate(bys):
         print 'collapsing {0}/{1}'.format(by_idx + 1, nbys)
         context = by
-        trip_attrs = taskfid['triplets'].attrs[by]
+        trip_attrs = taskfid['triplets']['by_index'][by_idx]
 
 
         tfrk = taskfid['regressors'][by]

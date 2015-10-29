@@ -72,6 +72,8 @@ import ABXpy.sideop.regressor_manager as regressor_manager
 import ABXpy.sampling.sampler as sampler
 import ABXpy.misc.progress_display as progress_display
 import tempfile
+from tables import NaturalNameWarning
+#import numba as nb
 
 # FIXME many of the fixmes should be presented as feature requests in a
 # github instead of fixmes
@@ -156,7 +158,7 @@ class Task(object):
     """
 
     def __init__(self, db_name, on, across=None, by=None, filters=None,
-                 regressors=None, verbose=0):
+                 regressors=None, threshold=None, verbose=0):
 
         self.verbose = verbose
         assert os.path.exists(db_name), ('the item file {0} was not found:'
@@ -217,13 +219,11 @@ class Task(object):
         # note that this additional columns are not in the db_hierarchy,
         # but I don't think this is problematic
 
-        self.filters = filter_manager.FilterManager(db_hierarchy,
-                                                    on, across, by,
-                                                    filters)
-        self.regressors = regressor_manager.RegressorManager(db,
-                                                             db_hierarchy,
-                                                             on, across, by,
-                                                             regressors)
+        self.filters = filter_manager.FilterManager(
+            db_hierarchy, on, across, by, filters)
+        self.regressors = regressor_manager.RegressorManager(
+            db, db_hierarchy, on, across, by, regressors)
+        self.threshold = threshold
 
         self.sampling = False
 
@@ -299,7 +299,7 @@ class Task(object):
         self.types = types
 
         self.reg_block_indices = []
-        self.by_block_indices = []
+        self.by_block_indices = [0]
         # compute some statistics about the task
         self.compute_statistics()
 
@@ -382,8 +382,9 @@ class Task(object):
                     stats['nb_on_pairs'] += n_A * n_X
                     if ((approximate or
                          not(self.filters.A or self.filters.B or
-                         self.filters.X or self.filters.ABX)) and
-                            type(across) != tuple):
+                             self.filters.X or self.filters.ABX)) and
+                        type(across) != tuple and
+                        not self.threshold):
                         stats['nb_triplets'] += n_A * n_B * n_X
                         stats['block_sizes'][block_key] = n_A * n_B * n_X
                     else:
@@ -391,11 +392,10 @@ class Task(object):
                         # optimized because it isn't necessary to do the whole
                         # triplet generation, in particular in the case where
                         # there are no ABX filters
-                        triplets = self.on_across_triplets(
-                            by, on, across, block, on_across_by_values,
-                            with_regressors=False)
-                        stats['nb_triplets'] += triplets.shape[0]
-                        stats['block_sizes'][block_key] = triplets.shape[0]
+                        nb_triplets = self.nb_on_across_triplets(
+                            by, on, across, block, on_across_by_values)
+                        stats['nb_triplets'] += nb_triplets
+                        stats['block_sizes'][block_key] = nb_triplets
                 else:
                     stats['block_sizes'][block_key] = 0
 
@@ -518,46 +518,9 @@ class Task(object):
 
                     permut = np.argsort(new_index)
                     # TODO: replace with empty array and fill it
-                    new_permut = []
-                    i_unique = 0
-                    key_reg = new_index[permut[0]]
-                    reg_block = np.empty((len(permut), 2))
-                    i_start = 0
-                    i = 0
-                    for i, p in enumerate(permut[1:]):
-                        i += 1
-                        if new_index[p] != key_reg:
-                            reg_block[i_unique] = [i_start, i]
-                            count = i - i_start
-                            if self.threshold and count > self.threshold:
-                                # sampling this 'on across by' block
-                                sampled_block_indexes = (
-                                    i_start + \
-                                    sampler.sample_without_replacement(
-                                        self.threshold, count, dtype=ind_type))
-                                new_permut.extend(permut[sampled_block_indexes])
-                                on_across_block_index.append(
-                                    on_across_block_index[-1] + self.threshold)
-                            else:
-                                new_permut.extend(permut[i_start:i])
-                                on_across_block_index.append(
-                                    on_across_block_index[-1] + count)
-                            i_start = i
-                            i_unique += 1
-                            key_reg = new_index[p]
-
-                    reg_block[i_unique] = [i_start, i + 1]
-                    reg_block = np.resize(reg_block, (i_unique + 1, 2))
-                    count = i + 1 - i_start
-                    if self.threshold and count > self.threshold:
-                        # sampling this 'on across by' block
-                        sampled_block_indexes = (
-                            i_start + \
-                            sampler.sample_without_replacement(
-                                self.threshold, count, dtype=ind_type))
-                        new_permut.extend(permut[sampled_block_indexes])
-                    else:
-                        new_permut.extend(permut[i_start:i+1])
+                    new_permut = sort_and_threshold(
+                        permut, new_index, ind_type, on_across_block_index, 
+                        threshold=self.threshold)
 
                     # TODO add other regs, replace reg_block by indexes for collapse
                     iA = iA[new_permut]
@@ -616,6 +579,126 @@ class Task(object):
             return triplets, regressors, np.reshape(np.array(on_across_block_index), (len(on_across_block_index), 1))
         else:
             return triplets
+
+
+    def nb_on_across_triplets(self, by, on, across, on_across_block,
+                           on_across_by_values):
+        """Count all possible triplets for a given by block.
+
+        Parameters
+        ----------
+        by : int
+            The block index
+        on, across : int
+            The task attributes
+        on_across_block : list
+            the block
+        on_across_by_values : dict
+            the actual values
+        with_regressors : bool, optional
+            By default, true
+
+        Returns
+        -------
+        nb_triplets : int
+            the number of triplets to generate
+        """
+        # find all possible A, B, X where A and X have the 'on' feature of the
+        # block and A and B have the 'across' feature of the block
+        A = np.array(on_across_block, dtype=self.types[by])
+        on_set = set(self.on_blocks[by].groups[on])
+        # FIXME quick fix to process case whith no across, but better done in a
+        # separate loop ...
+        if self.across == ['#across']:
+            # in this case A is a singleton and B can be anything in the by
+            # block that doesn't have the same 'on' as A
+            B = np.array(
+                list(set(self.by_dbs[by].index).difference(on_set)),
+                dtype=self.types[by])
+        else:
+            B = self.across_blocks[by].groups[across]
+            # remove B with the same 'on' than A
+            B = np.array(list(set(B).difference(A)), dtype=self.types[by])
+        # remove X with the same 'across' than A
+
+        if type(across) is tuple:
+            antiacross_set = set(self.antiacross_blocks[by][across])
+            X = np.array(list(antiacross_set & on_set), dtype=self.types[by])
+        else:
+            X = np.array(list(on_set.difference(A)), dtype=self.types[by])
+
+        # apply singleton filters
+        db = self.by_dbs[by]
+
+        if self.filters.A:
+            A = self.filters.A_filter(on_across_by_values, db, A)
+        if self.filters.B:
+            B = self.filters.B_filter(on_across_by_values, db, B)
+        if self.filters.X:
+            X = self.filters.X_filter(on_across_by_values, db, X)
+
+        # instantiate A, B, X regressors here
+        self.regressors.set_A_regressors(on_across_by_values, db, A)
+        self.regressors.set_B_regressors(on_across_by_values, db, B)
+        self.regressors.set_X_regressors(on_across_by_values, db, X)
+
+        # A, B, X can then be combined efficiently in a full (or randomly
+        # sampled) factorial design
+        size = len(A) * len(B) * len(X)
+        on_across_block_index = [0]
+
+        if size > 0:
+            ind_type = type_fitting.fit_integer_type(size, is_signed=False)
+            # if sampling in the absence of triplets filters, do it here
+            if self.sampling and not(self.filters.ABX):
+                indices = self.sampler.sample(size, dtype=ind_type)
+            else:
+                indices = np.arange(size, dtype=ind_type)
+            # generate triplets from indices
+            iX = np.mod(indices, len(X))
+            iB = np.mod(np.divide(indices, len(X)), len(B))
+            iA = np.divide(indices, len(B) * len(X))
+            triplets = np.column_stack((A[iA], B[iB], X[iX]))
+
+            # apply triplets filters
+            if self.filters.ABX:
+                triplets = self.filters.ABX_filter(
+                    on_across_by_values, db, triplets)
+                size = triplets.shape[0]
+                # if sampling in the presence of triplets filters, do it here
+                if self.sampling:
+                    ind_type = type_fitting.fit_integer_type(
+                        size, is_signed=False)
+                    indices = self.sampler.sample(size, dtype=ind_type)
+                    triplets = triplets[indices, :]
+
+            on_across_block_index = [0]
+            # reindexing by regressors
+            Breg = [reg[iB] for regs in self.regressors.B_regressors for reg in regs]
+            Xreg = [reg[iX] for regs in self.regressors.X_regressors for reg in regs]
+            regs = np.array(Breg + Xreg).T
+
+            if len(regs) != 0:
+                n_regs = np.max(regs, 0) + 1
+                new_index = regs[:, 0].astype(ind_type)
+                for i in range(1, len(n_regs)):
+                    new_index = regs[:, i] + n_regs[i] * new_index
+
+                permut = np.argsort(new_index)
+                # TODO: replace with empty array and fill it
+                new_permut = sort_and_threshold(
+                    permut, new_index, ind_type, on_across_block_index, 
+                    threshold=self.threshold)
+
+                # TODO add other regs, replace reg_block by indexes for collapse
+                triplets = triplets[new_permut]
+
+
+        else:
+            # empty block...
+            triplets = np.empty(shape=(0, 3), dtype=self.types[by])
+
+        return triplets.shape[0]
 
     # FIXME add a mechanism to allow the specification of a random seed in a
     # way that would produce reliably the same triplets on different machines
@@ -687,90 +770,96 @@ associated pairs
 
         with np2h5.NP2H5(h5file=output) as fh:
             # FIXME test if not fixed size impacts performance a lot
-            out = fh.add_dataset(group='triplets', dataset='data',
-                                 n_rows=self.total_n_triplets, n_columns=3,
-                                 item_type=type_fitting.fit_integer_type(self.total_n_triplets),
-                                 fixed_size=False)
+            out = fh.add_dataset(
+                group='triplets', dataset='data',
+                n_rows=self.n_triplets, n_columns=3,
+                item_type=type_fitting.fit_integer_type(self.total_n_triplets),
+                fixed_size=True)
 
-            out_block_index = fh.add_dataset(group='triplets', dataset='on_across_block_index',
-                                              n_rows=self.stats['nb_blocks'], n_columns=1,
-                                              fixed_size=False)  #TODO add item type
-            out_by_index = fh.add_dataset(group='triplets', dataset='by_index',
-                                          n_rows=self.stats['nb_by_levels'], n_columns=1,
-                                          fixed_size=False)
-
+            out_block_index = fh.add_dataset(
+                group='triplets', dataset='on_across_block_index',
+                n_rows=self.stats['nb_blocks'], n_columns=1,
+                item_type=type_fitting.fit_integer_type(self.stats['nb_blocks']),
+                fixed_size=False)  #TODO add item type
+            to_delete = []
             for by, db in self.by_dbs.iteritems():
                 # class for efficiently writing to datasets of the output file
                 # (using a buffer under the hood)
-                self.by_block_indices.append(self.current_index)
                 if self.verbose > 0:
                     print("Writing ABX triplets to task file...")
+
+                # allow to get by values as well as values of other
+                # variables that are determined by these
+                by_values = dict(db.iloc[0])
 
                 datasets, indexes = self.regressors.get_regressor_info()
                 with (h5io.H5IO(
                         filename=output, datasets=datasets,
                         indexes=indexes,
                         group='/regressors/' + str(by) + '/')) as out_regs:
-                    #out_index = h5io.H5IO(filename=output, datasets=datasets, group='/on_across_block_index/' + str(by) + '/')
-                    if sample is not None:
-                        n_rows = np.uint64(round(sample * (self.by_stats[by]['nb_triplets'] /
-                                            np.float(self.total_n_triplets))))
-                    elif self.threshold:
-                        n_rows = 0
+                    self._compute_triplets(
+                        by, out, out_block_index,
+                        out_regs, sample, db, fh, by_values)
+
+                    # if no triplets found: delete by block
+                    if self.current_index == self.by_block_indices[-1]:
+                        to_delete.append(by)
                     else:
-                        n_rows = self.by_stats[by]['nb_triplets']
-                    # not fixed_size datasets are necessary only when sampling
-                    # is performed
-
-                    # allow to get by values as well as values of other
-                    # variables that are determined by these
-                    by_values = dict(db.iloc[0])
-                    # instantiate by regressors here
-                    self.regressors.set_by_regressors(by_values)
-                    # iterate over on/across blocks
-                    for block_key, block in (self.on_across_blocks[by]
-                                             .groups.iteritems()):
-                        if self.verbose > 0:
-                            display.update('block', 1)
-                        # allow to get on, across, by values as well as values
-                        # of other variables that are determined by these
-                        on_across_by_values = dict(db.ix[block[0]])
-                        if ((self.filters
-                             .on_across_by_filter(on_across_by_values))):
-                            # instantiate on_across_by regressors here
-                            self.regressors.set_on_across_by_regressors(
-                                on_across_by_values)
-                            on, across = on_across_from_key(block_key)
-                            triplets, regressors, on_across_block_index = (
-                                self.on_across_triplets(
-                                    by, on, across, block, on_across_by_values))
-                            out.write(triplets)
-                            out_regs.write(regressors, indexed=True)
-                            out_block_index.write(on_across_block_index)
-                            self.current_index += triplets.shape[0]
-                            fh.file['triplets'].attrs[str(by)] = (
-                                self.by_block_indices[-1], self.current_index)
-                            if self.verbose > 0:
-                                display.update(
-                                    'sampled_triplets', triplets.shape[0])
-                                display.update('triplets',
-                                               (self.by_stats[by]
-                                                ['block_sizes'][block_key]))
-                        if self.verbose > 0:
-                            display.display()
-
+                        self.by_block_indices.append(self.current_index)
             aux = np.array(self.by_block_indices)
-            out_by_index.write(aux.reshape((aux.size, 1)))
-
-            # removing empty bys:
-            attrs  = fh.file['triplets'].attrs[str(by)]
-            if attrs[0] == attrs[1]:
-                del fh.file['triplets'].attrs[str(by)]
+            out_by_index = fh.add_dataset(
+                group='triplets', dataset='by_index',
+                n_rows=len(aux)-1, n_columns=2,
+                item_type=type_fitting.fit_integer_type(aux[-1]),
+                fixed_size=True)
+            self.by_block_indices = np.hstack((aux[:-1, None], aux[1:, None]))
+            out_by_index.write(self.by_block_indices)
+            for by in to_delete:
                 del self.by_dbs[by]
 
+            
         if self.verbose > 0:
             print("done.")
-        self.generate_pairs(output)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", NaturalNameWarning)
+            self.generate_pairs(output)
+
+    def _compute_triplets(self, by, out, out_block_index,
+                          out_regs, sample, db, fh, by_values, display=None):
+        #out_index = h5io.H5IO(filename=output, datasets=datasets, group='/on_across_block_index/' + str(by) + '/')
+
+        # instantiate by regressors here
+        self.regressors.set_by_regressors(by_values)
+
+        # iterate over on/across blocks
+        for block_key, block in (self.on_across_blocks[by]
+                                 .groups.iteritems()):
+            if self.verbose > 0:
+                display.update('block', 1)
+            # allow to get on, across, by values as well as values
+            # of other variables that are determined by these
+            on_across_by_values = dict(db.ix[block[0]])
+            if ((self.filters
+                 .on_across_by_filter(on_across_by_values))):
+                # instantiate on_across_by regressors here
+                self.regressors.set_on_across_by_regressors(
+                    on_across_by_values)
+                on, across = on_across_from_key(block_key)
+                triplets, regressors, on_across_block_index = (
+                    self.on_across_triplets(
+                        by, on, across, block, on_across_by_values))
+                out.write(triplets)
+                out_regs.write(regressors, indexed=True)
+                out_block_index.write(on_across_block_index)
+                self.current_index += triplets.shape[0]
+                if self.verbose > 0:
+                    display.update(
+                        'sampled_triplets', triplets.shape[0])
+                    display.update('triplets',
+                                   (self.by_stats[by]
+                                    ['block_sizes'][block_key]))
+            if self.verbose > 0:
+                display.display()
 
     # FIXME clean this function (maybe do a few well-separated sub-functions
     # for getting the pairs and unique them)
@@ -787,8 +876,6 @@ associated pairs
             (basename, _) = os.path.splitext(self.database)
             output = basename + '.abx'
         # list all pairs
-        all_empty = True
-        max_ind_by = {}
         n_pairs_dict = {}
         max_ind_dict = {}
         try:
@@ -797,11 +884,10 @@ associated pairs
                 if self.verbose > 0:
                     print("Writing AX/BX pairs to task file...")
                 with h5py.File(output) as fh:
-                    triplets_attrs = fh['/triplets'].attrs[str(by)]
+                    triplets_attrs = fh['/triplets']['by_index'][n_by][...]
                 if triplets_attrs[0] == triplets_attrs[1]:
                     # subdataset is empty
                     continue
-                all_empty = False
                 max_ind = np.max(db.index.values)
                 max_ind_dict[by] = max_ind
                 pair_key_type = type_fitting.fit_integer_type(
@@ -939,7 +1025,7 @@ associated pairs
                     'unique_pairs', 'data', n_rows=n_rows, n_columns=1,
                     item_type=np.int64, fixed_size=False)
                 for n_by, (by, db) in enumerate(self.by_dbs.iteritems()):
-                    triplets_attrs = f_out.file['/triplets'].attrs[str(by)]
+                    triplets_attrs = f_out.file['/triplets']['by_index'][n_by]
                     if triplets_attrs[0] == triplets_attrs[1]:
                         # subdataset is empty
                         continue
@@ -1074,6 +1160,52 @@ def on_across_from_key(key):
     if len(across) == 1:  # this is the problematic case
         across = across[0]
     return on, across
+
+
+#@nb.autojit
+def sort_and_threshold(permut, new_index, ind_type,
+                       on_across_block_index, threshold=None):
+    new_permut = []
+    i_unique = 0
+    key_reg = new_index[permut[0]]
+    reg_block = np.empty((len(permut), 2), dtype=np.int64)
+    i_start = 0
+    i = 0
+    for i, p in enumerate(permut[1:]):
+        i += 1
+        if new_index[p] != key_reg:
+            reg_block[i_unique] = [i_start, i]
+            count = i - i_start
+            if threshold and count > threshold:
+                # sampling this 'on across by' block
+                sampled_block_indexes = (
+                    i_start + \
+                    sampler.sample_without_replacement(
+                        threshold, count, dtype=ind_type))
+                new_permut.extend(permut[sampled_block_indexes])
+                on_across_block_index.append(
+                    on_across_block_index[-1] + threshold)
+            else:
+                new_permut.extend(permut[i_start:i])
+                on_across_block_index.append(
+                    on_across_block_index[-1] + count)
+            i_start = i
+            i_unique += 1
+            key_reg = new_index[p]
+
+    reg_block[i_unique] = [i_start, i + 1]
+    reg_block = np.resize(reg_block, (i_unique + 1, 2))
+    count = i + 1 - i_start
+    if threshold and count > threshold:
+        # sampling this 'on across by' block
+        sampled_block_indexes = (
+            i_start + \
+            sampler.sample_without_replacement(
+                threshold, count, dtype=ind_type))
+        new_permut.extend(permut[sampled_block_indexes])
+    else:
+        new_permut.extend(permut[i_start:i+1])
+    return new_permut
 
 
 """

@@ -89,9 +89,9 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
         n_triplets = t['triplets']['data'].shape[0]
     with h5py.File(score_file) as s:
         s.create_dataset('scores', (n_triplets, 1), dtype=np.int8)
-        for by in bys:
+        for n_by, by in enumerate(bys):
             with h5py.File(task_file) as t, h5py.File(distance_file) as d:
-                trip_attrs = t['triplets'].attrs[by]
+                trip_attrs = t['triplets']['by_index'][n_by]
                 pair_attrs = t['unique_pairs'].attrs[by]
                 # FIXME here we make the assumption
                 # that this fits into memory ...

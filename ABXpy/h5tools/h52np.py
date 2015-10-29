@@ -186,3 +186,50 @@ class H52NPbuffer(object):
         assert self.parent.file_open
         assert self.n_columns == 1
         return bisect.bisect_right(self.buf[self.buf_ix:, :], x)
+
+
+class H5dataset2NPbuffer(H52NPbuffer):
+    """Augmentation of the H%2NPbuffer, proposing to use a subdataset
+    selected by index"""
+
+    def __init__(self, parent, group, dataset, buf_size, minimum_occupied_portion, indexes=None):
+        super(H5dataset2NPbuffer, self).__init__(
+            parent, group, dataset, buf_size,
+            minimum_occupied_portion)
+        if indexes == None:
+            self.dataset_ix = 0
+            self.dataset_end = self.dataset.shape[0]
+        else:
+            assert len(indexes) == 2
+            self.dataset_ix = indexes[0]
+            self.dataset_end = indexes[1]
+
+    # read and consume, refill automatically if the buffer becomes empty, if
+    # there is not enough data left, just send less than what was asked
+    def read(self, amount=None):
+        super(H5dataset2NPbuffer).read(amount)
+
+
+    def refill_buffer(self):
+        if not(self.dataset_ix == self.dataset_end):
+            # for now one policy is implemented: if less than
+            # self.minimum_occupied_portion of the full capacity is occupied
+            # the buffer is refilled
+            occupied_portion = 1. - float(self.buf_ix) / float(self.buf_len)
+            if occupied_portion < self.minimum_occupied_portion:
+                # set useful variables
+                curr_ix = self.dataset_ix
+                next_ix = curr_ix + self.buf_ix
+                next_buf_ix = next_ix - self.n_rows
+                amount_in_buffer = self.buf_len - self.buf_ix
+                # take care of not going out of the dataset
+                next_buf_ix = max(next_buf_ix, 0)
+                next_ix = min(next_ix, self.dataset_end)
+                # move old data
+                self.buf[next_buf_ix:next_buf_ix+amount_in_buffer, :] = self.buf[self.buf_ix:,:]
+                # add new data
+                self.buf[next_buf_ix+amount_in_buffer:, :] = self.dataset[curr_ix:next_ix,:]
+                # update indices
+                self.buf_ix = next_buf_ix
+                self.dataset_ix = next_ix
+
