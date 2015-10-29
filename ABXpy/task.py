@@ -774,7 +774,7 @@ associated pairs
                 group='triplets', dataset='data',
                 n_rows=self.n_triplets, n_columns=3,
                 item_type=type_fitting.fit_integer_type(self.total_n_triplets),
-                fixed_size=True)
+                fixed_size=False)
 
             out_block_index = fh.add_dataset(
                 group='triplets', dataset='on_across_block_index',
@@ -894,8 +894,9 @@ associated pairs
                     (max_ind + 1) ** 2 - 1, is_signed=False)
                 with h52np.H52NP(output) as f_in:
                     with np2h5.NP2H5(output_tmp) as f_out:
-                        # inp = f_in.add_dataset('triplets', 'data')
-                        inp = f_in.file['triplets']['data'][triplets_attrs[0]:triplets_attrs[1]]
+                        inp = f_in.add_subdataset('triplets', 'data',
+                                                  indexes=triplets_attrs)
+                        # inp = f_in.file['triplets']['data'][triplets_attrs[0]:triplets_attrs[1]]
                         out = f_out.add_dataset(
                             'pairs', str(by), n_columns=1,
                             item_type=pair_key_type, fixed_size=False)
@@ -905,7 +906,7 @@ associated pairs
                         try:
                             # while True:
                             for a in [1]:
-                                triplets = pair_key_type(inp)
+                                triplets = pair_key_type(inp.read())
                                 n = triplets.shape[0]
                                 ind = np.arange(n)
                                 i1 = 2 * ind

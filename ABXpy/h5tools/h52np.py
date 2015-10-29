@@ -69,6 +69,17 @@ class H52NP(object):
             raise IOError(
                 "Method add_dataset of class H52NP can only be used within a 'with' statement!")
 
+    def add_subdataset(self, group, dataset, buf_size=100, minimum_occupied_portion=0.25, indexes=None):
+        if self.file_open:
+            buf = H5dataset2NPbuffer(
+                self, group, dataset, buf_size, minimum_occupied_portion, indexes=indexes)
+            self.buffers.append(buf)
+            return buf
+        else:
+            raise IOError(
+                "Method add_dataset of class H52NP can only be used within a 'with' statement!")
+
+
 
 class H52NPbuffer(object):
 
@@ -193,21 +204,49 @@ class H5dataset2NPbuffer(H52NPbuffer):
     selected by index"""
 
     def __init__(self, parent, group, dataset, buf_size, minimum_occupied_portion, indexes=None):
-        super(H5dataset2NPbuffer, self).__init__(
-            parent, group, dataset, buf_size,
-            minimum_occupied_portion)
-        if indexes == None:
-            self.dataset_ix = 0
-            self.dataset_end = self.dataset.shape[0]
-        else:
+        assert parent.file_open
+
+        # super(H5dataset2NPbuffer, self).__init__(
+        #     parent, group, dataset, buf_size,
+        #     minimum_occupied_portion)
+
+        # get info from dataset
+        # fail if dataset do not exist
+        if not(group + '/' + dataset in parent.file):
+            raise IOError('Dataset %s does not exists in file %s!' %
+                          (dataset, parent.filename))
+        dset = parent.file[group][dataset]
+        self.n_columns = dset.shape[1]
+        self.type = dset.dtype
+        self.dataset = dset
+        self.dataset_ix = 0
+        self.dataset_end = self.dataset.shape[0]
+        if indexes is not None:
             assert len(indexes) == 2
             self.dataset_ix = indexes[0]
             self.dataset_end = indexes[1]
+        self.n_rows = self.dataset_end# - self.dataset_ix
+        # could add checks: no more than 2 dims, etc.
+
+        self.parent = parent
+        self.minimum_occupied_portion = minimum_occupied_portion
+
+        # initialize buffer
+        row_size = self.n_columns * self.type.itemsize / \
+            1000.  # entry size in kilobytes
+        self.buf_len = int(round(buf_size / row_size))
+        # buf_ix represents the number of free rows in the buffer. Here the
+        # buffer is empty
+        self.buf_ix = self.buf_len
+        self.buf = np.zeros((self.buf_len, self.n_columns), self.type)
+        # fill it
+        self.refill_buffer()
+
 
     # read and consume, refill automatically if the buffer becomes empty, if
     # there is not enough data left, just send less than what was asked
     def read(self, amount=None):
-        super(H5dataset2NPbuffer).read(amount)
+        return super(H5dataset2NPbuffer, self).read(amount)
 
 
     def refill_buffer(self):
