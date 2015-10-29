@@ -171,6 +171,12 @@ class H52NPbuffer(object):
                 self.buf_ix = next_buf_ix
                 self.dataset_ix = next_ix
 
+    def __iter__(self):
+        return self
+
+    def next(self):
+        return self.read()
+
     # true only if the input file has been totally read and the buffer is empty
     def isempty(self):
         assert self.parent.file_open
@@ -241,7 +247,6 @@ class H5dataset2NPbuffer(H52NPbuffer):
         self.buf = np.zeros((self.buf_len, self.n_columns), self.type)
         # fill it
         self.refill_buffer()
-
 
     # read and consume, refill automatically if the buffer becomes empty, if
     # there is not enough data left, just send less than what was asked

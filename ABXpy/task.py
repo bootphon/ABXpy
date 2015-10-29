@@ -896,43 +896,35 @@ associated pairs
                     with np2h5.NP2H5(output_tmp) as f_out:
                         inp = f_in.add_subdataset('triplets', 'data',
                                                   indexes=triplets_attrs)
-                        # inp = f_in.file['triplets']['data'][triplets_attrs[0]:triplets_attrs[1]]
                         out = f_out.add_dataset(
                             'pairs', str(by), n_columns=1,
                             item_type=pair_key_type, fixed_size=False)
-                        # FIXME repace this by a for loop by making h52np
-                        # implement the iterable pattern with next() outputing
-                        # inp.read()
-                        try:
-                            # while True:
-                            for a in [1]:
-                                triplets = pair_key_type(inp.read())
-                                n = triplets.shape[0]
-                                ind = np.arange(n)
-                                i1 = 2 * ind
-                                i2 = 2 * ind + 1
-                                # would need to amend np2h5 and h52np to remove
-                                # the second dim...
-                                pairs = np.empty(
-                                    shape=(2 * n, 1), dtype=pair_key_type)
-                                # FIXME change the encoding (and type_fitting)
-                                # so that A,B and B,A have the same code ...
-                                # (take a=min(a,b), b=max(a,b))
-                                # FIXME but allow a flag to control the
-                                # behavior to be able to enforce A,X and B,X
-                                # order when using assymetrical distance
-                                # functions
-                                pairs[i1, 0] = triplets[:, 0] + (
-                                    max_ind + 1) * triplets[:, 2]  # AX
-                                pairs[i2, 0] = triplets[:, 1] + (
-                                    max_ind + 1) * triplets[:, 2]  # BX
-                                # FIXME do a unique here already? Do not store
-                                # the inverse mapping ? (could sort triplets on
-                                # pair1, complete pair1, sort on pair2,
-                                # complete pair 2 and shuffle ?)
-                                out.write(pairs)
-                        except StopIteration:
-                            pass
+                        for data in inp:
+                            triplets = pair_key_type(data)
+                            n = triplets.shape[0]
+                            ind = np.arange(n)
+                            i1 = 2 * ind
+                            i2 = 2 * ind + 1
+                            # would need to amend np2h5 and h52np to remove
+                            # the second dim...
+                            pairs = np.empty(
+                                shape=(2 * n, 1), dtype=pair_key_type)
+                            # FIXME change the encoding (and type_fitting)
+                            # so that A,B and B,A have the same code ...
+                            # (take a=min(a,b), b=max(a,b))
+                            # FIXME but allow a flag to control the
+                            # behavior to be able to enforce A,X and B,X
+                            # order when using assymetrical distance
+                            # functions
+                            pairs[i1, 0] = triplets[:, 0] + (
+                                max_ind + 1) * triplets[:, 2]  # AX
+                            pairs[i2, 0] = triplets[:, 1] + (
+                                max_ind + 1) * triplets[:, 2]  # BX
+                            # FIXME do a unique here already? Do not store
+                            # the inverse mapping ? (could sort triplets on
+                            # pair1, complete pair1, sort on pair2,
+                            # complete pair 2 and shuffle ?)
+                            out.write(pairs)
 
                     # sort pairs
                     handler = h5_handler.H5Handler(output_tmp, '/pairs/', str(by))
@@ -970,19 +962,15 @@ associated pairs
                         with h52np.H52NP(output_tmp) as f_in:
                             inp = f_in.add_dataset('pairs', str(by))
                             n_pairs = 0
-                            try:
-                                last = -1
-                                while True:
-                                    pairs = inp.read()
-                                    # unique alters the shape
-                                    pairs = np.reshape(pairs, (pairs.shape[0], 1))
-                                    n_pairs += np.unique(pairs).size
-                                    if pairs[0, 0] == last:
-                                        n_pairs -= 1
-                                    if pairs.size > 0:
-                                        last = pairs[-1, 0]
-                            except StopIteration:
-                                pass
+                            last = -1
+                            for pairs in inp:
+                                # unique alters the shape
+                                pairs = np.reshape(pairs, (pairs.shape[0], 1))
+                                n_pairs += np.unique(pairs).size
+                                if pairs[0, 0] == last:
+                                    n_pairs -= 1
+                                if pairs.size > 0:
+                                    last = pairs[-1, 0]
                         n_pairs_dict[by] = n_pairs
 
                     # FIXME should have a unique function directly instead of
@@ -994,20 +982,16 @@ associated pairs
                                 'unique_pairs', str(by), n_rows=n_pairs, n_columns=1,
                                 item_type=pair_key_type, fixed_size=False)
                             # out = out_unique_pairs
-                            try:
+                            for pairs in inp:
                                 last = -1
-                                while True:
-                                    pairs = inp.read()
-                                    pairs = np.unique(pairs)
-                                    # unique alters the shape
-                                    pairs = np.reshape(pairs, (pairs.shape[0], 1))
-                                    if pairs[0, 0] == last:
-                                        pairs = pairs[1:]
-                                    if pairs.size > 0:
-                                        last = pairs[-1, 0]
-                                        out.write(pairs)
-                            except StopIteration:
-                                pass
+                                pairs = np.unique(pairs)
+                                # unique alters the shape
+                                pairs = np.reshape(pairs, (pairs.shape[0], 1))
+                                if pairs[0, 0] == last:
+                                    pairs = pairs[1:]
+                                if pairs.size > 0:
+                                    last = pairs[-1, 0]
+                                    out.write(pairs)
 
                         # store for ulterior decoding
                         store = pd.HDFStore(output)
@@ -1033,12 +1017,8 @@ associated pairs
 
                     with h52np.H52NP(output_tmp) as f_in:
                         inp = f_in.add_dataset('unique_pairs', str(by))
-                        try:
-                            while True:
-                                pairs = inp.read()
-                                out_unique_pairs.write(pairs)
-                        except StopIteration:
-                            pass
+                        for pairs in inp:
+                            out_unique_pairs.write(pairs)
 
                     with h5py.File(output) as fh:
                         fh['/unique_pairs'].attrs[str(by)] = (
