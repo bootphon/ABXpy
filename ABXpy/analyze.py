@@ -37,7 +37,7 @@ import numpy as np
 # import ast
 import argparse
 import os.path as path
-import ABXpy.misc.type_fitting as type_fitting
+from ABXpy.misc.type_fitting import fit_integer_type
 import os
 
 
@@ -68,17 +68,15 @@ def collapse(scorefile, taskfile, fid):
     """Collapses the results for each triplets sharing the same on, across and
     by labels.
     """
-    # wf_tmp = open('tmp_pandas.txt', 'wb')
+    # We make the assumption that everything fits in memory...
     scorefid = h5py.File(scorefile)
     taskfid = h5py.File(taskfile)
-    # results = []
-    bys = taskfid['feat_dbs'].keys()
-    nbys = len(bys)
+    bys = taskfid['bys'][...]
+    s = 0
+    t = 0
     for by_idx, by in enumerate(bys):
-        print 'collapsing {0}/{1}'.format(by_idx + 1, nbys)
-        context = by
+        # print 'collapsing {0}/{1}'.format(by_idx + 1, len(bys))
         trip_attrs = taskfid['triplets']['by_index'][by_idx]
-
 
         tfrk = taskfid['regressors'][by]
 
@@ -91,39 +89,26 @@ def collapse(scorefile, taskfile, fid):
         tmp = np.ascontiguousarray(indices).view(
             np.dtype((np.void, indices.dtype.itemsize * indices.shape[1])))
         n_indices = np.max(indices, 0) + 1
-        if np.prod(n_indices) > 18446744073709551615:
-            print "type not big enough"
-        ind_type = type_fitting.fit_integer_type(np.prod(n_indices),
-                                                 is_signed=False)
+        assert np.prod(n_indices) < 18446744073709551615, "type not big enough"
+        ind_type = fit_integer_type(np.prod(n_indices),
+                                    is_signed=False)
         # encoding the indices of a triplet to a unique index
         new_index = indices[:, 0].astype(ind_type)
         for i in range(1, len(n_indices)):
             new_index = indices[:, i] + n_indices[i] * new_index
 
         permut = np.argsort(new_index)
-        i_unique = 0
         # collapsing the score
-        key_reg = new_index[permut[0]]
-        mean = np.empty((len(permut), 3))
-        mean[0] = [key_reg, scores_arr[permut[0]], 0]
-        i_start = 0
-        for i, p in enumerate(permut[1:]):
-            i += 1
-            if new_index[p] != key_reg:
-                mean[i_unique, 1] = (np.mean(scores_arr[permut[i_start:i]])
-                                     + 1) / 2
-                mean[i_unique, 2] = i - i_start
-                i_start = i
-                i_unique += 1
-                key_reg = new_index[p]
-                mean[i_unique] = [key_reg, 0, 0]
-
-        mean[i_unique] = [key_reg, (np.mean(scores_arr[permut[i_start:i + 1]])
-                                    + 1) / 2, i - i_start + 1]
-        mean = np.resize(mean, (i_unique + 1, 3))
+        mean = np.empty((len(permut),), dtype=np.float64)
+        keys = np.empty((len(permut), 2), dtype=ind_type)
+        i_unique = unique(keys, mean, permut, scores_arr, new_index)
+        mean = np.resize(mean, (i_unique + 1,))
+        keys = np.resize(keys, (i_unique + 1, 2))
+        s += np.mean(mean)
+        t += np.mean(scores_arr)
 
         # retrieving the triplet indices from the unique index.
-        tmp = npdecode(mean[:, 0], n_indices)
+        tmp = npdecode(keys[:, 0], n_indices)
 
         regs = tfrk['indexed_datasets']
         indexes = []
@@ -136,17 +121,43 @@ def collapse(scorefile, taskfile, fid):
             for j in range(nregs):
                 aux.append(indexes[j][key[j]])
                 # aux.append((indexes[regs[j]])[key[j]])
-            score = mean[i, 1]
-            n = mean[i, 2]
-            result = aux + [context, score, int(n)]
+            score = mean[i]
+            n = keys[i, 1]
+            result = aux + [by, score, int(n)]
             fid.write('\t'.join(map(str, result)) + '\n')
             # results.append(aux + [context, score, n])
             # wf_tmp.write('\t'.join(map(str, results[-1])) + '\n')
     scorefid.close()
     taskfid.close()
     del taskfid
+    print s
+    print t
     # wf_tmp.close()
     # return results
+
+
+def unique(keys, mean, permut, scores_arr, new_index):
+    #TODO cython or clearer version
+    i_unique = 0
+    # collapsing the score
+    key_reg = new_index[permut[0]]
+    keys[0, 0] = key_reg
+    i_start = 0
+    i = 0
+    for i, p in enumerate(permut[1:]):
+        i += 1
+        if new_index[p] != key_reg:
+            mean[i_unique] = (np.mean(scores_arr[permut[i_start:i]])
+                              + 1) / 2
+            keys[i_unique, 1] = i - i_start
+            i_start = i
+            i_unique += 1
+            key_reg = new_index[p]
+            keys[i_unique, 0] = key_reg
+
+    mean[i_unique] = (np.mean(scores_arr[permut[i_start:i + 1]]) + 1) / 2
+    keys[i_unique, 1] = i - i_start + 1
+    return i_unique
 
 
 def analyze(task_file, score_file, result_file):

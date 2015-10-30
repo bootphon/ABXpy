@@ -40,8 +40,8 @@ if __name__ == '__main__':
                     help='Output distance file')
     # options
     g2 = parser.add_argument_group('options')
-    g2.add_argument(
-        '-n', '--ncpu', default=None, help='optional: number of cpus to use')
+    g2.add_argument('-n', '--ncpu', default=None, type=int,
+                    help='optional: number of cpus to use')
     g2.add_argument('-d', '--distance',
                     choices=option_metrics.keys(),
                     default='cosine',

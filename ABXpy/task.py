@@ -782,6 +782,7 @@ associated pairs
                 item_type=type_fitting.fit_integer_type(self.stats['nb_blocks']),
                 fixed_size=False)  #TODO add item type
             to_delete = []
+            bys = []
             for by, db in self.by_dbs.iteritems():
                 # class for efficiently writing to datasets of the output file
                 # (using a buffer under the hood)
@@ -806,6 +807,8 @@ associated pairs
                         to_delete.append(by)
                     else:
                         self.by_block_indices.append(self.current_index)
+                        bys.append(by)
+
             aux = np.array(self.by_block_indices)
             out_by_index = fh.add_dataset(
                 group='triplets', dataset='by_index',
@@ -816,6 +819,10 @@ associated pairs
             out_by_index.write(self.by_block_indices)
             for by in to_delete:
                 del self.by_dbs[by]
+            fh.file.create_dataset(
+                'bys', (aux.shape[0] -1,),
+                dtype=h5py.special_dtype(vlen=unicode))
+            fh.file['bys'][:] = bys
 
             
         if self.verbose > 0:
@@ -982,8 +989,8 @@ associated pairs
                                 'unique_pairs', str(by), n_rows=n_pairs, n_columns=1,
                                 item_type=pair_key_type, fixed_size=False)
                             # out = out_unique_pairs
+                            last = -1
                             for pairs in inp:
-                                last = -1
                                 pairs = np.unique(pairs)
                                 # unique alters the shape
                                 pairs = np.reshape(pairs, (pairs.shape[0], 1))
