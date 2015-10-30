@@ -83,7 +83,7 @@ def test_frozen_analyze():
         # assert items.h5cmp(taskfilename, frozen_file('abx'))
         # assert items.h5cmp(distance_file, frozen_file('distance'))
         # assert items.h5cmp(scorefilename, frozen_file('score'))
-        assert items.cmp(analyzefilename, frozen_file('csv'))
+        assert items.csv_cmp(analyzefilename, frozen_file('csv'))
 
     finally:
         try:
