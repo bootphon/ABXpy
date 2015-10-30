@@ -72,8 +72,6 @@ def collapse(scorefile, taskfile, fid):
     scorefid = h5py.File(scorefile)
     taskfid = h5py.File(taskfile)
     bys = taskfid['bys'][...]
-    s = 0
-    t = 0
     for by_idx, by in enumerate(bys):
         # print 'collapsing {0}/{1}'.format(by_idx + 1, len(bys))
         trip_attrs = taskfid['triplets']['by_index'][by_idx]
@@ -104,8 +102,6 @@ def collapse(scorefile, taskfile, fid):
         i_unique = unique(keys, mean, permut, scores_arr, new_index)
         mean = np.resize(mean, (i_unique + 1,))
         keys = np.resize(keys, (i_unique + 1, 2))
-        s += np.mean(mean)
-        t += np.mean(scores_arr)
 
         # retrieving the triplet indices from the unique index.
         tmp = npdecode(keys[:, 0], n_indices)
@@ -130,8 +126,6 @@ def collapse(scorefile, taskfile, fid):
     scorefid.close()
     taskfid.close()
     del taskfid
-    print s
-    print t
     # wf_tmp.close()
     # return results
 
