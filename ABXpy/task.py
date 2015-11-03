@@ -822,9 +822,8 @@ associated pairs
             fh.file.create_dataset(
                 'bys', (aux.shape[0] -1,),
                 dtype=h5py.special_dtype(vlen=unicode))
-            fh.file['bys'][:] = bys
+            fh.file['bys'][:] = [str(by) for by in bys]
 
-            
         if self.verbose > 0:
             print("done.")
         with warnings.catch_warnings():
