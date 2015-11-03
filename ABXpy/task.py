@@ -721,6 +721,10 @@ associated pairs
         sample : bool, optional
                  apply the function on a sample of the task
         """
+        if self.stats['nb_triplets'] == 0:
+            warnings.warn('There are no possible ABX triplets'
+                          ' in the specified task', UserWarning)
+            return
 
         # FIXME change this to a random file name to avoid overwriting problems
         # default name for output file
@@ -753,6 +757,7 @@ associated pairs
         else:
             self.threshold = False
 
+        display=None
         if self.verbose > 0:
             display = progress_display.ProgressDisplay()
             display.add(
@@ -800,7 +805,7 @@ associated pairs
                         group='/regressors/' + str(by) + '/')) as out_regs:
                     self._compute_triplets(
                         by, out, out_block_index,
-                        out_regs, sample, db, fh, by_values)
+                        out_regs, sample, db, fh, by_values, display=display)
 
                     # if no triplets found: delete by block
                     if self.current_index == self.by_block_indices[-1]:
