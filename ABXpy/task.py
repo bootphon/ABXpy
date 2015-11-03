@@ -299,7 +299,6 @@ class Task(object):
         self.types = types
 
         self.reg_block_indices = []
-        self.by_block_indices = [0]
         # compute some statistics about the task
         self.compute_statistics()
 
@@ -764,6 +763,7 @@ associated pairs
             display.add(
                 'sampled_triplets', 'Triplets sampled:', self.n_triplets)
 
+        self.by_block_indices = [0]
         self.current_index = 0
         # fill output file with list of needed ABX triplets, it is done
         # independently for each 'by' value

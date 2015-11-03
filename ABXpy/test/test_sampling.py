@@ -110,10 +110,8 @@ def test_sampling_task():
         print "stats computed"
         # stats = task.stats
         task.generate_triplets(sample=0.2)
-        print "first sample"
         os.remove('data.abx')
         task.generate_triplets(sample=200)
-        print "second sample"
     finally:
         try:
             os.remove('data.abx')
