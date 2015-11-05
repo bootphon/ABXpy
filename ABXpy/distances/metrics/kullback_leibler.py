@@ -30,7 +30,7 @@ def kl_divergence(x, y, thresholded=True, symmetrized=True, normalize=True):
     """
     assert (x.dtype == np.float64 and y.dtype == np.float64) or (
         x.dtype == np.float32 and y.dtype == np.float32)
-    assert (np.all(x.sum(1) != 0.) and np.all(y.sum(1) != 0.))
+    # assert (np.all(x.sum(1) != 0.) and np.all(y.sum(1) != 0.))
     if thresholded:
         normalize = True
     if normalize:

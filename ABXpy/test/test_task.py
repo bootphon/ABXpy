@@ -105,7 +105,7 @@ def test_multiple_across():
 def test_no_across():
     items.generate_testitems(2, 3, name='data.item')
     try:
-        task = ABXpy.task.Task('data.item', 'c0', None, 'c2', verbose=1)
+        task = ABXpy.task.Task('data.item', 'c0', None, 'c2')
         stats = task.stats
         assert stats['nb_blocks'] == 8
         assert stats['nb_triplets'] == 16

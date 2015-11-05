@@ -8,7 +8,7 @@ It can also be used in a command line. See task --help for the documentation
 Usage
 -----
 
-Form the command line:
+From the command line:
 
 .. code-block:: bash
 
