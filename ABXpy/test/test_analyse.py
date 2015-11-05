@@ -73,8 +73,8 @@ def test_threshold_analyze():
         threshold=2
 
         items.generate_db_and_feat(3, 3, 1, item_file, 2, 3, feature_file)
-        task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2', threshold=threshold)
-        task.generate_triplets(taskfilename)
+        task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
+        task.generate_triplets(taskfilename, threshold=threshold)
         distances.compute_distances(feature_file, '/features/', taskfilename,
                                     distance_file, dtw_cosine_distance, n_cpu=1)
         score.score(taskfilename, distance_file, scorefilename)
@@ -129,5 +129,4 @@ def test_frozen_analyze():
         except:
             pass
 
-
-test_frozen_analyze()
+test_threshold_analyze()

@@ -158,7 +158,7 @@ class Task(object):
     """
 
     def __init__(self, db_name, on, across=None, by=None, filters=None,
-                 regressors=None, threshold=None, verbose=0):
+                 regressors=None, verbose=0):
 
         self.verbose = verbose
         assert os.path.exists(db_name), ('the item file {0} was not found:'
@@ -223,7 +223,6 @@ class Task(object):
             db_hierarchy, on, across, by, filters)
         self.regressors = regressor_manager.RegressorManager(
             db, db_hierarchy, on, across, by, regressors)
-        self.threshold = threshold
 
         self.sampling = False
 
@@ -382,8 +381,7 @@ class Task(object):
                     if ((approximate or
                          not(self.filters.A or self.filters.B or
                              self.filters.X or self.filters.ABX)) and
-                        type(across) != tuple and
-                        not self.threshold):
+                        type(across) != tuple):
                         stats['nb_triplets'] += n_A * n_B * n_X
                         stats['block_sizes'][block_key] = n_A * n_B * n_X
                     else:
