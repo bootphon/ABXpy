@@ -580,7 +580,8 @@ class Task(object):
 
     def nb_on_across_triplets(self, by, on, across, on_across_block,
                            on_across_by_values):
-        """Count all possible triplets for a given by block.
+        """Count all possible triplets for a given by block. Does not take in
+        account sample or threshold.
 
         Parameters
         ----------
@@ -634,23 +635,13 @@ class Task(object):
         if self.filters.X:
             X = self.filters.X_filter(on_across_by_values, db, X)
 
-        # instantiate A, B, X regressors here
-        self.regressors.set_A_regressors(on_across_by_values, db, A)
-        self.regressors.set_B_regressors(on_across_by_values, db, B)
-        self.regressors.set_X_regressors(on_across_by_values, db, X)
-
         # A, B, X can then be combined efficiently in a full (or randomly
         # sampled) factorial design
         size = len(A) * len(B) * len(X)
-        on_across_block_index = [0]
 
         if size > 0:
             ind_type = type_fitting.fit_integer_type(size, is_signed=False)
-            # if sampling in the absence of triplets filters, do it here
-            if self.sampling and not(self.filters.ABX):
-                indices = self.sampler.sample(size, dtype=ind_type)
-            else:
-                indices = np.arange(size, dtype=ind_type)
+            indices = np.arange(size, dtype=ind_type)
             # generate triplets from indices
             iX = np.mod(indices, len(X))
             iB = np.mod(np.divide(indices, len(X)), len(B))
@@ -661,35 +652,6 @@ class Task(object):
             if self.filters.ABX:
                 triplets = self.filters.ABX_filter(
                     on_across_by_values, db, triplets)
-                size = triplets.shape[0]
-                # if sampling in the presence of triplets filters, do it here
-                if self.sampling:
-                    ind_type = type_fitting.fit_integer_type(
-                        size, is_signed=False)
-                    indices = self.sampler.sample(size, dtype=ind_type)
-                    triplets = triplets[indices, :]
-
-            on_across_block_index = [0]
-            # reindexing by regressors
-            Breg = [reg[iB] for regs in self.regressors.B_regressors for reg in regs]
-            Xreg = [reg[iX] for regs in self.regressors.X_regressors for reg in regs]
-            regs = np.array(Breg + Xreg).T
-
-            if len(regs) != 0:
-                n_regs = np.max(regs, 0) + 1
-                new_index = regs[:, 0].astype(ind_type)
-                for i in range(1, len(n_regs)):
-                    new_index = regs[:, i] + n_regs[i] * new_index
-
-                permut = np.argsort(new_index)
-                # TODO: replace with empty array and fill it
-                new_permut = sort_and_threshold(
-                    permut, new_index, ind_type, on_across_block_index, 
-                    threshold=self.threshold)
-
-                # TODO add other regs, replace reg_block by indexes for collapse
-                triplets = triplets[new_permut]
-
 
         else:
             # empty block...
