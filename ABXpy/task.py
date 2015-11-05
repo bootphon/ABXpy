@@ -1221,8 +1221,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         usage="""%(prog)s database [output] -o ON [-a ACROSS [ACROSS ...]] \
 [-b BY [BY ...]] [-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT\
-_OR_PROPORTION] [--stats-only] [-h] [-v VERBOSE_LEVEL] [--no_verif] \
-[--features FEATURE_FILE] [--threshold THRESHOLD]""",
+_OR_PROPORTION] [--stats-only] [-h] [-v VERBOSE_LEVEL] \
+[--threshold THRESHOLD]""",
         description='ABX task specification')
     message = """must be defined by the database you are using (e.g. speaker \
 or phonemes, if your database contains columns defining these attributes)"""
