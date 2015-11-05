@@ -17,7 +17,7 @@ before_install:
 # Install packages
 install:
   - conda install --yes python=2.7 cython numpy scipy h5py pandas pytest pytables matplotlib
-  - pip install -t /home/travis/miniconda/lib/python2.7/site-packages --no-deps h5features
+  - pip install -t /home/travis/miniconda2/lib/python2.7/site-packages --no-deps h5features
   - export PATH=/home/travis/virtualenv/python2.7.8/build:$PATH
   # Coverage packages are on my binstar channel
   - make install
