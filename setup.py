@@ -49,7 +49,7 @@ setup(
     long_description=open('README.rst').read(),
     ext_modules=cythonize(extension),
     install_requires=[
-        "python >= 2.7",
+        #"python >= 3.4",
         "h5py >= 2.2.1",
         "numpy >= 1.8.0",
         "pandas >= 0.13.1",
