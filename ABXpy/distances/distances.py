@@ -252,8 +252,8 @@ def run_distance_job(job_description, distance_file, distance,
 def compute_distances(feature_file, feature_group, pair_file, distance_file,
                       distance, n_cpu=None, mem=1000,
                       feature_file_as_list=False):
-    with h5py.File(distance_file) as fh:
-        fh.attrs.create('distance', pickle.dumps(distance))
+    #with h5py.File(distance_file) as fh:
+    #    fh.attrs.create('distance', pickle.dumps(distance))
 
     if n_cpu is None:
         n_cpu = multiprocessing.cpu_count()
