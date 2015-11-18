@@ -11,9 +11,9 @@ Implements the DBfun API
 
 
 import ast
-import dbfun
-import dbfun_lookuptable
-import lookuptable_connector
+from . import dbfun
+from . import dbfun_lookuptable
+from . import lookuptable_connector
 
 
 # FIXME: remove dbfun prefix from dbfun_lookuptable and dbfun_connector ?

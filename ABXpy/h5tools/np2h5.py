@@ -1,30 +1,32 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Sep 19 13:46:18 2013
+"""Created on Thu Sep 19 13:46:18 2013
 
 @author: Thomas Schatz
 
-Class for efficiently writing to disk (in a specified dataset of a HDF5 file)
-simple two-dimensional numpy arrays that are incrementally generated along the first dimension.
-It uses buffers to avoid small I/O.
+Class for efficiently writing to disk (in a specified dataset of a
+HDF5 file) simple two-dimensional numpy arrays that are incrementally
+generated along the first dimension.  It uses buffers to avoid small
+I/O.
 
-It needs to be used within a 'with' statement, so as to handle buffer flushing and opening and closing of the underlying HDF5 file smoothly.
+It needs to be used within a 'with' statement, so as to handle buffer
+flushing and opening and closing of the underlying HDF5 file smoothly.
 
-Buffer size should be chosen according to speed/memory trade-off. Due to cache issues there is probably an optimal size.
+Buffer size should be chosen according to speed/memory trade-off. Due
+to cache issues there is probably an optimal size.
 
-The size of the dataset to be written must be known in advance, excepted when overwriting an existing dataset.
-Not writing exactly the expected amount of data causes an Exception to be thrown excepted is the fixed_size option was set to False when adding the dataset.
+The size of the dataset to be written must be known in advance,
+excepted when overwriting an existing dataset. Not writing exactly
+the expected amount of data causes an Exception to be thrown excepted
+is the fixed_size option was set to False when adding the dataset.
+
 """
 
 import numpy as np
 import h5py
 
-
 class NP2H5(object):
-
-    # sink is the name of the HDF5 file to which to write, buffer size is in
-    # kilobytes
-
+    # sink is the name of the HDF5 file to which to write, buffer size
+    # is in kilobytes
     def __init__(self, h5file):
         # set up output file and buffer list
         if isinstance(h5file, str):
@@ -69,8 +71,9 @@ class NP2H5(object):
             # check that all buffers were completed (defaults to true for
             # dataset without a fixed size)
             elif not(all([buf.iscomplete() for buf in self.buffers])):
-                raise Warning(
-                    'File %s, the amount of data actually written is not consistent with the size of the datasets' % self.filename)
+                raise Warning('File {}, the amount of data actually written '
+                              'is not consistent with the size of the datasets'
+                              .format(self.filename))
         except:
             # raise the first exception
             if eValue is not None:
@@ -80,25 +83,27 @@ class NP2H5(object):
             else:
                 raise
 
-    def add_dataset(self, group, dataset, n_rows=0, n_columns=None, chunk_size=100, buf_size=100, item_type=np.int64, overwrite=False, fixed_size=True):
+    def add_dataset(self, group, dataset, n_rows=0, n_columns=None,
+                    chunk_size=100, buf_size=100, item_type=np.int64,
+                    overwrite=False, fixed_size=True):
         if n_columns is None:
             raise ValueError(
                 'You have to specify the number of columns of the dataset.')
         if self.file_open:
             buf = NP2H5buffer(self, group, dataset, n_rows, n_columns,
-                              chunk_size, buf_size, item_type, overwrite, fixed_size)
+                              chunk_size, buf_size, item_type,
+                              overwrite, fixed_size)
             self.buffers.append(buf)
             return buf
         else:
-            raise IOError(
-                "Method add_dataset of class NP2H5 can only be used within a 'with' statement!")
+            raise IOError("Method add_dataset of class NP2H5 can only "
+                          "be used within a 'with' statement!")
 
 
 class NP2H5buffer(object):
-
     # buf_size in Ko
-
-    def __init__(self, parent, group, dataset, n_rows, n_columns, chunk_size, buf_size, item_type, overwrite, fixed_size):
+    def __init__(self, parent, group, dataset, n_rows, n_columns,
+                 chunk_size, buf_size, item_type, overwrite, fixed_size):
 
         assert parent.file_open
 
@@ -116,8 +121,8 @@ class NP2H5buffer(object):
         # built-in type was specified
         self.type = np.dtype(item_type)
         if self.type.itemsize == 0:
-            raise AttributeError(
-                'NP2H5 can only be used with numpy arrays whose items have a fixed size in memory')
+            raise AttributeError('NP2H5 can only be used with numpy arrays '
+                                 'whose items have a fixed size in memory')
 
         # initialize buffer
         self.buf_len = nb_lines(self.type.itemsize, n_columns, buf_size)
@@ -131,12 +136,14 @@ class NP2H5buffer(object):
         if group + '/' + dataset in parent.file:
             if overwrite:
                 self.dataset = parent.file[group][dataset]
-                if self.dataset.shape[0] != n_rows or self.dataset.shape[1] != n_columns or self.dataset.dtype != self.type:
-                    raise IOError(
-                        'Overwriting a dataset is only possible if it already has the correct shape and dtype')
+                if (self.dataset.shape[0] != n_rows or
+                    self.dataset.shape[1] != n_columns or
+                    self.dataset.dtype != self.type):
+                    raise IOError('Overwriting a dataset is only possible if '
+                                  'it already has the correct shape and dtype')
             else:
-                raise IOError(
-                    'Dataset %s already exists in file %s!' % (dataset, parent.filename))
+                raise IOError('Dataset {} already exists in file {}!'
+                              .format(dataset, parent.filename))
         else:
             # if necessary create group
             try:
@@ -150,8 +157,10 @@ class NP2H5buffer(object):
             else:
                 chunk_lines = nb_lines(
                     self.type.itemsize, n_columns, chunk_size)
-                g.create_dataset(dataset, (n_rows, n_columns), dtype=self.type, chunks=(
-                    chunk_lines, n_columns), maxshape=(None, n_columns))
+                g.create_dataset(dataset, (n_rows, n_columns),
+                                 dtype=self.type,
+                                 chunks=( chunk_lines, n_columns),
+                                 maxshape=(None, n_columns))
             self.dataset = parent.file[group][dataset]
 
         # store useful parameters
@@ -162,8 +171,9 @@ class NP2H5buffer(object):
     def write(self, data):
         # fail if not used in a with statement of a parent NP2H5 object
         if not(self.parent.file_open):
-            raise IOError(
-                "Method write of class NP2H5buffer can only be used within a 'with' statement of parent NP2H5 object!")
+            raise IOError("Method write of class NP2H5buffer can only be used "
+                          "within a 'with' statement of parent NP2H5 object!")
+
         target_ix = self.buf_ix + data.shape[0]
         # if size is not of fixed size, check that it is big enough
         if not(self.fixed_size):

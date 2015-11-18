@@ -1,3 +1,4 @@
+* TODO compatibility tests
 * package organization
 ** TODO python3 compatibility
 ** TODO move tests in root

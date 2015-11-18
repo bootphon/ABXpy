@@ -298,10 +298,10 @@ class Task(object):
             self.db, self.db_hierarchy, self.feat_db = abx_database.load(
                 self.db_file, features_info=True)
 
-        except IOError, e:
+        except IOError as err:
             # If loading raises an exception, exit the program
-            logging.error(e)
-            sys.exit(e)
+            logging.error(err)
+            sys.exit(err)
 
     def _check_parameters_consistency(self):
         """Verify the consistency of the task parameters on the database.

@@ -5,7 +5,6 @@ Created on Tue Oct 15 09:48:31 2013
 @author: Thomas Schatz
 """
 
-
 """Sort rows of a several two dimenional numeric dataset (possibly
 with just one column) according to numeric key in two-dimensional key
 dataset with just one column (the first dimension of all datasets
@@ -32,12 +31,11 @@ import numpy as np
 import tempfile
 import os
 import h5py
-import np2h5
-import h52np  # FIXME: shutil
+from . import np2h5
+from . import h52np  # FIXME shutil
 
 
 class H5Handler(object):
-
     def __init__(self, h5file, keygroup, keyset, groups=None, datasets=None):
         if groups is None:
             groups = []
@@ -46,24 +44,26 @@ class H5Handler(object):
         paths = [g + '/' + d for g, d in zip(groups, datasets)]
         keypath = keygroup + '/' + keyset
         if keypath in paths:
-            raise ValueError(
-                'key dataset %s should not be in the list of datasets to be sorted: %s' % (keypath, paths))
+            raise ValueError('key dataset {} should not be in the list '
+                             'of datasets to be sorted: {}'
+                             .format(keypath, paths))
         self.file = h5file
         self.groups = [keygroup] + groups
         self.datasets = [keyset] + datasets
         self.sources = zip(self.groups, self.datasets)
 
-    # sort the content of several datasets with n lines and varying number of columns in an h5file according to the order specified in the first column of the 'key' dataset
-    # the result replaces the original datasets
-    # order is specified by integers and sort is done in increasing order
-    # buffer size is in Ko
+    # Sort the content of several datasets with n lines and varying
+    # number of columns in an h5file according to the order specified
+    # in the first column of the 'key' dataset.  The result replaces
+    # the original datasets.  Order is specified by integers and sort
+    # is done in increasing order.  Buffer size is in Ko.
     def sort(self, buffer_size=1000, o_buffer_size=1000):
 
         # first backup file to be sorted
         self.backupDir = tempfile.mkdtemp()
         self.backup = os.path.join(self.backupDir, os.path.basename(self.file))
-        # shutil.copyfile(self.file, self.backup) #FIXME if no backup is mad cannot recover from exceptions ...
-        #
+        # shutil.copyfile(self.file, self.backup)
+        #FIXME if no backup is mad cannot recover from exceptions ...
         try:
             with H5TMP() as tmp:
                 with h5py.File(self.file) as f:
@@ -71,8 +71,9 @@ class H5Handler(object):
                     # check file structure
                     for g, d in self.sources:
                         if not(g + '/' + d in f):
-                            raise IOError(
-                                'Dataset %s does not exist in group %s of file %s!' % (d, g, self.file))
+                            raise IOError('Dataset {} does not exist in '
+                                          'group {} of file {}!'
+                                          .format(d, g, self.file))
 
                     # set tmp file structure (cannot be done in __init__
                     # because the tmp file is destroyed as soon as the 'with'
@@ -85,8 +86,9 @@ class H5Handler(object):
                     dsets = [f[g][d] for g, d in self.sources]
                     n_rows = [dset.shape[0] for dset in dsets]
                     if not(all([n_row == n_rows[0] for n_row in n_rows])):
-                        raise IOError(
-                            'First dimensions of all the datasets should be the same')
+                        raise IOError('First dimensions of all the '
+                                      'datasets should be the same')
+
                     self.n_row = n_rows[0]
                     self.n_columns = [dset.shape[1] for dset in dsets]
                     self.dtypes = [dset.dtype for dset in dsets]
@@ -111,14 +113,15 @@ class H5Handler(object):
                         self.extract_chunk(row, self.n_row, n_chunks)
                         n_chunks = n_chunks + 1
 
-                # merge (tmp still open but f closed, both are important (tmp destruction and backup))
-                # try block to allow backup recovery if something goes wrong
+                # Merge (tmp still open but f closed, both are
+                # important (tmp destruction and backup)).  Try block
+                # to allow backup recovery if something goes wrong
                 try:
                     with np2h5.NP2H5(self.file) as o:
                         with h52np.H52NP(tmp) as i:
-
-                            # buf_size =  ? for i: n_chunks * n_line_buf * totallinecost = buf_size ...
-                            # for o ?
+                            # buf_size = ?  for i: n_chunks *
+                            # n_line_buf * totallinecost = buf_size
+                            # ...  for o ?
 
                             # create n_datasets*n_chunks input buffers
                             # number of rows
@@ -131,10 +134,12 @@ class H5Handler(object):
                             for ix, (g, d) in enumerate(self.sources):
                                 buf1 = []
                                 for c in range(n_chunks):
-                                    buf_size = self.dtypes[
-                                        ix].itemsize * self.n_columns[ix] * i_buf_rows / 1000.
+                                    buf_size = (self.dtypes[ ix].itemsize *
+                                                self.n_columns[ix] *
+                                                i_buf_rows / 1000.)
                                     buf1.append(
-                                        i.add_dataset(g, d + '_' + str(c), buf_size))
+                                        i.add_dataset(g, d + '_' + str(c),
+                                                      buf_size))
                                 i_buf.append(buf1)
 
                             # create n_datasets output buffers
@@ -264,33 +269,3 @@ class H5TMP(object):
             print('problem')
             # here could log a warning...
             pass
-
-# TODO: Move in test/some_file
-def test():
-    # generate random h5 file
-    n1 = 10
-    n2 = 1000
-    np.random.seed(42)
-    folder = tempfile.mkdtemp()
-    with h5py.File(os.path.join(folder, 'tmp.h5')) as fh:
-        fh.create_group('key')
-        fh['key'].create_dataset('k', (n2 * n1, 1), np.int64)
-        fh.create_group('data')
-        fh['data'].create_dataset('f', (n2 * n1, 3), np.float64)
-        fh['data'].create_dataset('i', (n2 * n1, 5), np.int64)
-        for i in range(n1):
-            keys = np.random.randint(10 ** 12, size=(n2, 1))
-            fh['key']['k'][i * n2:(i + 1) * n2, :] = keys
-            floats = np.random.rand(n2, 3)
-            fh['data']['f'][i * n2:(i + 1) * n2, :] = floats
-            integers = np.random.randint(10 ** 12, size=(n2, 5))
-            fh['data']['i'][i * n2:(i + 1) * n2, :] = integers
-
-    #folder = '/var/folders/ma/maqYoEehEsiaVpQWYhnOr++++TY/-Tmp-/tmpaLxTaQ'
-    # test sort on it
-    h = H5Handler(
-        os.path.join(folder, 'tmp.h5'), 'key', 'k', ['data', 'data'], ['f', 'i'])
-    h.sort(100, 100)
-
-    # get the same in a regular arrays and compare with regular sorting
-    # ...
