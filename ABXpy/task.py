@@ -1233,17 +1233,16 @@ def sort_and_threshold(permut, new_index, ind_type,
     if threshold and count > threshold:
         # sampling this 'on across by' block
         sampled_block_indexes = (
-            i_start + \
-            sampler.sample_without_replacement(
+            i_start + sampler.sample_without_replacement(
                 threshold, count, dtype=ind_type))
         new_permut.extend(permut[sampled_block_indexes])
     else:
         new_permut.extend(permut[i_start:i+1])
     return new_permut
 
-def task_parser():
-    """
-    Command-line API
+
+def task_parser(input_args=None):
+    """Parses arguments for the Task command line API
 
     For more details on the command line options, have a:
 
@@ -1361,8 +1360,8 @@ def task_parser():
         os.remove(args.output)
 
         if args.sample and args.threshold:
-        warnings.warn('The use of sampling AND threshold is not '
-                      'tested yet', UserWarning)
+            warnings.warn('The use of sampling AND threshold is not '
+                          'tested yet', UserWarning)
 
     # BY and ACROSS can accept several arguments either with '--by 1 2
     # 3' or '--by 1 --by 2 3'. Thus we need to join sublists in a
