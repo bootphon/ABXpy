@@ -68,6 +68,17 @@ class H52NP(object):
             raise IOError(
                 "Method add_dataset of class H52NP can only be used within a 'with' statement!")
 
+    def add_subdataset(self, group, dataset, buf_size=100, minimum_occupied_portion=0.25, indexes=None):
+        if self.file_open:
+            buf = H5dataset2NPbuffer(
+                self, group, dataset, buf_size, minimum_occupied_portion, indexes=indexes)
+            self.buffers.append(buf)
+            return buf
+        else:
+            raise IOError(
+                "Method add_dataset of class H52NP can only be used within a 'with' statement!")
+
+
 
 class H52NPbuffer(object):
 
@@ -78,7 +89,7 @@ class H52NPbuffer(object):
         # get info from dataset
         # fail if dataset do not exist
         if not(group + '/' + dataset in parent.file):
-            raise IOError('Dataset %s already exists in file %s!' %
+            raise IOError('Dataset %s does not exists in file %s!' %
                           (dataset, parent.filename))
         dset = parent.file[group][dataset]
         self.n_rows = dset.shape[0]
@@ -162,6 +173,12 @@ class H52NPbuffer(object):
                 self.buf_ix = next_buf_ix
                 self.dataset_ix = next_ix
 
+    def __iter__(self):
+        return self
+
+    def next(self):
+        return self.read()
+
     # true only if the input file has been totally read and the buffer is empty
     def isempty(self):
         assert self.parent.file_open
@@ -188,3 +205,77 @@ class H52NPbuffer(object):
         assert self.parent.file_open
         assert self.n_columns == 1
         return bisect.bisect_right(self.buf[self.buf_ix:, :], x)
+
+
+class H5dataset2NPbuffer(H52NPbuffer):
+    """Augmentation of the H%2NPbuffer, proposing to use a subdataset
+    selected by index"""
+
+    def __init__(self, parent, group, dataset, buf_size, minimum_occupied_portion, indexes=None):
+        assert parent.file_open
+
+        # super(H5dataset2NPbuffer, self).__init__(
+        #     parent, group, dataset, buf_size,
+        #     minimum_occupied_portion)
+
+        # get info from dataset
+        # fail if dataset do not exist
+        if not(group + '/' + dataset in parent.file):
+            raise IOError('Dataset %s does not exists in file %s!' %
+                          (dataset, parent.filename))
+        dset = parent.file[group][dataset]
+        self.n_columns = dset.shape[1]
+        self.type = dset.dtype
+        self.dataset = dset
+        self.dataset_ix = 0
+        self.dataset_end = self.dataset.shape[0]
+        if indexes is not None:
+            assert len(indexes) == 2
+            self.dataset_ix = indexes[0]
+            self.dataset_end = indexes[1]
+        self.n_rows = self.dataset_end# - self.dataset_ix
+        # could add checks: no more than 2 dims, etc.
+
+        self.parent = parent
+        self.minimum_occupied_portion = minimum_occupied_portion
+
+        # initialize buffer
+        row_size = self.n_columns * self.type.itemsize / \
+            1000.  # entry size in kilobytes
+        self.buf_len = int(round(buf_size / row_size))
+        # buf_ix represents the number of free rows in the buffer. Here the
+        # buffer is empty
+        self.buf_ix = self.buf_len
+        self.buf = np.zeros((self.buf_len, self.n_columns), self.type)
+        # fill it
+        self.refill_buffer()
+
+    # read and consume, refill automatically if the buffer becomes empty, if
+    # there is not enough data left, just send less than what was asked
+    def read(self, amount=None):
+        return super(H5dataset2NPbuffer, self).read(amount)
+
+
+    def refill_buffer(self):
+        if not(self.dataset_ix == self.dataset_end):
+            # for now one policy is implemented: if less than
+            # self.minimum_occupied_portion of the full capacity is occupied
+            # the buffer is refilled
+            occupied_portion = 1. - float(self.buf_ix) / float(self.buf_len)
+            if occupied_portion < self.minimum_occupied_portion:
+                # set useful variables
+                curr_ix = self.dataset_ix
+                next_ix = curr_ix + self.buf_ix
+                next_buf_ix = next_ix - self.n_rows
+                amount_in_buffer = self.buf_len - self.buf_ix
+                # take care of not going out of the dataset
+                next_buf_ix = max(next_buf_ix, 0)
+                next_ix = min(next_ix, self.dataset_end)
+                # move old data
+                self.buf[next_buf_ix:next_buf_ix+amount_in_buffer, :] = self.buf[self.buf_ix:,:]
+                # add new data
+                self.buf[next_buf_ix+amount_in_buffer:, :] = self.dataset[curr_ix:next_ix,:]
+                # update indices
+                self.buf_ix = next_buf_ix
+                self.dataset_ix = next_ix
+

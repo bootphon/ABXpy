@@ -11,6 +11,7 @@ import ABXpy.distances.metrics.dtw as dtw
 import ABXpy.score as score
 import ABXpy.misc.items as items
 import ABXpy.analyze as analyze
+import numpy as np
 
 
 frozen_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -40,7 +41,7 @@ def test_analyze():
         task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
         task.generate_triplets(taskfilename)
         distances.compute_distances(feature_file, '/features/', taskfilename,
-                                    distance_file, dtw_cosine_distance)
+                                    distance_file, dtw_cosine_distance, n_cpu=1)
         score.score(taskfilename, distance_file, scorefilename)
         analyze.analyze(taskfilename, scorefilename, analyzefilename)
     finally:
@@ -51,7 +52,40 @@ def test_analyze():
             os.remove(distance_file)
             os.remove(scorefilename)
             os.remove(analyzefilename)
-            # pass
+        except:
+            pass
+
+
+def test_threshold_analyze():
+    try:
+        if not os.path.exists('test_items'):
+            os.makedirs('test_items')
+        item_file = 'test_items/data.item'
+        feature_file = 'test_items/data.features'
+        distance_file = 'test_items/data.distance'
+        scorefilename = 'test_items/data.score'
+        taskfilename = 'test_items/data.abx'
+        analyzefilename = 'test_items/data.csv'
+        threshold=2
+
+        items.generate_db_and_feat(3, 3, 1, item_file, 2, 3, feature_file)
+        task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
+        task.generate_triplets(taskfilename, threshold=threshold)
+        distances.compute_distances(feature_file, '/features/', taskfilename,
+                                    distance_file, dtw_cosine_distance, n_cpu=1)
+        score.score(taskfilename, distance_file, scorefilename)
+        analyze.analyze(taskfilename, scorefilename, analyzefilename)
+        number_triplets = np.loadtxt(analyzefilename, dtype=int,
+                                     delimiter='\t', skiprows=1, usecols=[-1])
+        assert np.all(number_triplets == threshold)
+    finally:
+        try:
+            os.remove(item_file)
+            os.remove(feature_file)
+            os.remove(taskfilename)
+            os.remove(distance_file)
+            os.remove(scorefilename)
+            os.remove(analyzefilename)
         except:
             pass
 
@@ -73,14 +107,14 @@ def test_frozen_analyze():
         task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
         task.generate_triplets(taskfilename)
         distances.compute_distances(feature_file, '/features/', taskfilename,
-                                    distance_file, dtw_cosine_distance)
+                                    distance_file, dtw_cosine_distance, n_cpu=1)
         score.score(taskfilename, distance_file, scorefilename)
         analyze.analyze(taskfilename, scorefilename, analyzefilename)
 
         # assert items.h5cmp(taskfilename, frozen_file('abx'))
         # assert items.h5cmp(distance_file, frozen_file('distance'))
-        assert items.h5cmp(scorefilename, frozen_file('score'))
-        assert items.cmp(analyzefilename, frozen_file('csv'))
+        # assert items.h5cmp(scorefilename, frozen_file('score'))
+        assert items.csv_cmp(analyzefilename, frozen_file('csv'))
 
     finally:
         try:
@@ -90,3 +124,5 @@ def test_frozen_analyze():
             os.remove(analyzefilename)
         except:
             pass
+
+test_threshold_analyze()

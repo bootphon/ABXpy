@@ -100,3 +100,12 @@ def h5cmp(f1, f2):
         return False
     else:
         return True
+
+
+def csv_cmp(f1, f2):
+    with open(f1) as f1in, open(f1) as f2in:
+        f1_content = f1in.readlines()
+        f2_content = f2in.readlines()
+    f1_content.sort()
+    f2_content.sort()
+    return np.all(f1_content == f2_content)

@@ -75,6 +75,11 @@ import ABXpy.misc.type_fitting as type_fitting
 import ABXpy.sampling.sampler as sampler
 import ABXpy.sideop.filter_manager as filter_manager
 import ABXpy.sideop.regressor_manager as regressor_manager
+import ABXpy.sampling.sampler as sampler
+import ABXpy.misc.progress_display as progress_display
+import tempfile
+from tables import NaturalNameWarning
+#import numba as nb
 
 # FIXME: many of the fixmes should be presented as feature requests in a
 # github instead of fixmes
@@ -280,6 +285,7 @@ class Task(object):
 
         self.types = types
 
+        self.reg_block_indices = []
         # compute some statistics about the task
         self.compute_statistics()
 
@@ -434,7 +440,7 @@ class Task(object):
                     if ((approximate or
                          not(self.filters.A or self.filters.B or
                              self.filters.X or self.filters.ABX)) and
-                            type(across) != tuple):
+                        type(across) != tuple):
                         stats['nb_triplets'] += n_A * n_B * n_X
                         stats['block_sizes'][block_key] = n_A * n_B * n_X
                     else:
@@ -442,11 +448,10 @@ class Task(object):
                         # optimized because it isn't necessary to do the whole
                         # triplet generation, in particular in the case where
                         # there are no ABX filters
-                        triplets = self.on_across_triplets(
-                            by, on, across, block, on_across_by_values,
-                            with_regressors=False)
-                        stats['nb_triplets'] += triplets.shape[0]
-                        stats['block_sizes'][block_key] = triplets.shape[0]
+                        nb_triplets = self.nb_on_across_triplets(
+                            by, on, across, block, on_across_by_values)
+                        stats['nb_triplets'] += nb_triplets
+                        stats['block_sizes'][block_key] = nb_triplets
                 else:
                     stats['block_sizes'][block_key] = 0
 
@@ -527,6 +532,7 @@ class Task(object):
         # A, B, X can then be combined efficiently in a full (or randomly
         # sampled) factorial design
         size = len(A) * len(B) * len(X)
+        on_across_block_index = [0]
 
         if size > 0:
             ind_type = type_fitting.fit_integer_type(size, is_signed=False)
@@ -552,7 +558,35 @@ class Task(object):
                         size, is_signed=False)
                     indices = self.sampler.sample(size, dtype=ind_type)
                     triplets = triplets[indices, :]
+
+            if with_regressors:
+                on_across_block_index = [0]
+                # reindexing by regressors
+                Breg = [reg[iB] for regs in self.regressors.B_regressors for reg in regs]
+                Xreg = [reg[iX] for regs in self.regressors.X_regressors for reg in regs]
+                regs = np.array(Breg + Xreg).T
+
+                if len(regs) != 0:
+                    n_regs = np.max(regs, 0) + 1
+                    new_index = regs[:, 0].astype(ind_type)
+                    for i in range(1, len(n_regs)):
+                        new_index = regs[:, i] + n_regs[i] * new_index
+
+                    permut = np.argsort(new_index)
+                    # TODO: replace with empty array and fill it
+                    new_permut = sort_and_threshold(
+                        permut, new_index, ind_type, on_across_block_index,
+                        threshold=self.threshold)
+
+                    # TODO add other regs, replace reg_block by indexes for collapse
+                    iA = iA[new_permut]
+                    iB = iB[new_permut]
+                    iX = iX[new_permut]
+                    triplets = triplets[new_permut]
+
+
         else:
+            # empty block...
             triplets = np.empty(shape=(0, 3), dtype=self.types[by])
             indices = np.empty(shape=size, dtype=np.uint8)
             iA = indices
@@ -598,19 +632,101 @@ class Task(object):
             #                        self.regressors.ABX_regressors):
             #    for name, reg in zip(names, regs):
             #        regressors[name] = reg[indices,:]
-            return triplets, regressors
+            return triplets, regressors, np.reshape(np.array(on_across_block_index), (len(on_across_block_index), 1))
         else:
             return triplets
 
-    # FIXME: add a mechanism to allow the specification of a random seed in a
+
+    def nb_on_across_triplets(self, by, on, across, on_across_block,
+                           on_across_by_values):
+        """Count all possible triplets for a given by block. Does not take in
+        account sample or threshold.
+
+        Parameters
+        ----------
+        by : int
+            The block index
+        on, across : int
+            The task attributes
+        on_across_block : list
+            the block
+        on_across_by_values : dict
+            the actual values
+        with_regressors : bool, optional
+            By default, true
+
+        Returns
+        -------
+        nb_triplets : int
+            the number of triplets to generate
+        """
+        # find all possible A, B, X where A and X have the 'on' feature of the
+        # block and A and B have the 'across' feature of the block
+        A = np.array(on_across_block, dtype=self.types[by])
+        on_set = set(self.on_blocks[by].groups[on])
+        # FIXME quick fix to process case whith no across, but better done in a
+        # separate loop ...
+        if self.across == ['#across']:
+            # in this case A is a singleton and B can be anything in the by
+            # block that doesn't have the same 'on' as A
+            B = np.array(
+                list(set(self.by_dbs[by].index).difference(on_set)),
+                dtype=self.types[by])
+        else:
+            B = self.across_blocks[by].groups[across]
+            # remove B with the same 'on' than A
+            B = np.array(list(set(B).difference(A)), dtype=self.types[by])
+        # remove X with the same 'across' than A
+
+        if type(across) is tuple:
+            antiacross_set = set(self.antiacross_blocks[by][across])
+            X = np.array(list(antiacross_set & on_set), dtype=self.types[by])
+        else:
+            X = np.array(list(on_set.difference(A)), dtype=self.types[by])
+
+        # apply singleton filters
+        db = self.by_dbs[by]
+
+        if self.filters.A:
+            A = self.filters.A_filter(on_across_by_values, db, A)
+        if self.filters.B:
+            B = self.filters.B_filter(on_across_by_values, db, B)
+        if self.filters.X:
+            X = self.filters.X_filter(on_across_by_values, db, X)
+
+        # A, B, X can then be combined efficiently in a full (or randomly
+        # sampled) factorial design
+        size = len(A) * len(B) * len(X)
+
+        if size > 0:
+            ind_type = type_fitting.fit_integer_type(size, is_signed=False)
+            indices = np.arange(size, dtype=ind_type)
+            # generate triplets from indices
+            iX = np.mod(indices, len(X))
+            iB = np.mod(np.divide(indices, len(X)), len(B))
+            iA = np.divide(indices, len(B) * len(X))
+            triplets = np.column_stack((A[iA], B[iB], X[iX]))
+
+            # apply triplets filters
+            if self.filters.ABX:
+                triplets = self.filters.ABX_filter(
+                    on_across_by_values, db, triplets)
+
+        else:
+            # empty block...
+            triplets = np.empty(shape=(0, 3), dtype=self.types[by])
+
+        return triplets.shape[0]
+
+    # FIXME add a mechanism to allow the specification of a random seed in a
     # way that would produce reliably the same triplets on different machines
     # (means cross-platform random number generator + having its state so as
     # to be sure that no other random number generation calls to it are
     # altering the sequence)
     # FIXME in case of sampling, get rid of blocks with no samples ?
-    def generate_triplets(self, output=None, sample=None):
+    def generate_triplets(self, output=None, sample=None, threshold=None):
         """Generate all possible triplets for the whole task and the
-        associated pairs.
+        associated pairs
 
         Generate the triplets and the pairs for an ABXpy.Task and store it in
         a h5db file.
@@ -625,6 +741,10 @@ class Task(object):
                  the task
 
         """
+        if self.stats['nb_triplets'] == 0:
+            warnings.warn('There are no possible ABX triplets'
+                          ' in the specified task', UserWarning)
+            return
 
         # FIXME: change this to a random file name to avoid
         # overwriting problems default name for output file
@@ -652,6 +772,12 @@ class Task(object):
             self.sampling = False
             self.n_triplets = self.total_n_triplets
 
+        if threshold is not None:
+            self.threshold = threshold
+        else:
+            self.threshold = False
+
+        display=None
         if self.verbose > 0:
             display = progress_display.ProgressDisplay()
             display.add(
@@ -661,69 +787,110 @@ class Task(object):
                 'triplets', 'Triplets considered:', self.total_n_triplets)
             display.add(
                 'sampled_triplets', 'Triplets sampled:', self.n_triplets)
+
+        self.by_block_indices = [0]
+        self.current_index = 0
         # fill output file with list of needed ABX triplets, it is done
         # independently for each 'by' value
-        for by, db in self.by_dbs.iteritems():
-            # class for efficiently writing to datasets of the output file
-            # (using a buffer under the hood)
-            if self.verbose > 0:
-                print("Writing ABX triplets to task file...")
-            with np2h5.NP2H5(h5file=output) as fh:
-                # FIXME: test if not fixed size impacts performance a lot
+
+        with np2h5.NP2H5(h5file=output) as fh:
+            # FIXME test if not fixed size impacts performance a lot
+            out = fh.add_dataset(
+                group='triplets', dataset='data',
+                n_rows=self.n_triplets, n_columns=3,
+                item_type=type_fitting.fit_integer_type(self.total_n_triplets),
+                fixed_size=False)
+
+            out_block_index = fh.add_dataset(
+                group='triplets', dataset='on_across_block_index',
+                n_rows=self.stats['nb_blocks'], n_columns=1,
+                item_type=type_fitting.fit_integer_type(self.stats['nb_blocks']),
+                fixed_size=False)  #TODO add item type
+            to_delete = []
+            bys = []
+            for by, db in self.by_dbs.iteritems():
+                # class for efficiently writing to datasets of the output file
+                # (using a buffer under the hood)
+                if self.verbose > 0:
+                    print("Writing ABX triplets to task file...")
+
+                # allow to get by values as well as values of other
+                # variables that are determined by these
+                by_values = dict(db.iloc[0])
+
                 datasets, indexes = self.regressors.get_regressor_info()
                 with (h5io.H5IO(
                         filename=output, datasets=datasets,
                         indexes=indexes,
                         group='/regressors/' + str(by) + '/')) as out_regs:
-                    if sample is not None:
-                        n_rows = np.uint64(
-                            round(sample * (self.by_stats[by]['nb_triplets'] /
-                                            np.float(self.total_n_triplets))))
+                    self._compute_triplets(
+                        by, out, out_block_index,
+                        out_regs, sample, db, fh, by_values, display=display)
+
+                    # if no triplets found: delete by block
+                    if self.current_index == self.by_block_indices[-1]:
+                        to_delete.append(by)
                     else:
-                        n_rows = self.by_stats[by]['nb_triplets']
-                    # not fixed_size datasets are necessary only when sampling
-                    # is performed
-                    out = fh.add_dataset(group='triplets', dataset=str(
-                            by), n_rows=n_rows, n_columns=3,
-                                         item_type=self.types[by],
-                                         fixed_size=False)
+                        self.by_block_indices.append(self.current_index)
+                        bys.append(by)
 
-                    # allow to get by values as well as values of other
-                    # variables that are determined by these
-                    by_values = dict(db.iloc[0])
+            aux = np.array(self.by_block_indices)
+            out_by_index = fh.add_dataset(
+                group='triplets', dataset='by_index',
+                n_rows=len(aux)-1, n_columns=2,
+                item_type=type_fitting.fit_integer_type(aux[-1]),
+                fixed_size=True)
+            self.by_block_indices = np.hstack((aux[:-1, None], aux[1:, None]))
+            out_by_index.write(self.by_block_indices)
+            for by in to_delete:
+                del self.by_dbs[by]
+            fh.file.create_dataset(
+                'bys', (aux.shape[0] -1,),
+                dtype=h5py.special_dtype(vlen=unicode))
+            fh.file['bys'][:] = [str(by) for by in bys]
 
-                    # instantiate by regressors here
-                    self.regressors.set_by_regressors(by_values)
-
-                    # iterate over on/across blocks
-                    for block_key, block in (self.on_across_blocks[by]
-                                             .groups.iteritems()):
-                        if self.verbose:
-                            display.update('block', 1)
-                        # allow to get on, across, by values as well as values
-                        # of other variables that are determined by these
-                        on_across_by_values = dict(db.ix[block[0]])
-                        if self.filters.on_across_by_filter(
-                                on_across_by_values):
-                            # instantiate on_across_by regressors here
-                            self.regressors.set_on_across_by_regressors(
-                                on_across_by_values)
-                            on, across = on_across_from_key(block_key)
-                            triplets, regressors = self.on_across_triplets(
-                                by, on, across, block, on_across_by_values)
-                            out.write(triplets)
-                            out_regs.write(regressors, indexed=True)
-                            if self.verbose:
-                                display.update(
-                                    'sampled_triplets', triplets.shape[0])
-                                display.update('triplets',
-                                               (self.by_stats[by]
-                                                ['block_sizes'][block_key]))
-                        if self.verbose:
-                            display.display()
-        if self.verbose:
+        if self.verbose > 0:
             print("done.")
-        self.generate_pairs(output)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", NaturalNameWarning)
+            self.generate_pairs(output)
+
+    def _compute_triplets(self, by, out, out_block_index,
+                          out_regs, sample, db, fh, by_values, display=None):
+        #out_index = h5io.H5IO(filename=output, datasets=datasets, group='/on_across_block_index/' + str(by) + '/')
+
+        # instantiate by regressors here
+        self.regressors.set_by_regressors(by_values)
+
+        # iterate over on/across blocks
+        for block_key, block in (self.on_across_blocks[by]
+                                 .groups.iteritems()):
+            if self.verbose > 0:
+                display.update('block', 1)
+            # allow to get on, across, by values as well as values
+            # of other variables that are determined by these
+            on_across_by_values = dict(db.ix[block[0]])
+            if ((self.filters
+                 .on_across_by_filter(on_across_by_values))):
+                # instantiate on_across_by regressors here
+                self.regressors.set_on_across_by_regressors(
+                    on_across_by_values)
+                on, across = on_across_from_key(block_key)
+                triplets, regressors, on_across_block_index = (
+                    self.on_across_triplets(
+                        by, on, across, block, on_across_by_values))
+                out.write(triplets)
+                out_regs.write(regressors, indexed=True)
+                out_block_index.write(on_across_block_index)
+                self.current_index += triplets.shape[0]
+                if self.verbose > 0:
+                    display.update(
+                        'sampled_triplets', triplets.shape[0])
+                    display.update('triplets',
+                                   (self.by_stats[by]
+                                    ['block_sizes'][block_key]))
+            if self.verbose > 0:
+                display.display()
 
     # FIXME: clean this function (maybe do a few well-separated
     # sub-functions for getting the pairs and unique them)
@@ -740,63 +907,55 @@ class Task(object):
             (basename, _) = os.path.splitext(self.db_file)
             output = basename + '.abx'
         # list all pairs
-        all_empty = True
+        n_pairs_dict = {}
+        max_ind_dict = {}
         try:
             _, output_tmp = tempfile.mkstemp()
-            for by, db in self.by_dbs.iteritems():
-                # FIXME: maybe care about this case earlier ?
-                if self.verbose:
+            for n_by, (by, db) in enumerate(self.by_dbs.iteritems()):
+                if self.verbose > 0:
                     print("Writing AX/BX pairs to task file...")
                 with h5py.File(output) as fh:
-                    not_empty = fh['/triplets/' + str(by)].size
-                if not_empty:
-                    all_empty = False
-                    max_ind = np.max(db.index.values)
-                    pair_key_type = type_fitting.fit_integer_type(
-                        (max_ind + 1) ** 2 - 1, is_signed=False)
-                    with h52np.H52NP(output) as f_in:
-                        with np2h5.NP2H5(output_tmp) as f_out:
-                            inp = f_in.add_dataset('triplets', str(by))
-                            out = f_out.add_dataset(
-                                'pairs', str(by), n_columns=1,
-                                item_type=pair_key_type, fixed_size=False)
-                            # FIXME: repace this by a for loop by making h52np
-                            # implement the iterable pattern with
-                            # next() outputing
-                            # inp.read()
-                            try:
-                                while True:
-                                    triplets = pair_key_type(inp.read())
-                                    n = triplets.shape[0]
-                                    ind = np.arange(n)
-                                    i1 = 2 * ind
-                                    i2 = 2 * ind + 1
-                                    # would need to amend np2h5 and
-                                    # h52np to remove the second
-                                    # dim...
-                                    pairs = np.empty(
-                                        shape=(2 * n, 1), dtype=pair_key_type)
-                                    # FIXME: change the encoding (and
-                                    # type_fitting) so that A,B and
-                                    # B,A have the same code ...
-                                    # (take a=min(a,b), b=max(a,b))
-                                    # FIXME: but allow a flag to
-                                    # control the behavior to be able
-                                    # to enforce A,X and B,X order
-                                    # when using assymetrical distance
-                                    # functions
-                                    pairs[i1, 0] = triplets[:, 0] + (
-                                        max_ind + 1) * triplets[:, 2]  # AX
-                                    pairs[i2, 0] = triplets[:, 1] + (
-                                        max_ind + 1) * triplets[:, 2]  # BX
-                                    # FIXME: do a unique here already?
-                                    # Do not store the inverse mapping
-                                    # ? (could sort triplets on pair1,
-                                    # complete pair1, sort on pair2,
-                                    # complete pair 2 and shuffle ?)
-                                    out.write(pairs)
-                            except StopIteration:
-                                pass
+                    triplets_attrs = fh['/triplets']['by_index'][n_by][...]
+                if triplets_attrs[0] == triplets_attrs[1]:
+                    # subdataset is empty
+                    continue
+                max_ind = np.max(db.index.values)
+                max_ind_dict[by] = max_ind
+                pair_key_type = type_fitting.fit_integer_type(
+                    (max_ind + 1) ** 2 - 1, is_signed=False)
+                with h52np.H52NP(output) as f_in:
+                    with np2h5.NP2H5(output_tmp) as f_out:
+                        inp = f_in.add_subdataset('triplets', 'data',
+                                                  indexes=triplets_attrs)
+                        out = f_out.add_dataset(
+                            'pairs', str(by), n_columns=1,
+                            item_type=pair_key_type, fixed_size=False)
+                        for data in inp:
+                            triplets = pair_key_type(data)
+                            n = triplets.shape[0]
+                            ind = np.arange(n)
+                            i1 = 2 * ind
+                            i2 = 2 * ind + 1
+                            # would need to amend np2h5 and h52np to remove
+                            # the second dim...
+                            pairs = np.empty(
+                                shape=(2 * n, 1), dtype=pair_key_type)
+                            # FIXME change the encoding (and type_fitting)
+                            # so that A,B and B,A have the same code ...
+                            # (take a=min(a,b), b=max(a,b))
+                            # FIXME but allow a flag to control the
+                            # behavior to be able to enforce A,X and B,X
+                            # order when using assymetrical distance
+                            # functions
+                            pairs[i1, 0] = triplets[:, 0] + (
+                                max_ind + 1) * triplets[:, 2]  # AX
+                            pairs[i2, 0] = triplets[:, 1] + (
+                                max_ind + 1) * triplets[:, 2]  # BX
+                            # FIXME do a unique here already? Do not store
+                            # the inverse mapping ? (could sort triplets on
+                            # pair1, complete pair1, sort on pair2,
+                            # complete pair 2 and shuffle ?)
+                            out.write(pairs)
 
                     # sort pairs
                     handler = h5_handler.H5Handler(output_tmp,
@@ -834,39 +993,73 @@ class Task(object):
                     else:
                         handler.sort(buffer_size=0.75 * memory)
 
-                    # FIXME: should have a unique function directly instead of
+                    # counting unique
+                    with np2h5.NP2H5(output_tmp) as f_out:
+                        with h52np.H52NP(output_tmp) as f_in:
+                            inp = f_in.add_dataset('pairs', str(by))
+                            n_pairs = 0
+                            last = -1
+                            for pairs in inp:
+                                # unique alters the shape
+                                pairs = np.reshape(pairs, (pairs.shape[0], 1))
+                                n_pairs += np.unique(pairs).size
+                                if pairs[0, 0] == last:
+                                    n_pairs -= 1
+                                if pairs.size > 0:
+                                    last = pairs[-1, 0]
+                        n_pairs_dict[by] = n_pairs
+
+                    # FIXME should have a unique function directly instead of
                     # sorting + unique ?
-                    with h52np.H52NP(output_tmp) as f_in:
-                        with np2h5.NP2H5(output) as f_out:
+                    with np2h5.NP2H5(output_tmp) as f_out:
+                        with h52np.H52NP(output_tmp) as f_in:
                             inp = f_in.add_dataset('pairs', str(by))
                             out = f_out.add_dataset(
-                                'unique_pairs', str(by), n_columns=1,
+                                'unique_pairs', str(by), n_rows=n_pairs, n_columns=1,
                                 item_type=pair_key_type, fixed_size=False)
-                            try:
-                                last = -1
-                                while True:
-                                    pairs = inp.read()
-                                    pairs = np.unique(pairs)
-                                    # unique alters the shape
-                                    pairs = np.reshape(pairs,
-                                                       (pairs.shape[0], 1))
-                                    if pairs[0, 0] == last:
-                                        pairs = pairs[1:]
-                                    if pairs.size > 0:
-                                        last = pairs[-1, 0]
-                                        out.write(pairs)
-                            except StopIteration:
-                                pass
-                    # store for ulterior decoding
+                            # out = out_unique_pairs
+                            last = -1
+                            for pairs in inp:
+                                pairs = np.unique(pairs)
+                                # unique alters the shape
+                                pairs = np.reshape(pairs, (pairs.shape[0], 1))
+                                if pairs[0, 0] == last:
+                                    pairs = pairs[1:]
+                                if pairs.size > 0:
+                                    last = pairs[-1, 0]
+                                    out.write(pairs)
+
+                        # store for ulterior decoding
+                        store = pd.HDFStore(output)
+                        # use append to make use of table format, which is better at
+                        # handling strings without much space (fixed-size format)
+                        store.append('/feat_dbs/' + str(by), self.feat_dbs[by],
+                                     expectedrows=len(self.feat_dbs[by]))
+                        store.close()
+                        # FIXME generate inverse mapping to triplets (1 and 2) ?
+
+            # Now merge all datasets
+            by_index = 0
+            with np2h5.NP2H5(output) as f_out:
+                n_rows = sum(n_pairs_dict.itervalues())
+                out_unique_pairs = f_out.add_dataset(
+                    'unique_pairs', 'data', n_rows=n_rows, n_columns=1,
+                    item_type=np.int64, fixed_size=False)
+                for n_by, (by, db) in enumerate(self.by_dbs.iteritems()):
+                    triplets_attrs = f_out.file['/triplets']['by_index'][n_by]
+                    if triplets_attrs[0] == triplets_attrs[1]:
+                        # subdataset is empty
+                        continue
+
+                    with h52np.H52NP(output_tmp) as f_in:
+                        inp = f_in.add_dataset('unique_pairs', str(by))
+                        for pairs in inp:
+                            out_unique_pairs.write(pairs)
+
                     with h5py.File(output) as fh:
-                        fh['/unique_pairs'].attrs[str(by)] = max_ind + 1
-                    store = pd.HDFStore(output)
-                    # use append to make use of table format, which better
-                    # handles strings without much space (fixed-size format)
-                    store.append('/feat_dbs/' + str(by), self.feat_dbs[by],
-                                 expectedrows=len(self.feat_dbs[by]))
-                    store.close()
-                    # FIXME: generate inverse mapping to triplets (1 and 2) ?
+                        fh['/unique_pairs'].attrs[str(by)] = (
+                            max_ind_dict[by] + 1, by_index, by_index + n_pairs_dict[by])
+                    by_index += n_pairs_dict[by]
         finally:
             os.remove(output_tmp)
         if self.verbose:
@@ -1003,8 +1196,54 @@ def on_across_from_key(key):
     return on, across
 
 
-def task_parser(input_args=None):
-    """Define and parse command line arguments for task specification.
+#@nb.autojit
+def sort_and_threshold(permut, new_index, ind_type,
+                       on_across_block_index, threshold=None):
+    new_permut = []
+    i_unique = 0
+    key_reg = new_index[permut[0]]
+    reg_block = np.empty((len(permut), 2), dtype=np.int64)
+    i_start = 0
+    i = 0
+    for i, p in enumerate(permut[1:]):
+        i += 1
+        if new_index[p] != key_reg:
+            reg_block[i_unique] = [i_start, i]
+            count = i - i_start
+            if threshold and count > threshold:
+                # sampling this 'on across by' block
+                sampled_block_indexes = (
+                    i_start + \
+                    sampler.sample_without_replacement(
+                        threshold, count, dtype=ind_type))
+                new_permut.extend(permut[sampled_block_indexes])
+                on_across_block_index.append(
+                    on_across_block_index[-1] + threshold)
+            else:
+                new_permut.extend(permut[i_start:i])
+                on_across_block_index.append(
+                    on_across_block_index[-1] + count)
+            i_start = i
+            i_unique += 1
+            key_reg = new_index[p]
+
+    reg_block[i_unique] = [i_start, i + 1]
+    reg_block = np.resize(reg_block, (i_unique + 1, 2))
+    count = i + 1 - i_start
+    if threshold and count > threshold:
+        # sampling this 'on across by' block
+        sampled_block_indexes = (
+            i_start + \
+            sampler.sample_without_replacement(
+                threshold, count, dtype=ind_type))
+        new_permut.extend(permut[sampled_block_indexes])
+    else:
+        new_permut.extend(permut[i_start:i+1])
+    return new_permut
+
+def task_parser():
+    """
+    Command-line API
 
     For more details on the command line options, have a:
 
@@ -1036,7 +1275,8 @@ def task_parser(input_args=None):
         '[-a ACROSS [ACROSS ...]] [-b BY [BY ...]] '
         '[-f FILT [FILT ...]] [-r REG [REG ...]] '
         '[-s SAMPLING_AMOUNT_OR_PROPORTION] '
-        '[--stats-only] [--no-verif] [--features FEATURE_FILE]')
+        '[--stats-only] [--no-verif] [--features FEATURE_FILE]'
+        '[--threshold THRESHOLD]')
 
     message = 'must be columns defined by the database you are using '
     '(e.g. speaker or phonemes, if your database contains such columns)'
@@ -1060,7 +1300,7 @@ def task_parser(input_args=None):
     # Task specification
     g2 = parser.add_argument_group('Task specification')
 
-    # TODO: force str and remove append on --on
+    # TODO force str and remove append on --on
     g2.add_argument('-o', '--on', required=True, action='append',
                     help='ON attribute, ' + message)
 
@@ -1077,7 +1317,10 @@ def task_parser(input_args=None):
                     help='optional: if a real number in ]0;1[: sampling '
                          'proportion, if a strictly positive integer: number '
                          'of triplets to be sampled')
-
+    g2.add_argument('-t', '--threshold', default=None, type=int,
+                    help='optional: threshold on the maximal size of a block of'
+                         ' triplets sharing the same regressors, triplets may '
+                         'be sampled')
     # Regressors specification
     g3 = parser.add_argument_group('Regressors specification')
 
@@ -1108,7 +1351,7 @@ def task_parser(input_args=None):
 
     # Consistency checks
     if args.stats_only:
-        # TODO: silly condition, can write stats on stdout...
+        # TODO silly condition, can write stats on stdout...
         assert args.output, 'Error: --stats-only requires an output '
         'file to be provided.'
 
@@ -1116,6 +1359,10 @@ def task_parser(input_args=None):
         if args.verbose:
             print("WARNING: Overwriting existing task file " + args.output)
         os.remove(args.output)
+
+        if args.sample and args.threshold:
+        warnings.warn('The use of sampling AND threshold is not '
+                      'tested yet', UserWarning)
 
     # BY and ACROSS can accept several arguments either with '--by 1 2
     # 3' or '--by 1 --by 2 3'. Thus we need to join sublists in a
@@ -1130,10 +1377,10 @@ def task_parser(input_args=None):
     return args
 
 
-# FIXME: maybe some problems if wanting to pass some code directly on the
+# FIXME maybe some problems if wanting to pass some code directly on the
 # command-line if it contains something like s = "'a'==1 and 'b'==2" ? but
 # not a big deal ?
-# TODO: detects whether the script was called from command-line
+# TODO detects whether the script was called from command-line
 def main():
     """ Command line API of the Task class
 
@@ -1153,7 +1400,7 @@ def main():
     if args.stats_only:
         task.print_stats()
     else:
-        task.generate_triplets(args.output, args.sample)
+        task.generate_triplets(args.output, args.sample, args.threshold)
 
 
 if __name__ == '__main__':
