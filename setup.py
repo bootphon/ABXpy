@@ -44,16 +44,17 @@ setup(
               'ABXpy.distances', 'ABXpy.h5tools', 'ABXpy.misc',
               'ABXpy.sampling', 'ABXpy.sideop', 'ABXpy.distances.metrics'],
     # url='http://pypi.python.org/pypi/ABXpy/',
-    license='license/LICENSE.txt',
+    license='LICENSE.txt',
     description='ABX discrimination task.',
     long_description=open('README.rst').read(),
     ext_modules=cythonize(extension),
     install_requires=[
-        "python >= 2.7",
+        #"python >= 3.4",
         "h5py >= 2.2.1",
         "numpy >= 1.8.0",
         "pandas >= 0.13.1",
         "scipy >= 0.13.0",
+        "tinytree >= 0.2.1"
     ],
     cmdclass = {'test': PyTest},
 )

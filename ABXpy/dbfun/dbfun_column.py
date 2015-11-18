@@ -32,7 +32,7 @@ class DBfun_Column(dbfun.DBfun):
     # context is a dictionary with just the right name/content associations
     def evaluate(self, context):
         if self.index:
-            # FIXME optimize this
+            # FIXME: optimize this
             return [np.array([self.index.index(e)
                     for e in context[self.input_names[0]]])]
         else:

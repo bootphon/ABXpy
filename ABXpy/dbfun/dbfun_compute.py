@@ -16,7 +16,7 @@ import dbfun_lookuptable
 import lookuptable_connector
 
 
-# FIXME remove dbfun prefix from dbfun_lookuptable and dbfun_connector ?
+# FIXME: remove dbfun prefix from dbfun_lookuptable and dbfun_connector ?
 class DBfun_Compute(dbfun.DBfun):
 
     def __init__(self, definition, columns):
@@ -29,7 +29,7 @@ class DBfun_Compute(dbfun.DBfun):
         else:
             self.script = definition
         self.parse()
-        # FIXME allow users to specify the content of n_outputs and/or
+        # FIXME: allow users to specify the content of n_outputs and/or
         # output_names from command-line (currently it will always be 1,
         # None...)
         self.n_outputs = 1
@@ -71,14 +71,14 @@ class DBfun_Compute(dbfun.DBfun):
         visitor = nameVisitor()  # see definition of this class below
         visitor.visit(self.main_ast)
         names = set(visitor.names)
-        # FIXME could add a check that all names correspond either to a bound
+        # FIXME: could add a check that all names correspond either to a bound
         # variable or is in self.columns
         # need a way to get a list of unbound variable ????
         # then would raise ValueError('There are unbound variables in script
         # %s' % self.script)
         # For now: just consider that the inputs are the intersection of the
         # element of names and of self.columns
-        # FIXME document that this means that using local variables with the
+        # FIXME: document that this means that using local variables with the
         # same name as db_columns in the scripts will affect the synopsis of
         # the dbfun ...
         self.input_names = list(names.intersection(self.columns))
@@ -158,7 +158,7 @@ class DBfun_Compute(dbfun.DBfun):
                     dbfun_lookuptable.DBfun_LookupTable(f, indexed=False))
         return tree
 
-    # FIXME if there is any sense in having indexed outputs for dbfun_compute,
+    # FIXME: if there is any sense in having indexed outputs for dbfun_compute,
     # implement it
     def output_specs(self):
         return self.n_outputs, self.output_names, {}
@@ -180,7 +180,7 @@ class DBfun_Compute(dbfun.DBfun):
                 aux_context[arg] = eval(code, ns_global, ns_local)
             # call the aux function and assign it in the main namespace
             ns_local[node['varname']] = node['function'].evaluate(aux_context)
-            # FIXME if aux files, could use the output_cols here ? and maybe
+            # FIXME: if aux files, could use the output_cols here ? and maybe
             # need to do it also in direct case for consistency ?
             # also is output format for vlen output going to work ?
         # exec main_bytecode

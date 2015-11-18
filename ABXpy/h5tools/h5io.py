@@ -8,10 +8,7 @@ Created on Sun Jan 19 17:06:15 2014
 # make sure the rest of the ABXpy package is accessible
 import os
 import sys
-package_path = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
+
 import ABXpy.misc.type_fitting as type_fitting
 # FIXME should remove above dependency on rest of ABX...
 
@@ -28,7 +25,9 @@ import np2h5
 
 class H5IO(object):
 
-    # example call without shared indexes and without fused datasets: H5IO('file.h5', ['talker', 'language', 'age'], {'talker': ['t1', 't2', 't3'], 'language': ['French', 'English']})
+    # example call without shared indexes and without fused datasets:
+    # H5IO('file.h5', ['talker', 'language', 'age'], {'talker': ['t1',
+    # 't2', 't3'], 'language': ['French', 'English']})
     # example call with shared indexes and with fused datasets:
     # H5IO('file.h5', {'talker1': 'talker', 'talker2': 'talker', 'language':
     # 'language', 'age1': None, 'age2': None}, {'talker': ['t1', 't2', 't3'],
@@ -174,7 +173,7 @@ class H5IO(object):
             else:
                 self.fused_datasets = []
 
-    # FIXME h5io should be developed as a subclass of np2h5
+    # FIXME: h5io should be developed as a subclass of np2h5
     def __enter__(self):
         try:
             self.np2h5 = np2h5.NP2H5(self.filename)
@@ -209,7 +208,7 @@ class H5IO(object):
             self.__initialize_datasets__(sample_data)
         else:
             sample_data = None
-            # FIXME for now have to check that np2h5 was initialized
+            # FIXME: for now have to check that np2h5 was initialized
             if not(self.np2h5.buffers):
                 raise ValueError(
                     "Current implementation does not allow to complete non-empty datasets")
@@ -278,7 +277,7 @@ class H5IO(object):
             # indexed_datasets
             d_type = type_fitting.fit_integer_type(
                 max(indexed_levels), is_signed=False)
-            # FIXME at some point should become super.add_dataset(...)
+            # FIXME: at some point should become super.add_dataset(...)
             self.out['indexed'] = self.np2h5.add_dataset(
                 self.group, 'indexed_data', n_columns=dim, item_type=d_type, fixed_size=False)
             with h5py.File(self.filename) as f:
@@ -298,7 +297,7 @@ class H5IO(object):
                     fused_dset, self.filename))
             # smallest unsigned integer dtype compatible
             d_type = type_fitting.fit_integer_type(max_key, is_signed=False)
-            # FIXME at some point should become super.add_dataset(...)
+            # FIXME: at some point should become super.add_dataset(...)
             self.out[fused_dset] = self.np2h5.add_dataset(
                 self.group, fused_dset, n_columns=1, item_type=d_type, fixed_size=False)
             nb_levels_with_multiplicity = np.concatenate([np.array(
@@ -320,7 +319,7 @@ class H5IO(object):
             self.out[dset].write(data[dset])
         # write indexed data
         if self.non_fused_datasets:
-            # FIXME check that values are in correct range of index ?
+            # FIXME: check that values are in correct range of index ?
             indexed_values = [data[dset] for dset in self.non_fused_datasets]
             # need type conversion sometimes here?
             self.out['indexed'].write(np.concatenate(indexed_values, axis=1))

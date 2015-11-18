@@ -8,10 +8,6 @@ Created on Mon Dec 16 05:01:53 2013
 # make sure the rest of the ABXpy package is accessible
 import os
 import sys
-package_path = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
 
 import ABXpy.sideop.side_operations_manager as side_operations_manager
 import ABXpy.dbfun.dbfun_compute as dbfun_compute
@@ -36,8 +32,8 @@ class RegressorManager(side_operations_manager.SideOperationsManager):
             for col in self.across_cols:
                 default_regressors.append(col + '_1')
                 default_regressors.append(col + '_2')
-        # FIXME add default regressors only if they are not already specified ?
-        # FIXME do we really need to add the columns deriving from the original
+        # FIXME: add default regressors only if they are not already specified ?
+        # FIXME: do we really need to add the columns deriving from the original
         # on and across?
         regressors = regressors + default_regressors
 
@@ -65,7 +61,7 @@ class RegressorManager(side_operations_manager.SideOperationsManager):
             # for now raise an exception
             raise ValueError(
                 'You need to explicitly specify the columns for which you want regressors (using _A, _B and _X extensions)')
-            # FIXME finish the following code to replace the current exception ...
+            # FIXME: finish the following code to replace the current exception ...
             # change the code and/or the synopsis to replace all columns by their name +'_A', '_B', or '_X'
             # if db_fun.mode == 'table lookup':
             #    definition = "with '%s' as reg: reg(%s%s, %s%s, ...)" % (db_fun.h5_file, db_fun.in_names[0], ext, db_fun.in_names[1], ext, ...)
@@ -101,11 +97,11 @@ class RegressorManager(side_operations_manager.SideOperationsManager):
         self.X_regressors = [
             result for result in self.evaluate_X(on_across_by_values, db, indices)]
 
-    # FIXME implement ABX regressors
+    # FIXME: implement ABX regressors
     def set_ABX_regressors(self, on_across_by_values, db, triplets):
         raise ValueError('ABX regressors not implemented')
 
-    # FIXME current implem (here and also in dbfun.output_specs), does not
+    # FIXME: current implem (here and also in dbfun.output_specs), does not
     # allow index sharing...
     def get_regressor_info(self):
         names = []

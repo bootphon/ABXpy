@@ -6,21 +6,26 @@ Created on Tue Oct 15 09:48:31 2013
 """
 
 
-"""
-Sort rows of a several two dimenional numeric dataset (possibly with just one column) according to numeric key in two-dimensional key dataset 
-with just one column (the first dimension of all datasets involved must match). The result replaces the original dataset
-buffer size is in kilobytes.
+"""Sort rows of a several two dimenional numeric dataset (possibly
+with just one column) according to numeric key in two-dimensional key
+dataset with just one column (the first dimension of all datasets
+involved must match). The result replaces the original dataset buffer
+size is in kilobytes.
 
+TODO:
 Two things need improvement:
     backup solution is too slow for big files
     the case of very small files should be handled nicely by using internal sort
-    
-To gain time: could try to parallelize the sort, however not easy how it would work for the merging part...
-Also cythonizing the 'read chunk' part might help getting more efficient when there are many chunks
 
-Also should write a function to determine buffer_size based on amount of RAM and size of the file to be sorted:
-    aim for 30 chunks or the least possible without exploding the RAM, except if file can be loaded in memory as a whole, then do internal sorting
+To gain time: could try to parallelize the sort, however not easy how
+it would work for the merging part...  Also cythonizing the 'read
+chunk' part might help getting more efficient when there are many
+chunks
 
+Also should write a function to determine buffer_size based on amount
+    of RAM and size of the file to be sorted: aim for 30 chunks or the
+    least possible without exploding the RAM, except if file can be
+    loaded in memory as a whole, then do internal sorting
 """
 
 import numpy as np
@@ -28,7 +33,7 @@ import tempfile
 import os
 import h5py
 import np2h5
-import h52np  # FIXME shutil
+import h52np  # FIXME: shutil
 
 
 class H5Handler(object):
@@ -260,9 +265,8 @@ class H5TMP(object):
             # here could log a warning...
             pass
 
-
+# TODO: Move in test/some_file
 def test():
-
     # generate random h5 file
     n1 = 10
     n2 = 1000

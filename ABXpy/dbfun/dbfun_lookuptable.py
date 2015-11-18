@@ -17,26 +17,22 @@ table fits in RAM memory.
 # make sure the rest of the ABXpy package is accessible
 import os
 import sys
-package_path = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
-import ABXpy.misc.type_fitting as type_fitting
-# FIXME should remove above dependency on rest of ABX...
-
 import h5py
 import numpy
 import operator
 import collections
+
+import ABXpy.misc.type_fitting as type_fitting
+# FIXME: should remove above dependency on rest of ABX...
 import dbfun
 import dbfun_compute
 
 
-# FIXME when data is missing: potentially use DB_column ?
-# FIXME make sure extension for other kind of input/output is easy: maybe use
+# FIXME: when data is missing: potentially use DB_column ?
+# FIXME: make sure extension for other kind of input/output is easy: maybe use
 # class for i/o as well ?
-# FIXME h5 file locking and db path and md5 hash storing...
-# FIXME string processing in the rest of the code is inconsistent and might
+# FIXME: h5 file locking and db path and md5 hash storing...
+# FIXME: string processing in the rest of the code is inconsistent and might
 # cause problem for a python 3 version: there are two types of strings str and
 # unicode, I should go back through all the code and check whether it is
 # compatible with unicode, plus what about pandas ? in particular isinstance(s,
@@ -235,7 +231,7 @@ class DBfun_LookupTable(dbfun.DBfun):
                 'indexed_outputs_dims', data=numpy.cumsum(indexed_o_dims),
                 dtype=numpy.int64)
 
-    # FIXME use np2h5 buffers to write in the different datasets ? (but
+    # FIXME: use np2h5 buffers to write in the different datasets ? (but
     # requires adapting np2h5 to resizable datasets)
     def write(self, data):
         with h5py.File(self.filename) as f:
@@ -292,7 +288,7 @@ class DBfun_LookupTable(dbfun.DBfun):
         keys = numpy.sum(self.key_weights * numpy.uint64(indexes).T, axis=1)
         return keys
 
-    # FIXME implement this
+    # FIXME: implement this
     def compress_index(self, indexed_output_name):
         # find index values actually occurring at least once in file, use them
         # as new index, reindex file (all columns indexed by it)
@@ -310,7 +306,7 @@ class DBfun_LookupTable(dbfun.DBfun):
             keys = f['keys'][...]
             order = numpy.argsort(keys)
             f['keys'][...] = keys[order]
-            # FIXME detect duplicates and fail if any ?
+            # FIXME: detect duplicates and fail if any ?
             for g, d in zip(groups, datasets):
                 data = f[g + '/' + d][...]
                 f[g + '/' + d][...] = data[order]
@@ -330,7 +326,7 @@ class DBfun_LookupTable(dbfun.DBfun):
     # context is a dictionary with the right input_name/queried_value
     # associations
     # assumes the dataset fits in RAM memory
-    # FIXME allow loading of specified outputs only
+    # FIXME: allow loading of specified outputs only
     def evaluate(self, context):
 
         if not(self.is_sorted):
@@ -360,7 +356,7 @@ class DBfun_LookupTable(dbfun.DBfun):
                 if self.indexed:  # re-encode indexed outputs
                     for o in self.indexed_outputs:
                         ind = self.output_names.index(o)
-                        # FIXME accelerate this with searchsorted
+                        # FIXME: accelerate this with searchsorted
                         index = numpy.array(self.indexes[o])
                         d = numpy.array(
                             shape=missing_data[ind].shape, dtype=index.dtype)
@@ -411,7 +407,7 @@ class DBfun_LookupTable(dbfun.DBfun):
         elif missing.size:
             data = missing_data
         return data
-        # FIXME give a way to obtain the indexes of indexed_outputs from an
+        # FIXME: give a way to obtain the indexes of indexed_outputs from an
         # external function
 
 

@@ -11,6 +11,7 @@ __pycache__/
 
 # C extensions
 *.so
+/ABXpy/distances/metrics/install/dtw.c
 
 # Distribution / packaging
 .Python
@@ -28,6 +29,8 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+examples/data
+examples/example_items
 
 # Installer logs
 pip-log.txt
@@ -65,3 +68,6 @@ test/__pycache__
 # Emacs
 *~
 \#*\#
+/test_items/data.abx
+/test_items/data.distance
+test_items

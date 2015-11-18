@@ -1,8 +1,8 @@
+import numpy as np
+
 import ABXpy.distances.metrics.dtw as dtw
 import ABXpy.distances.metrics.cosine as cosine
 import ABXpy.distances.metrics.kullback_leibler as kullback_leibler
-import numpy as np
-
 
 def dtw_cosine(x, y):
     """ Dynamic time warping cosine distance
@@ -32,4 +32,3 @@ def dtw_kl_divergence(x, y):
     else:
         d = np.inf
     return d
-

@@ -17,12 +17,13 @@ In python:
     # create a new task and compute the statistics
     ABXpy.verify.check('my_data.item', 'my_data.h5f')
 """
+
 import argparse
 
 
 def check(item_file, features_file, verbose=0):
     """check the consistency between the item file and the features file
-    
+
     Parameters:
     item_file: str
         the item file defining the database
@@ -69,4 +70,3 @@ verify the consistency between the item file and the features file""")
 if __name__ == '__main__':
     args = parse_args()
     check(args['item'], args['features'])
-

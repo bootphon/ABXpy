@@ -1,7 +1,9 @@
-"""The sampler class implementing incremental sampling without replacement.
+"""The sampler class implements incremental sampling without replacement.
+
 Incremental meaning that you don't have to draw the whole sample at once,
 instead at any given time you can get a piece of the sample of a size you
 specify.
+
 This is useful for very large sample sizes.
 """
 # -*- coding: utf-8 -*-

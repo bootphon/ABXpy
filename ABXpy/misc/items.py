@@ -12,21 +12,11 @@ import sys
 import os
 import filecmp
 import subprocess
-# import h5py
-# import numpy as np
-# from ys.mods import load
-try:
-    import h5features
-except ImportError:
-    sys.path.insert(0, os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.realpath(__file__)))), 'h5features'))
-    import h5features
+import h5features
 
 
 def generate_testitems(base, n, repeats=0, name='data.item'):
-    """Minimal item file generator for task.py
-    """
+    """Minimal item file generator for task.py"""
     res = np.empty((base ** n * (repeats + 1) + 1, n + 2), dtype='|S5')
     res[0, 0] = '#item'
     res[0, 1] = '#src'
@@ -48,8 +38,7 @@ def generate_testitems(base, n, repeats=0, name='data.item'):
 
 
 def generate_named_testitems(base, n, repeats=0, name='data.item'):
-    """Extended item file generator
-    """
+    """Extended item file generator"""
     res = np.empty((base ** n * (repeats + 1) + 1, n + 4), dtype='|S6')
     res[0, 0] = '#file'
     res[0, 1] = 'onset'
@@ -76,8 +65,7 @@ def generate_named_testitems(base, n, repeats=0, name='data.item'):
 
 
 def generate_features(n_files, n_feat=2, max_frames=3, name='data.features'):
-    """Random feature file generator
-    """
+    """Random feature file generator"""
     features = []
     times = []
     files = []
@@ -91,8 +79,7 @@ def generate_features(n_files, n_feat=2, max_frames=3, name='data.features'):
 
 def generate_db_and_feat(base, n, repeats=0, name_db='data.item', n_feat=2,
                          max_frames=3, name_feat='data.features'):
-    """Item and feature files generator
-    """
+    """Item and feature files generator"""
     generate_named_testitems(base, n, repeats, name_db)
     print name_db
     n_files = (base ** n) * (repeats + 1)

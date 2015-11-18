@@ -1,9 +1,7 @@
-"""This module is used for creating a new task and preprocessing.
+"""This module allows to specify, initialize and preprocess an ABX task.
 
-This module contains the functions to specify and initialise a new ABX task,
+This module contains the functions to specify and initialize a new ABX task,
 compute and display the statistics, and generate the ABX triplets and pairs.
-
-It can also be used in a command line. See task --help for the documentation
 
 Usage
 -----
@@ -11,6 +9,8 @@ Usage
 From the command line:
 
 .. code-block:: bash
+
+    python task.py --help
 
     python task.py my_data.item -o column1 -a column2 column3 -b column4 \
 column5 -f "[attr == 0 for attr in column3_X]"
@@ -23,17 +23,21 @@ In python:
 .. code-block:: python
 
     import ABXpy.task
+
     # create a new task and compute the statistics
-    myTask = ABXpy.task.Task('data.item', 'on_label', 'across_feature', \
+    myTask = ABXpy.task.Task('my_data.item', 'on_label', 'across_feature', \
 'by_label', filters=my_filters, regressors=my_regressors)
-    print myTask.stats  # display statistics
-    myTask.generate_triplets()  # generate a h5db file 'data.abx'containing \
-all the triplets and pairs
+
+    # display statistics
+    print myTask.stats
+
+    # generate a h5db file 'data.abx'containing all the triplets and pairs
+    myTask.generate_triplets()
 
 Example
 -------
 
-#TODO this example is for the front page or ABX module, to move
+# TODO: this example is for the front page or ABX module, to move
 An example of ABX triplet:
 
 +------+------+------+
@@ -49,77 +53,87 @@ An example of ABX triplet:
 A and X share the same 'on' attribute; A and B share the same 'across'
 attribute; A,B and X share the same 'by' attribute
 """
-# -*- coding: utf-8 -*-
 
-# make sure the rest of the ABXpy package is accessible
-import os
-import sys
-package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
+import argparse
 import h5py
+import logging
 import numpy as np
+import os
 import pandas as pd
+import pprint
+import sys
+import tempfile
 import warnings
-import ABXpy.database.database as database
+
+import ABXpy.database.database as abx_database
 import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.h5tools.h52np as h52np
 import ABXpy.h5tools.h5_handler as h5_handler
 import ABXpy.h5tools.h5io as h5io
+import ABXpy.misc.progress_display as progress_display
 import ABXpy.misc.type_fitting as type_fitting
+import ABXpy.sampling.sampler as sampler
 import ABXpy.sideop.filter_manager as filter_manager
 import ABXpy.sideop.regressor_manager as regressor_manager
-import ABXpy.sampling.sampler as sampler
-import ABXpy.misc.progress_display as progress_display
-import tempfile
 
-# FIXME many of the fixmes should be presented as feature requests in a
+# FIXME: many of the fixmes should be presented as feature requests in a
 # github instead of fixmes
-"""
-# FIXME get a memory and speed efficient mechanism for storing a task on disk
-and loading it back (pickling doesn't work well)
-# FIXME filter out empty  'on-across-by' blocks and empty 'by' blocks as soon
-as possible (i.e. when computing stats)
-# FIXME generate unique_pairs in separate file
-# FIXME find a better scheme for naming 'by' datasets in HDF5 files (to remove
-    the current warning)
-# FIXME efficiently dealing with case where there is no across
-# FIXME syntax to specify names for side-ops when computing them on the fly or
-at the very least number of output (default is one)
-# FIXME implementing file locking, md5 hash and path for integrity checks and
-logging warnings using the standard logging library of python + a verbose stuff
-# FIXME putting metadata in h5files + pretty print it
-# FIXME dataset size for task file seems too big when filtering so as to get
-only 3 different talkers ???
-# FIXME allow specifying regressors and filters from within python using
-something like (which should be integrated with the existing dbfun stuff):
+
+# FIXME: get a memory and speed efficient mechanism for storing a task
+# on disk and loading it back (pickling doesn't work well)
+
+# FIXME: filter out empty 'on-across-by' blocks and empty 'by' blocks
+# as soon as possible (i.e. when computing stats)
+
+# FIXME: generate unique_pairs in separate file
+
+# FIXME: find a better scheme for naming 'by' datasets in HDF5 files
+# (to remove the current warning)
+
+# FIXME: efficiently dealing with case where there is no across
+
+# FIXME: syntax to specify names for side-ops when computing them on
+# the fly or at the very least number of output (default is one)
+
+# FIXME: implementing file locking, md5 hash and path for integrity
+# checks and logging warnings using the standard logging library of
+# python + a verbose stuff
+
+# FIXME: putting metadata in h5files + pretty print it
+
+# FIXME: dataset size for task file seems too big when filtering so as
+# to get only 3 different talkers ???
+
+# FIXME: allow specifying regressors and filters from within python
+# using something like (which should be integrated with the existing
+# dbfun stuff):
 # class ABX_context(object):
-#		def __init__(self, db):
-                        # init fields with None
-#	context = ABX_context(db_file)
+#  def __init__(self, db):
+#  init fields with None
+# context = ABX_context(db_file)
 # def new_filter(context):
-#	return [True for e in context.talker_A]
-# FIXME allow other ways of providing the hierarchical db (directly in
+# return [True for e in context.talker_A]
+
+# FIXME: allow other ways of providing the hierarchical db (directly in
 # pandas format, etc.)
-"""
 
+# More complicated FIXMES
 
-"""More complicated FIXMES
-# FIXME taking by datasets as the basic unit was a mistake, because cases
-where there many small by datasets happen. Find a way to group them when
-needed both in the computations and in the h5 files
-# FIXME allow by sampling customization depending on the analyzes to be
-# carried out
-"""
+# FIXME: taking by datasets as the basic unit was a mistake, because
+# cases where there many small by datasets happen. Find a way to group
+# them when needed both in the computations and in the h5 files
+
+# FIXME: allow by sampling customization depending on the analyzes to
+# be carried out
+
+# TODO: replace verbose with the standard logging
 
 
 class Task(object):
+    """Define an ABX task for a given database.
 
-    """
-    Define an ABX task for a given database.
+    Attributes:
 
-    Attributes
-    ----------
     `stats` : dict. Contain several statistics about the task. The main \
         3 attributes are:
 
@@ -128,102 +142,75 @@ class Task(object):
     - nb_triplets the number of triplets considered.
     - nb_by_levels the number of blocks of ABX triplets sharing the same \
     'by' attribute.
-
-    Parameters
-    ----------
-    db_name : str
-        the filename of database on which the ABX task is applied.
-    on : str
-        the 'on' attribute of the ABX task. A and X share the same 'on'
-        attribute and B has a different one.
-    across : list, optional
-        a list of strings containing the 'across' attributes of the ABX
-        task. A and B share the same 'across' attributes and X has a
-        different one.
-    by : list, optional
-        a list of strings containing the 'by' attributes of the ABX task. A,B
-        and X share the same 'by' attributes.
-    filters : list, optional
-        a list of string specifying a filter on A, B or X.
-    regressors : list, optional
-        a list of string specifying a filter on A, B or X.
-    verbose : int, optional
-        display additionnal information is set superior to 0.
-    verify : str, optionnal
-        verify the correctness of the database file, do by default.
-    features : str, otpionnal
-        the features file. Add it to verify the consistency with the item file
     """
 
-    def __init__(self, db_name, on, across=None, by=None, filters=None,
-                 regressors=None, verbose=0):
+    def __init__(self, db_file, on, across=[], by=[],
+                 filters=[], regressors=[], verbose=False):
+        """Initialize an ABX task with the provided attributes.
 
+        Parameters
+
+        db_file : str
+            the filename of database on which the ABX task is applied.
+
+        on : str
+            the 'on' attribute of the ABX task. A and X share the same
+            'on' attribute and B has a different one.
+
+        across : list, optional
+            a list of strings containing the 'across' attributes of
+            the ABX task. A and B share the same 'across' attributes
+            and X has a different one.
+
+        by : list, optional
+            a list of strings containing the 'by' attributes of the
+            ABX task. A,B and X share the same 'by' attributes.
+
+        filters : list, optional
+            a list of string specifying a filter on A, B or X.
+
+        regressors : list, optional
+            a list of string specifying a filter on A, B or X.
+
+        verbose : bool, optional
+            display additionnal information if True.
+
+        """
         self.verbose = verbose
-        assert os.path.exists(db_name), ('the item file {0} was not found:'
-                                         .format(db_name))
 
-        if across is None:
-            across = []
-        if by is None:
-            by = []
-        if filters is None:
-            filters = []
-        if regressors is None:
-            regressors = []
+        # Load the ABX database in class attributes
+        self.db_file = db_file
+        self._load_database()
+        logging.info('{} loaded.'.format(self.db_file))
 
-        # check parameters
-        # using several 'on' isn't supported by the toolbox
-        assert isinstance(on, basestring), \
-            'ON attribute must be specified by a string'
-        on = [on]
-        if isinstance(across, basestring):
-            across = [across]
-        if isinstance(by, basestring):
-            by = [by]
+        # Store input arguments as class attributes.
+        # Filters and regressors are processed later.
+        self.on = on
+        self.across = across
+        self.by = by
 
-        if verbose:
-            print("Verifying input...")
+        # Check that those parameters are consistent with the database
+        self._check_parameters_consistency()
+        logging.info('task parameters are consistent.')
 
-        # open database
-        db, db_hierarchy, feat_db = database.load(db_name, features_info=True)
-
-        # check that required columns are present
-        cols = set(db.columns)
-        message = ' argument is invalid, check that all \
-            the provided attributes are defined in the database ' + db_name
-        # the argument of issuperset needs to be a list ...
-        assert cols.issuperset(on), 'ON' + message
-        assert cols.issuperset(across), 'ACROSS' + message
-        assert cols.issuperset(by), 'BY' + message
-        # FIXME add additional checks, for example that columns
-        # in BY, ACROSS, ON are not the same ? (see task structure notes)
-        # also that location columns are not used
-        for col in cols:
-            assert '_' not in col, col + ': you cannot use underscore in \
-                column names'
-            assert '#' not in col, col + ': you cannot use \'#\' in \
-                column names'
-        if verbose:
-            print("Input verified")
-
-        # if 'by' or 'across' are empty create appropriate dummy columns
-        # (note that '#' is forbidden in user names for columns)
+        # If 'by' or 'across' are empty create appropriate dummy
+        # columns (note that '#' is forbidden in user names for
+        # columns).  Note that this additional columns are not in the
+        # db_hierarchy, but I don't think this is problematic
         if not by:
-            db['#by'] = 0
-            by = ['#by']
+            self.db['#by'] = 0
+            self.by = ['#by']
         if not across:
-            db['#across'] = range(len(db))
-            across = ['#across']
-        # note that this additional columns are not in the db_hierarchy,
-        # but I don't think this is problematic
+            self.db['#across'] = range(len(self.db))
+            self.across = ['#across']
 
-        self.filters = filter_manager.FilterManager(db_hierarchy,
-                                                    on, across, by,
-                                                    filters)
-        self.regressors = regressor_manager.RegressorManager(db,
-                                                             db_hierarchy,
-                                                             on, across, by,
-                                                             regressors)
+        self.filters = filter_manager.FilterManager(
+            self.db_hierarchy, self.on, self.across, self.by,
+            filters)
+
+        self.regressors = regressor_manager.RegressorManager(
+            self.db, self.db_hierarchy, self.on, self.across, self.by,
+            regressors)
 
         self.sampling = False
 
@@ -234,57 +221,52 @@ class Task(object):
         self.across_blocks = {}
         self.on_across_blocks = {}
         self.antiacross_blocks = {}
-        by_groups = db.groupby(by)
+        by_groups = self.db.groupby(self.by)
 
-        if self.verbose > 0:
+        if self.verbose:
             display = progress_display.ProgressDisplay()
             display.add('block', 'Preprocessing by block', len(by_groups))
 
         for by_key, by_frame in by_groups:
-            if self.verbose > 0:
+            if self.verbose:
                 display.update('block', 1)
                 display.display()
 
-            # allow to get by values as well as values of other variables
-            # that are determined by these
+            # allow to get by values as well as values of other
+            # variables that are determined by these
             by_values = dict(by_frame.iloc[0])
             # apply 'by' filters
             if self.filters.by_filter(by_values):
                 # get analogous feat_db
-                by_feat_db = feat_db.iloc[by_frame.index]
+                by_feat_db = self.feat_db.iloc[by_frame.index]
+
                 # drop indexes
                 by_frame = by_frame.reset_index(drop=True)
+
                 # reset_index to get an index relative to the 'by' db,
                 # the original index could be conserved in an additional
                 # 'index' column if necessary by removing the drop=True, but
                 # this would add another constraint on the possible column name
                 by_feat_db = by_feat_db.reset_index(drop=True)
+
                 # apply generic filters
                 by_frame = self.filters.generic_filter(by_values, by_frame)
                 self.by_dbs[by_key] = by_frame
                 self.feat_dbs[by_key] = by_feat_db
-                self.on_blocks[by_key] = self.by_dbs[by_key].groupby(on)
+                self.on_blocks[by_key] = self.by_dbs[by_key].groupby(self.on)
                 self.across_blocks[by_key] = self.by_dbs[
-                    by_key].groupby(across)
+                    by_key].groupby(self.across)
                 self.on_across_blocks[by_key] = self.by_dbs[
-                    by_key].groupby(on + across)
-                if len(across) > 1:
+                    by_key].groupby(self.on + self.across)
+                if len(self.across) > 1:
                     self.antiacross_blocks[by_key] = dict()
                     for across_key in (self.across_blocks[by_key]
                                        .groups.iterkeys()):
                         b = True
-                        for i, col in enumerate(across):
+                        for i, col in enumerate(self.across):
                             b = b * (by_frame[col] != across_key[i])
                         self.antiacross_blocks[by_key][
                             across_key] = by_frame[b].index
-
-        # store parameters
-        self.database = db_name
-        self.db = db
-        self.db_hierarchy = db_hierarchy
-        self.on = on
-        self.across = across
-        self.by = by
 
         # determining appropriate numeric type to represent index (currently
         # used only for numpy arrays and h5 storage, might also be used for
@@ -301,33 +283,104 @@ class Task(object):
         # compute some statistics about the task
         self.compute_statistics()
 
+    def _load_database(self):
+        """Load a database from the provided filename.
+
+        Load a database from self.db_file and initilizes self.db,
+        self.db_hierarchy, self.feat_db.
+
+        If the file cannot be loaded, this method raises an
+        IOError exception.
+
+        """
+        try:
+            # Load the database from the items file
+            self.db, self.db_hierarchy, self.feat_db = abx_database.load(
+                self.db_file, features_info=True)
+
+        except IOError, e:
+            # If loading raises an exception, exit the program
+            logging.error(e)
+            sys.exit(e)
+
+    def _check_parameters_consistency(self):
+        """Verify the consistency of the task parameters on the database.
+
+        This method should be considered as private and not used by
+        front-end users.
+
+        The following conditions are checked. The ON parameter is
+        a unique string.  ON, ACROSS and BY corresponds to column
+        headers in the items file. Columns names in the items file
+        have no '_' or '#'.
+
+        Moreover ACROSS and BY are transformed into lists of str, in
+        case they was str.
+        """
+        # TODO: from assert to exceptions
+        if self.verbose:
+            logging.info('Verifying input consistency...')
+
+        assert isinstance(self.on, basestring), 'ON attribute must be a string'
+        self.on = self.on.split()  # from str to list
+        assert len(self.on) == 1, 'ON attribute must specifies a unique column'
+
+        if isinstance(self.across, basestring):
+            self.across = [self.across]
+
+        if isinstance(self.by, basestring):
+            self.by = [self.by]
+
+        # check that required columns are present
+        cols = set(self.db.columns)
+        message = ' argument is invalid, check all the provided attributes'
+        ' are defined in the database ' + self.db_file
+
+        # the argument of issuperset needs to be a list ...
+        assert cols.issuperset(self.on),     'ON' + message
+        assert cols.issuperset(self.across), 'ACROSS' + message
+        assert cols.issuperset(self.by),     'BY' + message
+
+        # FIXME: add additional checks, for example that columns
+        # in BY, ACROSS, ON are not the same ? (see task structure notes)
+        # also that location columns are not used
+        for col in cols:
+            assert '_' not in col, col + ': you cannot use underscore in \
+                column names'
+            assert '#' not in col, col + ': you cannot use \'#\' in \
+                column names'
+
+        if self.verbose:
+            logging.info("Input is consistent")
+
     def compute_statistics(self, approximate=False):
-        """Compute the statistics of the task
+        """Compute the statistics of the task.
 
         The number of ABX triplets is exact in most cases if approximate is
         set to false. The other statistics can only be approxrimate in the case
         where there are A, B, X or ABX filters.
 
-        Parameters
-        ----------
-        Approximate : bool
-            approximate the number of triplets
+        Parameters:
+
+        approximate : bool, optional. Approximate the number of
+        triplets, default is False.
         """
         self.stats = {}
-        self.stats['approximate'] = bool(self.filters.A or self.filters.B or
-                                         self.filters.X or self.filters.ABX)
-        self.stats['approximate_nb_triplets'] = approximate and self.stats[
-            'approximate']
+
+        is_approximate = bool(self.filters.A or self.filters.B or
+                              self.filters.X or self.filters.ABX)
+        self.stats['approximate'] = is_approximate
+        self.stats['approximate_nb_triplets'] = approximate and is_approximate
         self.stats['nb_by_levels'] = len(self.by_dbs)
         self.by_stats = {}
 
-        if self.verbose > 0:
+        if self.verbose:
             display = progress_display.ProgressDisplay()
             display.add('block', 'Computing statistics for by block',
                         self.stats['nb_by_levels'])
 
         for by in self.by_dbs:
-            if self.verbose > 0:
+            if self.verbose:
                 display.update('block', 1)
                 display.display()
             stats = {}
@@ -369,7 +422,7 @@ class Task(object):
                 if self.filters.on_across_by_filter(on_across_by_values):
                     n_A = count
                     n_X = stats['on_levels'][on]
-                    # FIXME quick fix to process case whith no across, but
+                    # FIXME: quick fix to process case whith no across, but
                     # better done in a separate loop ...
                     if self.across == ['#across']:
                         n_B = stats['nb_items'] - n_X
@@ -380,7 +433,7 @@ class Task(object):
                     stats['nb_on_pairs'] += n_A * n_X
                     if ((approximate or
                          not(self.filters.A or self.filters.B or
-                         self.filters.X or self.filters.ABX)) and
+                             self.filters.X or self.filters.ABX)) and
                             type(across) != tuple):
                         stats['nb_triplets'] += n_A * n_B * n_X
                         stats['block_sizes'][block_key] = n_A * n_B * n_X
@@ -411,8 +464,8 @@ class Task(object):
         task, this function will generate the complete set of triplets and \
         the regressors.
 
-        Parameters
-        ----------
+        Parameters:
+
         by : int
             The block index
         on, across : int
@@ -424,8 +477,8 @@ class Task(object):
         with_regressors : bool, optional
             By default, true
 
-        Returns
-        -------
+        Returns:
+
         triplets : numpy.Array
             the set of triplets generated
         regressors : numpy.Array
@@ -435,8 +488,8 @@ class Task(object):
         # block and A and B have the 'across' feature of the block
         A = np.array(on_across_block, dtype=self.types[by])
         on_set = set(self.on_blocks[by].groups[on])
-        # FIXME quick fix to process case whith no across, but better done in a
-        # separate loop ...
+        # FIXME: quick fix to process case whith no across, but better
+        # done in a separate loop ...
         if self.across == ['#across']:
             # in this case A is a singleton and B can be anything in the by
             # block that doesn't have the same 'on' as A
@@ -517,7 +570,7 @@ class Task(object):
             # or:
             #   [[np_array_output_1_dbfun_1, np_array_output_2_dbfun_1,...],
             #    [np_array_output_1_dbfun_2, ...], ...]
-            # FIXME change manager API so that self.regressors.A contains the
+            # FIXME: change manager API so that self.regressors.A contains the
             # data and not the list of dbfun_s ?
             regressors = {}
             scalar_names = self.regressors.by_names + \
@@ -540,7 +593,7 @@ class Task(object):
                                    self.regressors.X_regressors):
                 for name, reg in zip(names, regs):
                     regressors[name] = reg[iX]
-            # FIXME implement this
+            # FIXME: implement this
             # for names, regs in zip(self.regressors.ABX_names,
             #                        self.regressors.ABX_regressors):
             #    for name, reg in zip(names, regs):
@@ -549,36 +602,37 @@ class Task(object):
         else:
             return triplets
 
-    # FIXME add a mechanism to allow the specification of a random seed in a
+    # FIXME: add a mechanism to allow the specification of a random seed in a
     # way that would produce reliably the same triplets on different machines
     # (means cross-platform random number generator + having its state so as
     # to be sure that no other random number generation calls to it are
     # altering the sequence)
     # FIXME in case of sampling, get rid of blocks with no samples ?
     def generate_triplets(self, output=None, sample=None):
-        """Generate all possible triplets for the whole task and the \
-associated pairs
+        """Generate all possible triplets for the whole task and the
+        associated pairs.
 
         Generate the triplets and the pairs for an ABXpy.Task and store it in
         a h5db file.
 
-        Parameters
-        ----------
-        output : filename, optional
-                 The output file. If not specified, it will automatically
-                 create a new file with the same name as the input file.
+        Parameters:
 
-        sample : bool, optional
-                 apply the function on a sample of the task
+        output : filename, optional. The output file. If not
+                 specified, it will automatically create a new file
+                 with the same name as the input file.
+
+        sample : bool, optional. Apply the function on a sample of
+                 the task
+
         """
 
-        # FIXME change this to a random file name to avoid overwriting problems
-        # default name for output file
+        # FIXME: change this to a random file name to avoid
+        # overwriting problems default name for output file
         if output is None:
-            (basename, _) = os.path.splitext(self.database)
+            (basename, _) = os.path.splitext(self.db_file)
             output = basename + '.abx'
 
-        # FIXME use an object that guarantees that the stream will not be
+        # FIXME: use an object that guarantees that the stream will not be
         # perturbed by external codes calls to np.random
         # set up sampling if any
         self.total_n_triplets = self.stats['nb_triplets']
@@ -587,7 +641,7 @@ associated pairs
             if self.stats['approximate_nb_triplets']:
                 raise ValueError('Cannot sample if number of triplets is \
                     computed approximately')
-            # FIXME for now just something as random a possible
+            # FIXME: for now just something as random a possible
             np.random.seed()
             N = self.total_n_triplets
             if sample < 1:  # proportion of triplets to be sampled
@@ -615,7 +669,7 @@ associated pairs
             if self.verbose > 0:
                 print("Writing ABX triplets to task file...")
             with np2h5.NP2H5(h5file=output) as fh:
-                # FIXME test if not fixed size impacts performance a lot
+                # FIXME: test if not fixed size impacts performance a lot
                 datasets, indexes = self.regressors.get_regressor_info()
                 with (h5io.H5IO(
                         filename=output, datasets=datasets,
@@ -631,22 +685,26 @@ associated pairs
                     # is performed
                     out = fh.add_dataset(group='triplets', dataset=str(
                             by), n_rows=n_rows, n_columns=3,
-                                         item_type=self.types[by], fixed_size=False)
+                                         item_type=self.types[by],
+                                         fixed_size=False)
+
                     # allow to get by values as well as values of other
                     # variables that are determined by these
                     by_values = dict(db.iloc[0])
+
                     # instantiate by regressors here
                     self.regressors.set_by_regressors(by_values)
+
                     # iterate over on/across blocks
                     for block_key, block in (self.on_across_blocks[by]
                                              .groups.iteritems()):
-                        if self.verbose > 0:
+                        if self.verbose:
                             display.update('block', 1)
                         # allow to get on, across, by values as well as values
                         # of other variables that are determined by these
                         on_across_by_values = dict(db.ix[block[0]])
-                        if ((self.filters
-                             .on_across_by_filter(on_across_by_values))):
+                        if self.filters.on_across_by_filter(
+                                on_across_by_values):
                             # instantiate on_across_by regressors here
                             self.regressors.set_on_across_by_regressors(
                                 on_across_by_values)
@@ -655,39 +713,39 @@ associated pairs
                                 by, on, across, block, on_across_by_values)
                             out.write(triplets)
                             out_regs.write(regressors, indexed=True)
-                            if self.verbose > 0:
+                            if self.verbose:
                                 display.update(
                                     'sampled_triplets', triplets.shape[0])
                                 display.update('triplets',
                                                (self.by_stats[by]
                                                 ['block_sizes'][block_key]))
-                        if self.verbose > 0:
+                        if self.verbose:
                             display.display()
-        if self.verbose > 0:
+        if self.verbose:
             print("done.")
         self.generate_pairs(output)
 
-    # FIXME clean this function (maybe do a few well-separated sub-functions
-    # for getting the pairs and unique them)
+    # FIXME: clean this function (maybe do a few well-separated
+    # sub-functions for getting the pairs and unique them)
     def generate_pairs(self, output=None):
         """Generate the pairs associated to the triplet list
 
-        .. note:: This function is called by generate_triplets and should not
-            be used independantly
-        """
+        .. note:: This function is called by generate_triplets and
+            should not be used independantly
 
-        # FIXME change this to a random file name to avoid overwriting problems
-        # default name for output file
+        """
+        # FIXME: change this to a random file name to avoid
+        # overwriting problems default name for output file
         if output is None:
-            (basename, _) = os.path.splitext(self.database)
+            (basename, _) = os.path.splitext(self.db_file)
             output = basename + '.abx'
         # list all pairs
         all_empty = True
         try:
             _, output_tmp = tempfile.mkstemp()
             for by, db in self.by_dbs.iteritems():
-                # FIXME maybe care about this case earlier ?
-                if self.verbose > 0:
+                # FIXME: maybe care about this case earlier ?
+                if self.verbose:
                     print("Writing AX/BX pairs to task file...")
                 with h5py.File(output) as fh:
                     not_empty = fh['/triplets/' + str(by)].size
@@ -702,8 +760,9 @@ associated pairs
                             out = f_out.add_dataset(
                                 'pairs', str(by), n_columns=1,
                                 item_type=pair_key_type, fixed_size=False)
-                            # FIXME repace this by a for loop by making h52np
-                            # implement the iterable pattern with next() outputing
+                            # FIXME: repace this by a for loop by making h52np
+                            # implement the iterable pattern with
+                            # next() outputing
                             # inp.read()
                             try:
                                 while True:
@@ -712,30 +771,38 @@ associated pairs
                                     ind = np.arange(n)
                                     i1 = 2 * ind
                                     i2 = 2 * ind + 1
-                                    # would need to amend np2h5 and h52np to remove
-                                    # the second dim...
+                                    # would need to amend np2h5 and
+                                    # h52np to remove the second
+                                    # dim...
                                     pairs = np.empty(
                                         shape=(2 * n, 1), dtype=pair_key_type)
-                                    # FIXME change the encoding (and type_fitting)
-                                    # so that A,B and B,A have the same code ...
+                                    # FIXME: change the encoding (and
+                                    # type_fitting) so that A,B and
+                                    # B,A have the same code ...
                                     # (take a=min(a,b), b=max(a,b))
-                                    # FIXME but allow a flag to control the
-                                    # behavior to be able to enforce A,X and B,X
-                                    # order when using assymetrical distance
+                                    # FIXME: but allow a flag to
+                                    # control the behavior to be able
+                                    # to enforce A,X and B,X order
+                                    # when using assymetrical distance
                                     # functions
                                     pairs[i1, 0] = triplets[:, 0] + (
                                         max_ind + 1) * triplets[:, 2]  # AX
                                     pairs[i2, 0] = triplets[:, 1] + (
                                         max_ind + 1) * triplets[:, 2]  # BX
-                                    # FIXME do a unique here already? Do not store
-                                    # the inverse mapping ? (could sort triplets on
-                                    # pair1, complete pair1, sort on pair2,
+                                    # FIXME: do a unique here already?
+                                    # Do not store the inverse mapping
+                                    # ? (could sort triplets on pair1,
+                                    # complete pair1, sort on pair2,
                                     # complete pair 2 and shuffle ?)
                                     out.write(pairs)
                             except StopIteration:
                                 pass
+
                     # sort pairs
-                    handler = h5_handler.H5Handler(output_tmp, '/pairs/', str(by))
+                    handler = h5_handler.H5Handler(output_tmp,
+                                                   '/pairs/',
+                                                   str(by))
+
                     # memory: available RAM in Mo, could be a param
                     memory = 1000
                     # estimate of the amount of data to be sorted
@@ -746,18 +813,20 @@ associated pairs
                     # harmonize units to Ko:
                     memory = 1000 * memory
                     amount = amount / 1000.
-                    # be conservative: aim at using no more than 3/4 the available
-                    # memory
-                    # if enough memory take one chunk (this will do an unnecessary
-                    # full write and read of the file... could be optimized easily)
+                    # be conservative: aim at using no more than 3/4
+                    # the available memory if enough memory take one
+                    # chunk (this will do an unnecessary full write
+                    # and read of the file... could be optimized
+                    # easily)
                     if amount <= 0.75 * memory:
-                        # would it be beneficial to have a large o_buffer_size as
-                        # well ?
+                        # would it be beneficial to have a large
+                        # o_buffer_size as well ?
                         handler.sort(buffer_size=amount)
-                    # else take around 30 chunks if possible (this seems efficient
-                    # given the current implem, using a larger number of chunks
-                    # efficiently might be possible if the reading chunks part of
-                    # the sort was cythonized ?)
+                    # else take around 30 chunks if possible (this
+                    # seems efficient given the current implem, using
+                    # a larger number of chunks efficiently might be
+                    # possible if the reading chunks part of the sort
+                    # was cythonized ?)
                     elif amount / 30. <= 0.75 * memory:
                         handler.sort(buffer_size=amount / 30.)
                     # else take minimum number of chunks possible given the
@@ -765,7 +834,7 @@ associated pairs
                     else:
                         handler.sort(buffer_size=0.75 * memory)
 
-                    # FIXME should have a unique function directly instead of
+                    # FIXME: should have a unique function directly instead of
                     # sorting + unique ?
                     with h52np.H52NP(output_tmp) as f_in:
                         with np2h5.NP2H5(output) as f_out:
@@ -779,7 +848,8 @@ associated pairs
                                     pairs = inp.read()
                                     pairs = np.unique(pairs)
                                     # unique alters the shape
-                                    pairs = np.reshape(pairs, (pairs.shape[0], 1))
+                                    pairs = np.reshape(pairs,
+                                                       (pairs.shape[0], 1))
                                     if pairs[0, 0] == last:
                                         pairs = pairs[1:]
                                     if pairs.size > 0:
@@ -791,21 +861,21 @@ associated pairs
                     with h5py.File(output) as fh:
                         fh['/unique_pairs'].attrs[str(by)] = max_ind + 1
                     store = pd.HDFStore(output)
-                    # use append to make use of table format, which is better at
-                    # handling strings without much space (fixed-size format)
+                    # use append to make use of table format, which better
+                    # handles strings without much space (fixed-size format)
                     store.append('/feat_dbs/' + str(by), self.feat_dbs[by],
                                  expectedrows=len(self.feat_dbs[by]))
                     store.close()
-                    # FIXME generate inverse mapping to triplets (1 and 2) ?
+                    # FIXME: generate inverse mapping to triplets (1 and 2) ?
         finally:
             os.remove(output_tmp)
-        if self.verbose > 0:
+        if self.verbose:
             print("done.")
 
     # number of triplets when triplets with same on, across, by are counted as
     # one
-    # FIXME current implementation won't work with A, B, X or ABX filters
-    # FIXME lots of code in this function is repicated from
+    # FIXME: current implementation won't work with A, B, X or ABX filters
+    # FIXME: lots of code in this function is repicated from
     # on_across_triplets, generate_triplets and/or compute_stats: the maximum
     # possible should be factored out, including the loop over by, loop over
     # on_across iteration structure
@@ -839,7 +909,7 @@ associated pairs
                         by].groups[block_key]
                     A = np.array(on_across_block, dtype=self.types[by])
                     X = self.on_blocks[by].groups[on]
-                    # FIXME quick fix to process case whith no across, but
+                    # FIXME: quick fix to process case whith no across, but
                     # better done in a separate loop ...
                     if self.across == ['#across']:
                         # in this case A is a singleton and B can be anything
@@ -869,18 +939,33 @@ associated pairs
                                        for stats in self.by_stats.values()])
 
     def print_stats(self, filename=None, summarized=True):
-        if filename is None:
+        """Print basic statistics on the task to a file.
+
+        This is a simple wrapper to Task.print_stats_to_stream().
+
+        Parameters:
+
+        filename: str, optional. The file where to write
+            statistics. If not provided, write on stdout.
+
+        summarized: bool, optional. Write shorter statistics if True
+            (default), complete stats if False.
+        """
+        if not filename:
             self.print_stats_to_stream(sys.stdout, summarized)
         else:
-            with open(filename, 'w') as h:
-                self.print_stats_to_stream(h, summarized)
+            with open(filename, 'w') as f:
+                self.print_stats_to_stream(f, summarized)
 
-    def print_stats_to_stream(self, stream, summarized):
-        import pprint
+    def print_stats_to_stream(self, stream=sys.stdout, summarized=True):
+        """Print basic statistics on the task to a stream.
+
+        TODO comment...
+        """
         stream.write('\n\n###### Global stats ######\n\n')
         pprint.pprint(self.stats, stream)
         stream.write('\n\n###### by blocks stats ######\n\n')
-        if not(summarized):
+        if summarized:
             for by, stats in self.by_stats.iteritems():
                 stream.write('### by level: %s ###\n' % str(by))
                 pprint.pprint(stats, stream)
@@ -888,7 +973,9 @@ associated pairs
             try:
                 self.compute_nb_levels()
             except ValueError:
-                warnings.warn("Filters not fully supported, nb_levels per by block wont be calculated", RuntimeWarning)
+                warnings.warn('Filters not fully supported, '
+                              'nb_levels per by block wont be calculated',
+                              RuntimeWarning)
             for by, stats in self.by_stats.iteritems():
                 stream.write('### by level: %s ###\n' % str(by))
                 stream.write('nb_triplets: %d\n' % stats['nb_triplets'])
@@ -916,86 +1003,158 @@ def on_across_from_key(key):
     return on, across
 
 
-"""
-Command-line API
+def task_parser(input_args=None):
+    """Define and parse command line arguments for task specification.
 
-Example call:
-    task.py ./test.token --on word --across talker --by length --write_triplets
-"""
-# FIXME maybe some problems if wanting to pass some code directly on the
-# command-line if it contains something like s = "'a'==1 and 'b'==2" ? but
-# not a big deal ?
-# detects whether the script was called from command-line
-if __name__ == '__main__':
+    For more details on the command line options, have a:
 
-    import argparse
+    .. code-block:: bash
 
-    # using lists as default value in the parser might be dangerous ?
-    # probably not as long as it is not used more than once ?
-    # parser (the usage string is specified explicitly because the default
+        'python task.py --help'
+
+    Parameters:
+
+    input_args -- str, optional. The argument string to be
+    parsed. By default, the argument string is taken from sys.argv.
+
+    Return:
+
+    a Namespace object built up from attributes parsed out of the
+    argument string, as returned by argparse.parse_args().
+
+    TODO: document the Namespace structure
+    """
+    # The usage string is specified explicitly because the default
     # does not show that the mandatory arguments must come before the
-    # mandatory ones; otherwise parsing is not possible beacause optional
-    # arguments can have various numbers of inputs)
+    # optional ones; otherwise parsing is not possible because
+    # optional arguments can have various numbers of inputs
     parser = argparse.ArgumentParser(
-        usage="""%(prog)s database [output] -o ON [-a ACROSS [ACROSS ...]] \
-[-b BY [BY ...]] [-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT\
-_OR_PROPORTION] [--stats-only] [-h] [-v VERBOSE_LEVEL] [--no_verif] \
-[--features FEATURE_FILE]""",
-        description='ABX task specification')
-    message = """must be defined by the database you are using (e.g. speaker \
-or phonemes, if your database contains columns defining these attributes)"""
+        prog='task.py',
+        description='Specify and initialize a new ABX task, compute and '
+        'display the statistics, and generate the ABX triplets and pairs.',
+        usage='%(prog)s database [output] -o ON [--help] [--verbose] '
+        '[-a ACROSS [ACROSS ...]] [-b BY [BY ...]] '
+        '[-f FILT [FILT ...]] [-r REG [REG ...]] '
+        '[-s SAMPLING_AMOUNT_OR_PROPORTION] '
+        '[--stats-only] [--no-verif] [--features FEATURE_FILE]')
+
+    message = 'must be columns defined by the database you are using '
+    '(e.g. speaker or phonemes, if your database contains such columns)'
+
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='increase output verbosity')
+
     # I/O files
     g1 = parser.add_argument_group('I/O files')
-    g1.add_argument(
-        'database',
-        help='main file of the database defining the items used to form ABX '
-             'triplets and their attributes')
+
+    g1.add_argument('database',
+                    help='main file of the database defining the items used to'
+                    ' form ABX triplets and their attributes')
+
+    # TODO what if output file non provided ? Test/document it
     g1.add_argument('output', nargs='?', default=None,
                     help='optional: output file, where the results of the '
-                         'analysis will be put')
+                         'analysis will be put. If the --stats-only is used '
+                         'this argument is mandatory.')
+
     # Task specification
     g2 = parser.add_argument_group('Task specification')
-    g2.add_argument(
-        '-o', '--on', required=True, help='ON attribute, ' + message)
-    g2.add_argument('-a', '--across',  nargs='+', default=[],
+
+    # TODO: force str and remove append on --on
+    g2.add_argument('-o', '--on', required=True, action='append',
+                    help='ON attribute, ' + message)
+
+    g2.add_argument('-a', '--across',  nargs='+', default=[], action='append',
                     help='optional: ACROSS attribute(s), ' + message)
-    g2.add_argument('-b', '--by', nargs='+', default=[],
+
+    g2.add_argument('-b', '--by', nargs='+', default=[], action='append',
                     help='optional: BY attribute(s), ' + message)
-    g2.add_argument('-f', '--filt', nargs='+', default=[],
+
+    g2.add_argument('-f', '--filter', nargs='+', default=[],
                     help='optional: filter specification(s), ' + message)
+
     g2.add_argument('-s', '--sample', default=None, type=float,
                     help='optional: if a real number in ]0;1[: sampling '
                          'proportion, if a strictly positive integer: number '
                          'of triplets to be sampled')
+
     # Regressors specification
     g3 = parser.add_argument_group('Regressors specification')
-    g3.add_argument('-r', '--reg', nargs='+', default=[],
+
+    g3.add_argument('-r', '--regressor', nargs='+', default=[],
                     help='optional: regressor specification(s), ' + message)
+
     # Computation parameters
     g4 = parser.add_argument_group('Computation parameters')
-    g4.add_argument('--stats_only', default=False, action='store_true',
+
+    g4.add_argument('--stats-only', default=False, action='store_true',
                     help='add this flag if you only want some statistics '
                          'about the specified task')
-    g4.add_argument('-v', '--verbose', default=0,
-                    help='optional: level of verbosity required on the '
-                         'standard output')
-    g4.add_argument('--no_verif', default=False, action='store_true',
+
+    g4.add_argument('--no-verif', default=False, action='store_true',
                     help='optional: skip the verification of the database '
                          'file consistancy')
+
     g4.add_argument('--features',
                     help='optional: feature file, verify the consistency '
                          'of the feature file with the item file')
-    args = parser.parse_args()
-    if args.stats_only:
-        assert args.output, "The output file was not provided"
-    if not args.stats_only and os.path.exists(args.output):
-        print("WARNING: Overwriting task file " + args.output)
-        os.remove(args.output)
-    task = Task(args.database, args.on, args.across,
-                args.by, args.filt, args.reg, args.verbose)
 
-    if not(args.stats_only):
-        # generate triplets and unique pairs
-        task.generate_triplets(args.output, args.sample)
-    else:
+    # if input_args is given, split the string
+    if input_args:
+        input_args = input_args.split()
+
+    # Parse the parameters
+    args = parser.parse_args(input_args)
+
+    # Consistency checks
+    if args.stats_only:
+        # TODO: silly condition, can write stats on stdout...
+        assert args.output, 'Error: --stats-only requires an output '
+        'file to be provided.'
+
+    elif args.output and os.path.exists(args.output):
+        if args.verbose:
+            print("WARNING: Overwriting existing task file " + args.output)
+        os.remove(args.output)
+
+    # BY and ACROSS can accept several arguments either with '--by 1 2
+    # 3' or '--by 1 --by 2 3'. Thus we need to join sublists in a
+    # unique top-level list (i.e. [[1], [2,3]] becomes [1,2,3])
+    args.by = sum(args.by, [])
+    args.across = sum(args.across, [])
+
+    # Task.__init__ need args.on being a unique string, not a list
+    assert len(args.on) == 1, 'Error: --on requires a unique string'
+    args.on = args.on[0]
+
+    return args
+
+
+# FIXME: maybe some problems if wanting to pass some code directly on the
+# command-line if it contains something like s = "'a'==1 and 'b'==2" ? but
+# not a big deal ?
+# TODO: detects whether the script was called from command-line
+def main():
+    """ Command line API of the Task class
+
+    Example call:
+    .. code-block:: bash
+
+        task.py ./data.item --on word --across talker --by length
+    """
+    # Parse input arguments
+    args = task_parser()
+
+    # Create a task instance with parsed parameters
+    task = Task(args.database, args.on, args.across, args.by,
+                args.filter, args.regressor, args.verbose)
+
+    # Do the requested processing depending on --stats-only
+    if args.stats_only:
         task.print_stats()
+    else:
+        task.generate_triplets(args.output, args.sample)
+
+
+if __name__ == '__main__':
+    main()

@@ -21,12 +21,17 @@ def __kl_divergence(x, y):
 
 
 def kl_divergence(x, y, thresholded=True, symmetrized=True, normalize=True):
-    """ Kullback-Leibler divergence 
-    x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
-     - thresholded=True => means we add an epsilon to all the dimensions/values
-                           AND renormalize inputs.
-     - symmetrized=True => uses the symmetrized KL (0.5 x->y + 0.5 y->x).
-     - normalize=True => normalize the inputs so that lines sum to one.
+    """ Kullback-Leibler divergence.
+
+    - x and y should be 2D numpy arrays with "times" on the lines and "features"
+    on the columns.
+
+    - thresholded=True => means we add an epsilon to all the dimensions/values
+    AND renormalize inputs.
+
+    - symmetrized=True => uses the symmetrized KL (0.5 x->y + 0.5 y->x).
+
+    - normalize=True => normalize the inputs so that lines sum to one.
     """
     assert (x.dtype == np.float64 and y.dtype == np.float64) or (
         x.dtype == np.float32 and y.dtype == np.float32)
@@ -49,7 +54,7 @@ def kl_divergence(x, y, thresholded=True, symmetrized=True, normalize=True):
 
 
 def js_divergence(x, y, normalize=True):
-    """ Jensen-Shannon divergence 
+    """ Jensen-Shannon divergence
     x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
      - normalize=True => normalize the inputs so that lines sum to one.
     """
@@ -78,7 +83,7 @@ def sqrt_js_divergence(x, y):
 
 
 def hellinger_distance(x, y):
-    """ Hellinger distance 
+    """ Hellinger distance
     x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
      - normalize=True => normalize the inputs so that lines sum to one.
     """
@@ -97,10 +102,10 @@ def hellinger_distance(x, y):
     return np.float64((1. / np.sqrt(2)) * res)
 
 
-def is_distance(x, y):
-    """ Itakura-Saito distance 
-    x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
-    """
-    assert (x.dtype == np.float64 and y.dtype == np.float64) or (
-        x.dtype == np.float32 and y.dtype == np.float32)
-    # TODO
+# def is_distance(x, y):
+#     """ Itakura-Saito distance
+#     x and y should be 2D numpy arrays with "times" on the lines and "features" on the columns
+#     """
+#     assert (x.dtype == np.float64 and y.dtype == np.float64) or (
+#         x.dtype == np.float32 and y.dtype == np.float32)
+#     # TODO

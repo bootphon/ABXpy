@@ -1,11 +1,11 @@
-import sys
-from ABXpy.distances import distances
-import ABXpy.distances.metrics.dtw as dtw
-import ABXpy.distances.metrics.cosine as cosine
 import argparse
 import os
 import numpy as np
+import sys
 
+from ABXpy.distances import distances
+import ABXpy.distances.metrics.dtw as dtw
+import ABXpy.distances.metrics.cosine as cosine
 
 def default_distance(x, y):
     """ Dynamic time warping cosine distance
@@ -36,7 +36,7 @@ def run(features, task, output, distance=None, j=1):
         distancefun = getattr(__import__(mod), distancefunction)
     else:
         distancefun = default_distance
-        
+
     distances.compute_distances(features, '/features/', task,
                                 output, distancefun, n_cpu=j)
 
@@ -53,7 +53,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '-d', '--distance',
         help='distance module to use (distancemodule.distancefunction, '
-        'default to dtw cosine distance', metavar='distancemodule.distancefunction')
+        'default to dtw cosine distance',
+        metavar='distancemodule.distancefunction')
     parser.add_argument(
         '-j', help='number of cpus to use',
         type=int, default=1)
