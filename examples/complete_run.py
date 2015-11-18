@@ -86,4 +86,5 @@ def fullrun(working_dir='data'):
     analyze.analyze(files['score'], files['task'], files['analyze'])
 
 
-fullrun()
+if __name__ == '__main__':
+    fullrun()
