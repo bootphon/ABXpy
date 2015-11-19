@@ -1,4 +1,8 @@
-import ABXpy.h5tools.h5_handler as h5_handler
+import h5py
+import numpy as np
+import os
+import tempfile
+from ABXpy.h5tools.h5_handler import H5Handler
 
 # TODO some asserts...
 def test_h5handler():

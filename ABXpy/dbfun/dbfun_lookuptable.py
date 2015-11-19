@@ -24,8 +24,8 @@ import collections
 
 import ABXpy.misc.type_fitting as type_fitting
 # FIXME: should remove above dependency on rest of ABX...
-from . import dbfun
-from . import dbfun_compute
+import dbfun
+import dbfun_compute
 
 
 # FIXME: when data is missing: potentially use DB_column ?

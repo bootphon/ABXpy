@@ -36,7 +36,7 @@ import numpy as np
 import argparse
 import os
 
-import ABXpy.misc.type_fitting as type_fitting
+from ABXpy.misc.type_fitting import fit_integer_type
 
 # FIXME: by_columns should be stored as attributes into the task file
 # def analyze(task_file, score_file, analyze_file, by_columns=None):
