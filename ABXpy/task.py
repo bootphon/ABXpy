@@ -51,7 +51,8 @@ An example of ABX triplet:
 +------+------+------+
 
 A and X share the same 'on' attribute; A and B share the same 'across'
-attribute; A,B and X share the same 'by' attribute
+attribute; A,B and X share the same 'by' attribute.
+
 """
 
 import argparse
@@ -1361,8 +1362,8 @@ def task_parser():
         os.remove(args.output)
 
         if args.sample and args.threshold:
-        warnings.warn('The use of sampling AND threshold is not '
-                      'tested yet', UserWarning)
+            warnings.warn('The use of sampling AND threshold is not '
+                          'tested yet', UserWarning)
 
     # BY and ACROSS can accept several arguments either with '--by 1 2
     # 3' or '--by 1 --by 2 3'. Thus we need to join sublists in a
