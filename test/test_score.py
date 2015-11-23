@@ -3,11 +3,7 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
-package_path = os.path.dirname(os.path.dirname(
-    os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
+
 import ABXpy.task
 import ABXpy.distances.distances as distances
 import ABXpy.distances.metrics.cosine as cosine

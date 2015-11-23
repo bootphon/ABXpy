@@ -1,6 +1,6 @@
 test:
-	make install
-	py.test -s ABXpy/test
+#	make install
+	py.test test
 
 install:
 	python ABXpy/distances/metrics/install/install_dtw.py
