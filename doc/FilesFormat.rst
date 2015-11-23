@@ -4,7 +4,7 @@ Files format
 This package uses several types of files, this section describe them all.
 
 `Database`
----------
+----------
 Extension: .item
 Format: ASCII text
 

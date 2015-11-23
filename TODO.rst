@@ -7,8 +7,6 @@ Project wide TODOs
 
 * python3 compatibility
 
-* move tests in root
-
 * clean up the misc subpackage
 
 * proper copyright in source
