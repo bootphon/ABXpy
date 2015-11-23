@@ -3,10 +3,9 @@
 import h5py
 import os
 import numpy as np
-# import pytest
 
 import ABXpy.task
-import ABXpy.misc.items as items
+import aux.generate as generate
 
 
 def tables_equivalent(t1, t2):
@@ -52,7 +51,7 @@ def get_pairs(hdf5file, by):
 
 # test1, triplets and pairs verification
 def test_basic():
-    items.generate_testitems(2, 3, name='data.item')
+    generate.simple_items(2, 3, name='data.item')
     try:
         os.remove('data.item')
         os.remove('data.abx')
@@ -93,7 +92,7 @@ class TestTaskTripletsPairs:
     """basic stats, triplets and pairs verification."""
 
     def setup(self):
-        items.generate_testitems(2, 3, name='data.item')
+        generate.simple_items(2, 3, name='data.item')
         self.task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2')
 
     def teardown(self):
@@ -136,7 +135,7 @@ class TestTaskMultipleAcross:
     """testing with a list of across attributes, triplets verification"""
 
     def setup(self):
-        items.generate_testitems(2, 3, name='data.item')
+        generate.simple_items(2, 3, name='data.item')
         self.task = ABXpy.task.Task('data.item', 'c0', ['c1', 'c2'])
 
     def teardown(self):
@@ -162,7 +161,7 @@ class TestTaskNoAcross:
     """testing without any across attribute"""
 
     def setup(self):
-        items.generate_testitems(2, 3, name='data.item')
+        generate.simple_items(2, 3, name='data.item')
         self.task = ABXpy.task.Task('data.item', 'c0', [], 'c2')
 
     def teardown(self):
@@ -182,7 +181,7 @@ class TestTaskMultipleBy:
     """testing for multiple by attributes"""
 
     def setup(self):
-        items.generate_testitems(3, 4, name='data.item')
+        generate.simple_items(3, 4, name='data.item')
         self.task = ABXpy.task.Task('data.item', 'c0', [], ['c1', 'c2', 'c3'])
 
     def teardown(self):
@@ -198,7 +197,7 @@ class TestTaskFilter:
     """testing for a general filter (discarding last column)"""
 
     def setup(self):
-        items.generate_testitems(2, 4, name='data.item')
+        generate.simple_items(2, 4, name='data.item')
         self.task = ABXpy.task.Task('data.item', 'c0', 'c1', 'c2',
                                     filters=["[attr == 0 for attr in c3]"])
 
@@ -237,7 +236,7 @@ class TestTaskFilterOnABX:
     """testing with simple filter on A, B and X, verifying triplet generation"""
 
     def setup(self):
-        items.generate_testitems(2, 2, name='data.item')
+        generate.simple_items(2, 2, name='data.item')
 
     def teardown(self):
         rm_data_files()
@@ -281,7 +280,7 @@ class TestTaskFilterOnABX:
 
     def test_filter_on_X(self):
         """testing with simple filter on X"""
-        filter_X = ["[attr == 0 for attr in c1_X]"]
+        filter_X=["[attr == 0 for attr in c1_X]"]
 
         task = self.task_filtered(filter_X)
         stats = task.stats

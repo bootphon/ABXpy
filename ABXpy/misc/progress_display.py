@@ -24,9 +24,9 @@ class ProgressDisplay(object):
         # something that would work on all tty devices ... might rather be a
         # VT100 feature, but not sure how to detect if the stdio is a VT100
         # from python ...
-        if os.isatty(sys.stdin.fileno()):
-            self.is_tty = True
-        else:
+        try:
+            self.is_tty = True if os.isatty(sys.stdin.fileno()) else False
+        except ValueError:
             self.is_tty = False
 
     def add(self, name, message, total):
@@ -52,21 +52,3 @@ class ProgressDisplay(object):
             m = m + "%s %d on %d\n" % (message, count, total)
         sys.stdout.write(m)
         sys.stdout.flush()
-
-
-# Test
-import time
-
-def testProgressDisplay():
-
-    d = ProgressDisplay()
-    d.add('m1', 'truc 1', 12)
-    d.add('m2', 'truc 2', 48)
-    d.add('m3', 'truc 3', 24)
-
-    for i in range(12):
-        d.update('m1', 1)
-        d.update('m2', 4)
-        d.update('m3', 2)
-        d.display()
-        time.sleep(0.1)

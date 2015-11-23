@@ -4,7 +4,7 @@ import os
 import pandas.core.frame
 import pytest
 
-import ABXpy.misc.items as items
+import aux.generate as generate
 import ABXpy.database.database as database
 
 class TestDatabase:
@@ -13,8 +13,7 @@ class TestDatabase:
     def setup(self):
         self.features_info = True
         self.filename = '/tmp/data.item'
-        items.generate_named_testitems(2, 3, name=self.filename)
-
+        generate.items(2, 3, name=self.filename)
         self.db = database._load_database(self.filename)
 
     def teardown(self):
@@ -33,7 +32,7 @@ class TestDatabase:
             database._load_database('/path/to/no/where')
 
     def test_split_database_good(self):
-        dba, dbf = database._split_database(self.db,self.filename,
+        dba, dbf = database._split_database(self.db, self.filename,
                                             self.features_info)
 
         assert dba.columns.tolist() == ['item', 'c0', 'c1', 'c2']
@@ -42,7 +41,7 @@ class TestDatabase:
 
     def test_split_database_nofeatures1(self):
         with pytest.raises(ValueError):
-            dba, dbf = database._split_database(self.db,self.filename, False)
+            dba, dbf = database._split_database(self.db, self.filename, False)
 
     def test_split_database_nofeatures2(self):
         dba = database._split_database(self.db,self.filename, False)
@@ -50,20 +49,20 @@ class TestDatabase:
         assert len(dba.index) == 8
 
     def test_split_database_badsharp1(self):
-        db_bad = self.db.rename(columns={'#file':'truc'})
+        db_bad = self.db.rename(columns={'#file': 'truc'})
         assert not db_bad.columns[0][0] == '#'
 
         with pytest.raises(IOError) as err:
-            dba, dbf = database._split_database(db_bad,self.filename,
+            dba, dbf = database._split_database(db_bad, self.filename,
                                                 self.features_info)
         assert 'The first column in' in str(err.value)
 
     def test_split_database_badsharp2(self):
-        db_bad = self.db.rename(columns={'#item':'truc'})
+        db_bad = self.db.rename(columns={'#item': 'truc'})
         assert ''.join(db_bad.columns.tolist()).count('#') == 1
 
         with pytest.raises(IOError) as err:
-            dba, dbf = database._split_database(db_bad,self.filename,
+            dba, dbf = database._split_database(db_bad, self.filename,
                                                 self.features_info)
         assert 'Exactly two columns in' in str(err.value)
 
@@ -72,6 +71,6 @@ class TestDatabase:
         assert ''.join(db_bad.columns.tolist()).count('#') == 3
 
         with pytest.raises(IOError) as err:
-            dba, dbf = database._split_database(db_bad,self.filename,
+            dba, dbf = database._split_database(db_bad, self.filename,
                                                 self.features_info)
         assert 'Exactly two columns in' in str(err.value)

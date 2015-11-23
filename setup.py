@@ -24,7 +24,7 @@ class PyTest(Command):
         except ImportError:
             raise(ImportError, 'You need to have pytest to run the tests,'
                   ' try installing it (pip install pytest)')
-        errno = subprocess.call(['py.test', '-s', 'ABXpy/test'])
+        errno = subprocess.call(['py.test', '-s', 'test'])
         raise SystemExit(errno)
 
 
@@ -40,7 +40,7 @@ setup(
     name='ABXpy',
     version='0.1.0',
     author='Thomas Schatz',
-    packages=['ABXpy', 'ABXpy.test', 'ABXpy.database', 'ABXpy.dbfun',
+    packages=['ABXpy', 'ABXpy.database', 'ABXpy.dbfun',
               'ABXpy.distances', 'ABXpy.h5tools', 'ABXpy.misc',
               'ABXpy.sampling', 'ABXpy.sideop', 'ABXpy.distances.metrics'],
     # url='http://pypi.python.org/pypi/ABXpy/',

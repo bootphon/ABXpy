@@ -4,14 +4,10 @@ with task.py"""
 
 import os
 import sys
-package_path = os.path.dirname(os.path.dirname(
-    os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
 import ABXpy.task
 import ABXpy.sampling as sampling
 import numpy as np
-import ABXpy.misc.items as items
+import aux.generate as generate
 import random
 from scipy.stats import chisquare as chisquare
 
@@ -104,10 +100,10 @@ def test_simple_uniformity():
 
 
 def test_sampling_task():
-    items.generate_testitems(4, 6, name='data.item')
+    generate.items(4, 6, name='data.item')
     try:
         task = ABXpy.task.Task('data.item', 'c0', 'c1', ['c2', 'c3'])
-        print "stats computed"
+        print("stats computed")
         # stats = task.stats
         task.generate_triplets(sample=0.2)
         os.remove('data.abx')
