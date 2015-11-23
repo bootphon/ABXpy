@@ -14,13 +14,12 @@ import time
 import traceback
 import sys
 import warnings
-#import pickle
+# import pickle
 
 import h5features
 
 # FIXME: Enforce single process usage when using python compiled with
 # OMP enabled
-
 # FIXME: detect when multiprocessed jobs crashed
 # FIXME: do a separate functions: generic load_balancing
 # FIXME: write distances in a separate file
@@ -32,13 +31,15 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
     Parameters:
     -----------
     pair_file: string
-        hdf5 task file, or at least an hdf5 file containing a 'unique_pairs' dataset
+        hdf5 task file, or at least an hdf5 file containing a
+        'unique_pairs' dataset
     distance_file: string
         hdf5 file taht will contain the distance datasets
     n_cpu:
-        number of cpus tu use
-    block_ceil_size: int
+        number of cpus to use
+    buffer_max_size: int
         maximum size in RAM of a block in Mb
+
     """
     # FIXME: check (given an optional checking function)
     # that all features required in feat_dbs are indeed present in feature
@@ -53,6 +54,7 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
             attrs = fh['unique_pairs'].attrs[by_dset]
             by_n_pairs.append(attrs[2] - attrs[1])
             total_n_pairs = fh['unique_pairs/data'].shape[0]
+
     # initializing output datasets
     with h5py.File(distance_file) as fh:
         fh.attrs.create('done', False)
@@ -73,9 +75,10 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
     # step 1
     by_n_pairs = np.int64(by_n_pairs)
     total_n_pairs = np.sum(by_n_pairs)
-    max_block_size = min(np.int64(np.ceil(total_n_pairs / np.float(n_cpu))),
-                         # buffer_max_size * 1000000 / np.dtype(by_n_pairs).itemsize)
-                         buffer_max_size * 1000000 / 8)
+    max_block_size = min(
+        np.int64(np.ceil(total_n_pairs / np.float(n_cpu))),
+        # buffer_max_size * 1000000 / np.dtype(by_n_pairs).itemsize)
+        buffer_max_size * 1000000 / 8)
     by = []
     start = []
     stop = []
