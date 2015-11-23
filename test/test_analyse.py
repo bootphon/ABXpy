@@ -19,6 +19,7 @@ from aux.frozen import frozen_file
 def dtw_cosine_distance(x, y):
     return dtw.dtw(x, y, cosine.cosine_distance)
 
+
 class TestAnalyze():
     def setup(self):
         self.root = 'test_items'

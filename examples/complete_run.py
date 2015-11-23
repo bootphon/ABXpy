@@ -19,6 +19,7 @@ def dtw_cosine_distance(pt_1, pt_2):
     """
     return dtw.dtw(pt_1, pt_2, cosine.cosine_distance)
 
+
 def prepare_working_dir(working_dir='./data'):
     """Setup path and filenames for the fullrun.
 
