@@ -3,7 +3,6 @@ with task.py"""
 # -*- coding: utf-8 -*-
 
 import os
-import sys
 import ABXpy.task
 import ABXpy.sampling as sampling
 import numpy as np

@@ -9,7 +9,6 @@ import ABXpy.distances.metrics.dtw as dtw
 import ABXpy.score as score
 import aux.generate as generate
 
-
 def dtw_cosine_distance(x, y):
     return dtw.dtw(x, y, cosine.cosine_distance)
 
@@ -35,6 +34,7 @@ class TestScore:
         except:
             pass
 
+    # TODO This is too long for testing, reduce computation
     def test_score(self):
         pass
         # generate.items_and_features(
