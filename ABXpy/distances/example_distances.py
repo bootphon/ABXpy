@@ -4,15 +4,11 @@ import ABXpy.distances.metrics.dtw as dtw
 import ABXpy.distances.metrics.cosine as cosine
 import ABXpy.distances.metrics.kullback_leibler as kullback_leibler
 
-def dtw_cosine(x, y):
-    """ Dynamic time warping cosine distance
 
-    The "feature" dimension is along the columns and the "time"
-    dimension along the lines of arrays x and y
-    """
+def dtw_wrapper(x, y, dist):
     if x.shape[0] > 0 and y.shape[0] > 0:
         # x and y are not empty
-        d = dtw.dtw(x, y, cosine.cosine_distance)
+        d = dtw.dtw(x, y, dist)
     elif x.shape[0] == y.shape[0]:
         # both x and y are empty
         d = 0
@@ -22,13 +18,15 @@ def dtw_cosine(x, y):
     return d
 
 
-def dtw_kl_divergence(x, y):
-    """ Kullback-Leibler divergence
+def dtw_cosine(x, y):
+    """ Dynamic time warping cosine distance
+
+    The "feature" dimension is along the columns and the "time"
+    dimension along the lines of arrays x and y
     """
-    if x.shape[0] > 0 and y.shape[0] > 0:
-        d = dtw.dtw(x, y, kullback_leibler.kl_divergence)
-    elif x.shape[0] == y.shape[0]:
-        d = 0
-    else:
-        d = np.inf
-    return d
+    return dtw_wrapper(x, y, cosine.cosine_distance)
+
+
+def dtw_kl_divergence(x, y):
+    """ Kullback-Leibler divergence"""
+    return dtw_wrapper(x, y, kullback_leibler.kl_divergence)

@@ -14,12 +14,12 @@ import time
 import traceback
 import sys
 import warnings
-import pickle
+#import pickle
 
 import h5features
 
-# FIXME: Enforce single process usage when using python compiled with OMP
-# enabled
+# FIXME: Enforce single process usage when using python compiled with
+# OMP enabled
 
 # FIXME: detect when multiprocessed jobs crashed
 # FIXME: do a separate functions: generic load_balancing
@@ -256,7 +256,7 @@ def run_distance_job(job_description, distance_file, distance,
 def compute_distances(feature_file, feature_group, pair_file, distance_file,
                       distance, n_cpu=None, mem=1000,
                       feature_file_as_list=False):
-    #with h5py.File(distance_file) as fh:
+    # with h5py.File(distance_file) as fh:
     #    fh.attrs.create('distance', pickle.dumps(distance))
 
     if n_cpu is None:
@@ -273,7 +273,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
         feature_size = os.path.getsize(feature_file) / float(2 ** 20)
         mem_needed = feature_size * n_cpu + mem_needed
     splitted_features = False
-    #splitted_features = mem_needed > mem
+    # splitted_features = mem_needed > mem
     # if splitted_features:
     #    split_feature_file(feature_file, feature_group, pair_file)
     jobs = create_distance_jobs(pair_file, distance_file, n_cpu)
@@ -374,14 +374,13 @@ class Features_Accessor(object):
 # if this ever proves too slow: could use co-clustering on the big by blocks,
 # use it for the job creation and adopt smarter loading schemes
 
+# TODO remove that, redundant with ../distances.py
 if __name__ == '__main__':
-
     import argparse
-    import metrics.cosine as cosine
-    import metrics.dtw as dtw
+    from example_distances import dtw_cosine
 
     def dtw_cosine_distance(x, y):
-        return dtw.dtw(x, y, cosine.cosine_distance)
+        return dtw_cosine(x, y)
 
     # parser (the usage string is specified explicitly because the default
     # does not show that the mandatory arguments must come before the
@@ -403,5 +402,7 @@ if __name__ == '__main__':
     g1.add_argument(
         '-n', '--ncpu', default=None, help='optional: number of cpus to use')
     args = parser.parse_args()
-    compute_distances(args.features, '/features/', args.task,
-                      args.output, dtw_cosine_distance, n_cpu=args.ncpu)
+
+    compute_distances(
+        args.features, '/features/', args.task,
+        args.output, dtw_cosine_distance, n_cpu=args.ncpu)

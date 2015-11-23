@@ -1,11 +1,10 @@
 import argparse
 import os
-import numpy as np
 import sys
 
 from ABXpy.distances import distances
-import ABXpy.distances.metrics.dtw as dtw
-import ABXpy.distances.metrics.cosine as cosine
+from ABXpy.distances.example_distances import dtw_cosine
+
 
 def default_distance(x, y):
     """ Dynamic time warping cosine distance
@@ -13,20 +12,11 @@ def default_distance(x, y):
     The "feature" dimension is along the columns and the "time" dimension
     along the lines of arrays x and y
     """
-    if x.shape[0] > 0 and y.shape[0] > 0:
-        # x and y are not empty
-        d = dtw.dtw(x, y, cosine.cosine_distance)
-    elif x.shape[0] == y.shape[0]:
-        # both x and y are empty
-        d = 0
-    else:
-        # x or y is empty
-        d = np.inf
-    return d
+    return dtw_cosine(x, y)
 
 
-def run(features, task, output, distance=None, j=1):
-    j = int(j)
+def run(features, task, output, distance=None, jobs=1):
+    jobs = int(jobs)
     if distance:
         distancepair = distance.split('.')
         distancemodule = distancepair[0]
@@ -38,7 +28,7 @@ def run(features, task, output, distance=None, j=1):
         distancefun = default_distance
 
     distances.compute_distances(features, '/features/', task,
-                                output, distancefun, n_cpu=j)
+                                output, distancefun, n_cpu=jobs)
 
 
 if __name__ == '__main__':
@@ -56,8 +46,10 @@ if __name__ == '__main__':
         'default to dtw cosine distance',
         metavar='distancemodule.distancefunction')
     parser.add_argument(
-        '-j', help='number of cpus to use',
+        '-j', '--jobs',
+        help='number of cpus to use',
         type=int, default=1)
 
     args = parser.parse_args()
-    run(args.features, args.task, args.output, distance=args.distance, j=args.j)
+    run(args.features, args.task, args.output,
+        distance=args.distance, jobs=args.jobs)
