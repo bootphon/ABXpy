@@ -6,6 +6,7 @@ import os.path
 import pandas
 import tinytree
 
+
 def load(filename, features_info=False):
     """Load an ABX database from its filename.
 
@@ -23,7 +24,7 @@ def load(filename, features_info=False):
 
     Return:
 
-    TODO:
+    TODO
 
     Raise:
 
@@ -54,8 +55,8 @@ def load(filename, features_info=False):
     nan_rows = numpy.any(pandas.isnull(attribute_db), 1)
     is_nan = any(nan_rows)
 
-    # TODO: feature_db is not dropped. Should it be done?
-    # TODO: hierarchy is not updated, is it a bug?
+    # TODO feature_db is not dropped. Should it be done?
+    # TODO hierarchy is not updated, is it a bug?
     if is_nan:
         # suppress missing items in attributes
         attribute_db = attribute_db[~ nan_rows]
@@ -184,7 +185,7 @@ def _load_aux_databases(database, filename):
     return database, forest
 
 
-# TODO: document and test this function!
+# TODO document and test this function!
 def _load_aux_databases_rec(database, columns, filename, basename):
     """Recursive function for loading auxiliary databases.
 
@@ -196,22 +197,21 @@ def _load_aux_databases_rec(database, columns, filename, basename):
         forest[i].name = col
         aux_file = basename + '.' + col
 
-        # TODO: replace try/except by os.path.isfile when tested
+        # TODO replace try/except by os.path.isfile when tested
         try:
             if not aux_file == filename:
                 aux_db = _load_database(aux_file)
 
-                # TODO: replace assert by raise
+                # TODO replace assert by raise
                 assert col == aux_db.columns[0], (
                     'First column name in file {}'
                     ' is {}. It should be {} instead.'.format(
                         aux_file, aux_db.columns[0], col))
 
                 # recursive call on child columns
-                aux_db, aux_forest = _load_aux_databases_rec(aux_db,
-                                                             aux_db.columns[1:],
-                                                             filename,
-                                                             basename)
+                aux_db, aux_forest = _load_aux_databases_rec(
+                    aux_db, aux_db.columns[1:], filename, basename)
+
                 # add to forest
                 forest[i].addChildrenFromList(aux_forest)
 

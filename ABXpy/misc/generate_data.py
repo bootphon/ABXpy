@@ -74,7 +74,7 @@ def item(base, n, repeats=0, name=''):
 
 
 def feature(n_items, n_feat=2, max_frames=3, name='', group='features'):
-   """Random ABX features generator.
+    """Random ABX features generator.
 
     Generate random features for a set of items, given the feature
     vector size and the maximum number of frames in items.
@@ -106,16 +106,15 @@ def feature(n_items, n_feat=2, max_frames=3, name='', group='features'):
     We have len(files) == len(times) == len(features) == n_files
 
     """
-
     items, times, features = [], [], []
-    for i in xrange(n_items):
+    for i in range(n_items):
         n_frames = np.random.randint(max_frames) + 1
         features.append(np.random.randn(n_frames, n_feat))
         times.append(np.linspace(0, 1, n_frames))
         items.append('s%d' % i)
 
     # Write to file if required
-    if name != '' :
+    if name != '':
         # h5features doesn't support rewritting an existing file...
         if os.path.isfile(name):
             os.remove(name)
