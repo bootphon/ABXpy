@@ -148,6 +148,7 @@ class Task(object):
     - nb_triplets the number of triplets considered.
     - nb_by_levels the number of blocks of ABX triplets sharing the same \
     'by' attribute.
+
     """
 
     def __init__(self, db_file, on, across=[], by=[],

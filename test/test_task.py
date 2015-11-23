@@ -32,7 +32,7 @@ def rm_data_files():
         os.remove('data.abx')
     except(OSError):
         pass
-    
+
 def get_triplets(hdf5file, by):
     triplet_db = hdf5file['triplets']
     triplets = triplet_db['data']
@@ -125,7 +125,7 @@ class TestTaskTripletsPairs:
         # pairs_block1 = f.get('unique_pairs/1')
         pairs_block0 = get_pairs(f, str(0))
         pairs_block1 = get_pairs(f, str(1))
-        
+
         assert set(pairs) == set(pairs_block0[:, 0])
         assert set(pairs) == set(pairs_block1[:, 0])
 
