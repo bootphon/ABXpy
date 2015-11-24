@@ -25,6 +25,6 @@ install:
   - python setup.py install
 
 script: 
-    - "py.test -s ABXpy/test"
+    - "py.test -s test"
 # after_success:
 #     coveralls
