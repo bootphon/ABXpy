@@ -11,7 +11,7 @@ Issue reporting
 ===============
 
 * Check that the issue has not already been reported or fixed in the
-  latest code (a.k.a. `master`).
+  latest code (a.k.a. `master`_).
 * Include any relevant code to the issue summary, when possible write
   a broken test case.
 
@@ -24,5 +24,6 @@ Pull requests
 * Open a `pull request`_ that relates to *only* one subject.
 
 .. _issue tracker: https://github.com/bootphon/ABXpy/issues
+.. _master: https://github.com/bootphon/ABXpy/tree/master  
 .. _here: http://gun.io/blog/how-to-github-fork-branch-and-pull-request
 .. _pull request: https://help.github.com/articles/using-pull-requests
