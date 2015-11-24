@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 import ABXpy.task
-import ABXpy.bin.task
+import ABXpy.cmdline.task
 import aux.generate as generate
 
 
@@ -50,7 +50,6 @@ def get_pairs(hdf5file, by):
     return pairs[slice(*pairs_index)]
 
 
-# test1, triplets and pairs verification
 def test_basic():
     generate.simple_items(2, 3, name='data.item')
     try:
@@ -61,10 +60,8 @@ def test_basic():
 
 
 class TestTaskParser:
-    """test of task.task_parser()"""
-
     def setup(self):
-        self.parser = ABXpy.bin.task.task_parser
+        self.parser = ABXpy.cmdline.task.task_parser
 
     def test_by(self):
         by1 = self.parser('db -o c0 -b c0 -b c1').by
