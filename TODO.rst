@@ -2,15 +2,13 @@
 TODO list
 =========
 
-Current task (Mathieu)
-======================
+Scheduled (Mathieu)
+===================
 
-* Put all the front-end scripts in ./cmdline
+* Put all the front-end scripts in ABXpy/cmdline
 
-  * make a wrapper on everything except task.
-
-  * catch exceptions at top level, write proper error messages
-
+  * make a wrapper on everything after task.
+  * unified exceptions catching at top level, write proper error messages
   * unified logging facilities
 
 * Isolate parallel machinery from the distances module.
@@ -23,7 +21,7 @@ Project wide TODOs
 
 * clean up the misc subpackage
 
-  * replace any2h5features by h5features.Converter
+  * replace any2h5features by h5features.Converter, or delete it ?
 
 * proper copyright in source
 

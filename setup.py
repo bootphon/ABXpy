@@ -40,7 +40,7 @@ setup(
     name='ABXpy',
     version='0.1.0',
     author='Thomas Schatz',
-    packages=['ABXpy', 'ABXpy.database', 'ABXpy.dbfun',
+    packages=['ABXpy', 'ABXpy.cmdline', 'ABXpy.database', 'ABXpy.dbfun',
               'ABXpy.distances', 'ABXpy.h5tools', 'ABXpy.misc',
               'ABXpy.sampling', 'ABXpy.sideop', 'ABXpy.distances.metrics'],
     # url='http://pypi.python.org/pypi/ABXpy/',
