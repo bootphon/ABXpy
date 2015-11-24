@@ -1,3 +1,9 @@
+.. image:: https://readthedocs.org/projects/ABXpy/badge/?version=master
+   :target: http://ABXpy.readthedocs.org
+
+.. image:: https://travis-ci.org/bootphon/ABXpy.svg?branch=dev
+   :target: https://travis-ci.org/bootphon/ABXpy
+
 ABX discrimination test.
 ========================
 
@@ -137,8 +143,5 @@ Travis status
 -------------
 
 This package is continuously integrated with Travis-CI:
-
-.. image:: https://travis-ci.org/bootphon/ABXpy.svg?branch=master
-    :target: https://travis-ci.org/bootphon/ABXpy
 
 .. _read the docs: http://abxpy.readthedocs.org/en/latest/ABXpy.html
