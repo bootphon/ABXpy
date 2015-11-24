@@ -35,6 +35,7 @@ Project wide TODOs
 
 * more complete documentation
 
+* improve travis integration
 
 On task.py
 ==========
