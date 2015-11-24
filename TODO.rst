@@ -11,8 +11,13 @@ Project wide TODOs
 
 * proper copyright in source
 
+* Put all the front-end scripts in ./bin (task, analyze, score,
+  distance, ABXrun)
+
 On task.py
 ==========
+
+* Add metadata in the task file (author, data, path to original data, etc)
 
 * get a memory and speed efficient mechanism for storing a task on
   disk and loading it back (pickling doesn't work well)
@@ -44,12 +49,12 @@ On task.py
   stuff):
 
   .. code-block:: python
-                
+
      class ABX_context(object):
         def __init__(self, db):
             init fields with None
             context = ABX_context(db_file)
-        
+
         def new_filter(context):
             return [True for e in context.talker_A]
 
@@ -58,17 +63,18 @@ On task.py
 
 * replace verbose with the standard logging
 
-
-More complicated TODOS
-----------------------
-
 * taking by datasets as the basic unit was a mistake, because
   cases where there many small by datasets happen. Find a way to group
   them when needed both in the computations and in the h5 files
 
 * allow by sampling customization depending on the analyzes to
   be carried out
-  
+
+* Add a mechanism to allow the specification of a random seed in a way
+  that would produce reliably the same triplets on different machines
+  (means cross-platform random number generator + having its state so
+  as to be sure that no other random number generation calls to it are
+  altering the sequence)
 
 On database.py
 ==============
@@ -86,3 +92,19 @@ On database.py
    file 2  start 2 stop 2 value 2  value 1 value 1
    file 3  start 3 stop 3 value 3  value 1 value 1
    ======= ======= ====== ======== ======= =======
+
+On distance.py
+==============
+
+* Merge main() functions in distance and distances/distances
+
+* Write distances.Features_Accessor.split_feature_file()
+
+* Enforce single process usage when using python compiled with OMP
+  enabled
+
+* Detect when multiprocessed jobs crashed
+
+* Do a separate functions: generic load_balancing
+
+* Write distances in a separate file. DONE ?

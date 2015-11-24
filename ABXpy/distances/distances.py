@@ -5,6 +5,7 @@ Created on Thu May  8 04:07:43 2014
 @author: Thomas Schatz
 """
 
+import h5features
 import h5py
 import numpy as np
 import pandas
@@ -14,15 +15,6 @@ import time
 import traceback
 import sys
 import warnings
-# import pickle
-
-import h5features
-
-# FIXME: Enforce single process usage when using python compiled with
-# OMP enabled
-# FIXME: detect when multiprocessed jobs crashed
-# FIXME: do a separate functions: generic load_balancing
-# FIXME: write distances in a separate file
 
 
 def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
@@ -289,7 +281,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
             for i, job in enumerate(jobs):
                 print('launching job %d' % i)
                 # hack to get details of exceptions in child processes
-                worker = print_exception(run_distance_job)
+                worker = PrintException(run_distance_job)
                 result = pool.apply_async(worker,
                                           (job, distance_file, distance,
                                            feature_files, feature_groups,
@@ -324,8 +316,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
 
 # hack to get details of exceptions in child processes
 # FIXME: use as a decorator?
-class print_exception(object):
-
+class PrintException(object):
     def __init__(self, fun):
         self.fun = fun
 
@@ -362,6 +353,7 @@ class Features_Accessor(object):
             features[ix] = self.features[f + '_' + str(on) + '_' + str(off)]
         return features
 
+# TODO
 # write split_feature_file, such that it create the appropriate files
 # + check that no filename conflict can occur in:
 # (f + '_' + str(on) + '_' + str(off))

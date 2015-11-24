@@ -171,6 +171,7 @@ class Task(object):
         self.across_blocks = {}
         self.on_across_blocks = {}
         self.antiacross_blocks = {}
+
         by_groups = self.db.groupby(self.by)
 
         if self.verbose:
@@ -577,7 +578,9 @@ class Task(object):
             #                        self.regressors.ABX_regressors):
             #    for name, reg in zip(names, regs):
             #        regressors[name] = reg[indices,:]
-            return triplets, regressors, np.reshape(np.array(on_across_block_index), (len(on_across_block_index), 1))
+            return (triplets, regressors,
+                    np.reshape(np.array(on_across_block_index),
+                               (len(on_across_block_index), 1)))
         else:
             return triplets
 
@@ -663,11 +666,6 @@ class Task(object):
 
         return triplets.shape[0]
 
-    # TODO add a mechanism to allow the specification of a random seed in a
-    # way that would produce reliably the same triplets on different machines
-    # (means cross-platform random number generator + having its state so as
-    # to be sure that no other random number generation calls to it are
-    # altering the sequence)
     # TODO in case of sampling, get rid of blocks with no samples ?
     def generate_triplets(self, output=None, sample=None, threshold=None):
         """Generate all possible triplets for the whole task and the

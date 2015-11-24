@@ -6,13 +6,7 @@ from ABXpy.distances import distances
 from ABXpy.distances.example_distances import dtw_cosine
 
 
-def default_distance(x, y):
-    """ Dynamic time warping cosine distance
-
-    The "feature" dimension is along the columns and the "time" dimension
-    along the lines of arrays x and y
-    """
-    return dtw_cosine(x, y)
+default_distance = dtw_cosine
 
 
 def run(features, task, output, distance=None, jobs=1):
