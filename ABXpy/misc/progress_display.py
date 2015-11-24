@@ -38,17 +38,17 @@ class ProgressDisplay(object):
         self.count[name] = self.count[name] + amount
 
     def display(self):
-        if self.is_tty:
-            # move back up several lines (in bash)
-            m = "\033[<%d>A" % len(self.message)
-        else:
-            m = ""
+        # move back up several lines (in bash)
+        m = "\033[<%d>A" % len(self.message) if self.is_tty else ''
+
         if self.init:
             m = ""
             self.init = False
-        for message, total, count in zip(self.message.values(),
-                                         self.total.values(),
-                                         self.count.values()):
-            m = m + "%s %d on %d\n" % (message, count, total)
+
+        for message, total, count in zip(
+                self.message.values(),
+                self.total.values(),
+                self.count.values()):
+            m = m + '{} {} on {}\n'.format(message, count, total)
         sys.stdout.write(m)
         sys.stdout.flush()

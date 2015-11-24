@@ -1,5 +1,5 @@
 test:
-#	make install
+	make install
 	py.test test
 
 install:

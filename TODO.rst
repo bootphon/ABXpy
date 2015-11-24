@@ -23,6 +23,8 @@ Project wide TODOs
 
 * clean up the misc subpackage
 
+  * replace any2h5features by h5features.Converter
+
 * proper copyright in source
 
 * correct the multicore bug **DONE?**
