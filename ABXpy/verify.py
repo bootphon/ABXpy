@@ -1,4 +1,4 @@
-"""This script is used to verify the consistency of your input files.
+"""Verifies the consistency of item and features files.
 
 Usage
 -----
@@ -17,8 +17,6 @@ In python:
     # create a new task and compute the statistics
     ABXpy.verify.check('my_data.item', 'my_data.h5f')
 """
-
-import argparse
 
 
 def check(item_file, features_file, verbose=0):
@@ -48,25 +46,3 @@ def check(item_file, features_file, verbose=0):
             assert source in files, ("The file {} cannot "
                                      "be found in the feature file"
                                      .format(source))
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(
-        prog='collapse_results.py',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        description='Collapse results of ABX on by conditions.',
-        epilog="""Example usage:
-
-$ ./verify.py my_data.item my_features.h5f
-
-verify the consistency between the item file and the features file""")
-    parser.add_argument('item', metavar='ITEM_FILE',
-                        help='database description file in .item format')
-    parser.add_argument('features', metavar='FEATURES_FILE',
-                        help='features file in h5features format')
-    return vars(parser.parse_args())
-
-
-if __name__ == '__main__':
-    args = parse_args()
-    check(args['item'], args['features'])

@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+"""Provides a command-line API to ABX.distance"""
+
 import argparse
 import os
 import sys
@@ -6,11 +9,8 @@ from ABXpy.distances import distances
 from ABXpy.distances.example_distances import dtw_cosine
 
 
-default_distance = dtw_cosine
-
-
-def run(features, task, output, distance=None, jobs=1):
-    jobs = int(jobs)
+def run(features, task, output, distance=None, ncpus=1):
+    ncpus = int(ncpus)
     if distance:
         distancepair = distance.split('.')
         distancemodule = distancepair[0]
@@ -19,31 +19,39 @@ def run(features, task, output, distance=None, jobs=1):
         sys.path.insert(0, path)
         distancefun = getattr(__import__(mod), distancefunction)
     else:
-        distancefun = default_distance
+        # default distance if unspecified
+        distancefun = dtw_cosine
 
     distances.compute_distances(features, '/features/', task,
-                                output, distancefun, n_cpu=jobs)
+                                output, distancefun, n_cpu=ncpus)
 
-
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
         description='Compute distances for the ABX discrimination task')
+
     parser.add_argument(
         'features', help='h5features file containing the feature to evaluate')
+
     parser.add_argument(
         'task', help='task file')
+
     parser.add_argument(
         'output', help='output file for distance pairs')
+
     parser.add_argument(
         '-d', '--distance',
         help='distance module to use (distancemodule.distancefunction, '
         'default to dtw cosine distance',
         metavar='distancemodule.distancefunction')
+
     parser.add_argument(
-        '-j', '--jobs',
+        '-n', '--ncpus',
         help='number of cpus to use',
         type=int, default=1)
 
     args = parser.parse_args()
     run(args.features, args.task, args.output,
         distance=args.distance, jobs=args.jobs)
+
+if __name__ == '__main__':
+    main()

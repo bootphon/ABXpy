@@ -5,6 +5,7 @@ import os
 import numpy as np
 
 import ABXpy.task
+import ABXpy.bin.task
 import aux.generate as generate
 
 
@@ -63,7 +64,7 @@ class TestTaskParser:
     """test of task.task_parser()"""
 
     def setup(self):
-        self.parser = ABXpy.task.task_parser
+        self.parser = ABXpy.bin.task.task_parser
 
     def test_by(self):
         by1 = self.parser('db -o c0 -b c0 -b c1').by
