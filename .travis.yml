@@ -2,29 +2,32 @@ language: python
 
 python:
     - "2.7"
+ 
+notifications:
+  email: false
 
 # Setup anaconda
 before_install:
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - bash ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda2/bin:$PATH
-  - conda update --yes conda
+  - bash ./miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
   # The next couple lines fix a crash with multiprocessing on Travis
   # and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
-  - sudo apt-get install -qq python-numpy python-scipy
-  - sudo apt-get install -qq libhdf5-serial-dev python-h5py
-# Install packages
+  #- sudo apt-get install -qq python-numpy python-scipy
+  - sudo apt-get install -qq libhdf5-serial-dev #python-h5py
+
 install:
+  # Fix h5features... get it directly from github ??
   - conda install --yes python=2.7 cython numpy scipy h5py pandas pytest pytables matplotlib
   - pip install -t /home/travis/miniconda2/lib/python2.7/site-packages --no-deps h5features
   - export PATH=/home/travis/virtualenv/python2.7.8/build:$PATH
-  # Coverage packages are on my binstar channel
-  - make install
+# - make install
   - python setup.py install
 
 script: 
-    - "py.test test"
-# after_success:
-#     coveralls
+    - py.test test
