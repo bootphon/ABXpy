@@ -12,7 +12,16 @@ Project wide TODOs
 * proper copyright in source
 
 * Put all the front-end scripts in ./bin (task, analyze, score,
-  distance, ABXrun)
+  distance, ABXrun). Also make a wrapper on everything except task.
+
+* correct the multicore bug **DONE?**
+
+* integrate a generic collapse to ABX-score and output in R and csv format **URGENT**
+
+* more complete test suite
+
+* more complete documentation
+
 
 On task.py
 ==========
@@ -76,6 +85,9 @@ On task.py
   as to be sure that no other random number generation calls to it are
   altering the sequence)
 
+* multicore for ABX-task (low priority)
+
+
 On database.py
 ==============
 
@@ -93,6 +105,7 @@ On database.py
    file 3  start 3 stop 3 value 3  value 1 value 1
    ======= ======= ====== ======== ======= =======
 
+
 On distance.py
 ==============
 
@@ -105,6 +118,8 @@ On distance.py
 
 * Detect when multiprocessed jobs crashed
 
-* Do a separate functions: generic load_balancing
+* Isolate parallel machinery from the distances module.
 
 * Write distances in a separate file. DONE ?
+
+* Race condition in parallel computation -> 10 seconds wait to remove.
