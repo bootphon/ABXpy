@@ -6,18 +6,13 @@ import numpy as np
 
 import ABXpy.task
 import ABXpy.distances.distances as distances
-import ABXpy.distances.metrics.cosine as cosine
-import ABXpy.distances.metrics.dtw as dtw
+from ABXpy.distances.example_distances import dtw_cosine
 import ABXpy.score as score
 import ABXpy.analyze as analyze
 
 from aux import generate
 from aux import compare
 from aux.frozen import frozen_file
-
-
-def dtw_cosine_distance(x, y):
-    return dtw.dtw(x, y, cosine.cosine_distance)
 
 
 class TestAnalyze():
@@ -52,11 +47,9 @@ class TestAnalyze():
         self.task.generate_triplets(f['task'], threshold=threshold)
         distances.compute_distances(f['feature'], '/features/',
                                     f['task'], f['distance'],
-                                    dtw_cosine_distance, n_cpu=1)
-        score.score(
-            f['task'], f['distance'], f['score'])
-        analyze.analyze(
-            f['task'], f['score'], f['analyze'])
+                                    dtw_cosine, n_cpu=1)
+        score.score(f['task'], f['distance'], f['score'])
+        analyze.analyze(f['task'], f['score'], f['analyze'])
         number_triplets = np.loadtxt(f['analyze'], dtype=int,
                                      delimiter='\t', skiprows=1, usecols=[-1])
         assert np.all(number_triplets == threshold)
@@ -70,7 +63,7 @@ class TestAnalyze():
         self.task.generate_triplets(f['task'])
         distances.compute_distances(f['feature'], '/features/',
                                     f['task'], f['distance'],
-                                    dtw_cosine_distance, n_cpu=1)
+                                    dtw_cosine, n_cpu=1)
         score.score(
             f['task'], f['distance'], f['score'])
         analyze.analyze(
