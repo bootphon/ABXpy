@@ -16,7 +16,6 @@ __pycache__/
 # Distribution / packaging
 .Python
 env/
-bin/
 build/
 develop-eggs/
 dist/
@@ -68,6 +67,3 @@ test/__pycache__
 # Emacs
 *~
 \#*\#
-/test_items/data.abx
-/test_items/data.distance
-test_items
