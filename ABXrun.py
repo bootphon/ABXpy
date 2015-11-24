@@ -1,19 +1,15 @@
-"""This test script contains tests for the basic parameters of score.py
-"""
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+"""This test script contains tests for the basic parameters of score.py"""
 
+import json
 import os
-import sys
-package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
+
 import ABXpy.task
 import ABXpy.distances.distances as distances
 import ABXpy.distances.metrics.cosine as cosine
 import ABXpy.distances.metrics.dtw as dtw
 import ABXpy.score as score
 import ABXpy.analyze as analyze
-import json
 
 
 def get_name(filename):
@@ -141,7 +137,7 @@ if __name__ == '__main__':
         with open(configfile, 'r') as fid:
             config = json.load(fid)
     except IOError:
-        print 'No such file: ', configfile
+        print('No such file: ', configfile)
         exit()
     assert get_arg('on', config)
 
