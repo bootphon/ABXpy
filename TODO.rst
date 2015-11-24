@@ -2,6 +2,20 @@
 TODO list
 =========
 
+Current task (Mathieu)
+======================
+
+* Put all the front-end scripts in ./cmdline
+
+  * make a wrapper on everything except task.
+
+  * catch exceptions at top level, write proper error messages
+
+  * unified logging facilities
+
+* Isolate parallel machinery from the distances module.
+
+
 Project wide TODOs
 ==================
 
@@ -10,9 +24,6 @@ Project wide TODOs
 * clean up the misc subpackage
 
 * proper copyright in source
-
-* Put all the front-end scripts in ./bin (task, analyze, score,
-  distance, ABXrun). Also make a wrapper on everything except task.
 
 * correct the multicore bug **DONE?**
 
@@ -117,8 +128,6 @@ On distance.py
   enabled
 
 * Detect when multiprocessed jobs crashed
-
-* Isolate parallel machinery from the distances module.
 
 * Write distances in a separate file. DONE ?
 
