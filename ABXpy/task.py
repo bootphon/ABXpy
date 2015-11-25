@@ -114,13 +114,13 @@ class Task(object):
             a list of string specifying a regressor on A, B or X.
 
         """
-        self.logger = logging.getLogger('ABXpy.task.Task')#.addHandler(logging.NullHandler())
-        self.logger.info('Creating a Task instance')
+        self.logger = logging.getLogger('ABXpy.task')
+        self.logger.debug('Creating a Task instance')
 
         # Load the ABX database in class attributes
         self.db_file = db_file
         self._load_database()
-        self.logger.info('% loaded', self.db_file)
+        self.logger.debug('{} loaded'.format(self.db_file))
 
         # Store input arguments as class attributes.
         # Filters and regressors are processed later.
@@ -130,7 +130,7 @@ class Task(object):
 
         # Check that those parameters are consistent with the database
         self._check_parameters_consistency()
-        self.logger.info('task parameters are consistent.')
+        self.logger.debug('task parameters are consistent.')
 
         # If 'by' or 'across' are empty create appropriate dummy
         # columns (note that '#' is forbidden in user names for
@@ -231,14 +231,14 @@ class Task(object):
         IOError exception.
 
         """
-        #try:
+        # try:
         # Load the database from the items file
         self.db, self.db_hierarchy, self.feat_db = abx_database.load(
             self.db_file, features_info=True)
 
         # except IOError as err:
         #     # If loading raises an exception, exit the program
-        #     self.logger.error(err)
+        #     logger.error(err)
         #     sys.exit(err)
 
     def _param_error(self, key, value):
@@ -282,8 +282,12 @@ class Task(object):
         # in BY, ACROSS, ON are not the same ? (see task structure notes)
         # also that location columns are not used
         for col in cols:
-            assert '_' not in col, col + ': you cannot use underscore in column names'
-            assert '#' not in col, col + ': you cannot use \'#\' in column names'
+            assert '_' not in col, (
+                col + ': you cannot use underscore in column names')
+            
+            assert '#' not in col, (
+                col + ': you cannot use \'#\' in column names')
+
 
     def compute_statistics(self, approximate=False):
         """Compute the statistics of the task.

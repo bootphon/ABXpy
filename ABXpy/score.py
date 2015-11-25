@@ -51,7 +51,6 @@ import ABXpy.h5tools.h52np as h52np
 import ABXpy.misc.type_fitting as type_fitting
 
 
-# FIXME: include distance computation here
 def score(task_file, distance_file, score_file=None, score_group='scores'):
     """Calculate the score of a task and put the results in a hdf5 file.
 
@@ -119,5 +118,6 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
                     # 1 if X closer to A, -1 if X closer to B, 0 if equal
                     # distance (this doesn't use 0, 1/2, 1 to use the
                     # compact np.int8 data format)
-                    s['scores'][idx_start:idx_end] = np.reshape(scores, (-1, 1))
+                    s['scores'][idx_start:idx_end] = np.reshape(scores,
+                                                                (-1, 1))
                     idx_start = idx_end

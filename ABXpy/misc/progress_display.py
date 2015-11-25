@@ -53,7 +53,8 @@ class ProgressDisplay(object):
             m = m + '{} {} on {}\n'.format(message, count, total)
 
         if self.logger:
-            self.logger.info(m)
+            pass
+            # self.logger.info(m)
         else:
             sys.stdout.write(m)
             sys.stdout.flush()

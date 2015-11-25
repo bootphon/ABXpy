@@ -7,29 +7,34 @@ import os
 
 from ABXpy.task import Task
 
+# capture from the warnings module, if any
+logging.captureWarnings(True)
 
-def init_logger():
-    # create a task logger
-    logging.getLogger().addHandler(logging.NullHandler())
-    logger = logging.getLogger('cmdline.task')
-    logger.setLevel(logging.DEBUG)
+logger = logging.getLogger('ABXpy')
+logger.setLevel(logging.DEBUG)
 
-    # # create file handler which logs even debug messages
-    # fh = logging.FileHandler('task.log')
-    # fh.setLevel(logging.DEBUG)
-    # fh.setFormatter(logging.Formatter(
-    #     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-    # logger.addHandler(fh)
+# create console handler
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+ch.setFormatter(logging.Formatter(
+    '%(levelname)s - %(name)s \t %(message)s'))
+# '%(levelname)s \t %(name)s:%(funcName)s:%(lineno)d \t %(message)s'))
 
-    # create console handler
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.INFO)
-    ch.setFormatter(logging.Formatter('%(levelname)s - %(name)s - %(message)s'))
-    logger.addHandler(ch)
+logger.addHandler(ch)
 
-    return logger
 
-logger = init_logger()
+def set_log_level_from_verbose(args):
+    if not args.verbose:
+        ch.setLevel('ERROR')
+    elif args.verbose == 1:
+        ch.setLevel('WARNING')
+    elif args.verbose == 2:
+        ch.setLevel('INFO')
+    elif args.verbose >= 3:
+        ch.setLevel('DEBUG')
+    else:
+        logger.critical("UNEXPLAINED NEGATIVE COUNT!")
+
 
 def task_parser(input_args=None):
     """Parses arguments for the Task command line API
@@ -50,7 +55,7 @@ def task_parser(input_args=None):
         prog='task.py',
         description='Specify and initialize a new ABX task, compute and '
         'display the statistics, and generate the ABX triplets and pairs.',
-        usage='%(prog)s database [output] -o ON [--help] [--log LOGLEVEL] '
+        usage='%(prog)s database [output] -o ON [--help] [-v[v[v]]] '
         '[-a ACROSS [ACROSS ...]] [-b BY [BY ...]] '
         '[-f FILT [FILT ...]] [-r REG [REG ...]] '
         '[-s SAMPLING_AMOUNT_OR_PROPORTION] '
@@ -63,10 +68,8 @@ def task_parser(input_args=None):
 
     # Logging facilities
     g0 = parser.add_argument_group('Logging')
-    g0.add_argument('-l', '--log', type=str, default='warning',
-                    help="Set the logger with the given level. Levels must be "
-                    "'critical', 'error', 'warning', 'info' or 'debug'. "
-                    "Default is 'warning'")
+    g0.add_argument('-v', '--verbose', action="count",
+                    help="verbose level... repeat up to three times.")
 
     # I/O files
     g1 = parser.add_argument_group('I/O files')
@@ -130,15 +133,6 @@ def task_parser(input_args=None):
     args = (parser.parse_args(input_args.split()) if input_args
             else parser.parse_args())
 
-    # setup the logger. Convert to upper case to allow the user to
-    # specify --log=DEBUG or --log=debug
-    numeric_level = getattr(logging, args.log.upper(), None)
-    if not isinstance(numeric_level, int):
-        raise ValueError('Invalid log level: %s' % args.log)
-    logger.setLevel(numeric_level)
-
-
-
     # Consistency checks
     if args.output and os.path.exists(args.output):
         logger.warning('Overwriting existing task file {}'.format(args.output))
@@ -160,9 +154,8 @@ def task_parser(input_args=None):
     return args
 
 
-# TODO maybe some problems if wanting to pass some code directly on the
-# command-line if it contains something like s = "'a'==1 and 'b'==2" ? but
-# not a big deal ?
+# TODO maybe some problems when passing some code directly on the
+# command-line if it contains something like s = "'a'==1 and 'b'==2" ?
 def main():
     """Command line API of the Task class
 
@@ -177,6 +170,7 @@ def main():
     """
     try:
         args = task_parser()
+        set_log_level_from_verbose(args)
         task = Task(args.database, args.on, args.across, args.by,
                     args.filter, args.regressor)
 
@@ -185,7 +179,7 @@ def main():
         else:
             task.generate_triplets(args.output, args.sample, args.threshold)
     except Exception as err:
-        raise#logger.error(err)
+        logger.error(err)
 
 
 if __name__ == '__main__':
