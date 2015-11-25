@@ -98,7 +98,8 @@ def _load_database(filename):
     The loaded database as a panda DataFrame.
 
     """
-    db = pandas.read_table(filename, sep='[ \t]+')
+    # python engine specified to avoid a runtime warning
+    db = pandas.read_table(filename, sep='[ \t]+', engine='python')
 
     # removes all null values (None or NaN...)
     db = db.dropna(how='all')

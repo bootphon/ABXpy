@@ -86,7 +86,7 @@ class Task(object):
     """
 
     def __init__(self, db_file, on, across=[], by=[],
-                 filters=[], regressors=[], verbose=False):
+                 filters=[], regressors=[]):
         """Initialize an ABX task with the provided attributes.
 
         Parameters
@@ -113,16 +113,14 @@ class Task(object):
         regressors : list, optional
             a list of string specifying a regressor on A, B or X.
 
-        verbose : bool, optional
-            display additionnal information if True.
-
         """
-        self.verbose = verbose
+        self.logger = logging.getLogger('ABXpy.task.Task')#.addHandler(logging.NullHandler())
+        self.logger.info('Creating a Task instance')
 
         # Load the ABX database in class attributes
         self.db_file = db_file
         self._load_database()
-        logging.info('% loaded', self.db_file)
+        self.logger.info('% loaded', self.db_file)
 
         # Store input arguments as class attributes.
         # Filters and regressors are processed later.
@@ -132,7 +130,7 @@ class Task(object):
 
         # Check that those parameters are consistent with the database
         self._check_parameters_consistency()
-        logging.info('task parameters are consistent.')
+        self.logger.info('task parameters are consistent.')
 
         # If 'by' or 'across' are empty create appropriate dummy
         # columns (note that '#' is forbidden in user names for
@@ -164,14 +162,12 @@ class Task(object):
 
         by_groups = self.db.groupby(self.by)
 
-        if self.verbose:
-            display = progress_display.ProgressDisplay()
-            display.add('block', 'Preprocessing by block', len(by_groups))
+        display = progress_display.ProgressDisplay(self.logger)
+        display.add('block', 'Preprocessing by block', len(by_groups))
 
         for by_key, by_frame in by_groups:
-            if self.verbose:
-                display.update('block', 1)
-                display.display()
+            display.update('block', 1)
+            display.display()
 
             # allow to get by values as well as values of other
             # variables that are determined by these
@@ -235,21 +231,23 @@ class Task(object):
         IOError exception.
 
         """
-        try:
-            # Load the database from the items file
-            self.db, self.db_hierarchy, self.feat_db = abx_database.load(
-                self.db_file, features_info=True)
+        #try:
+        # Load the database from the items file
+        self.db, self.db_hierarchy, self.feat_db = abx_database.load(
+            self.db_file, features_info=True)
 
-        except IOError as err:
-            # If loading raises an exception, exit the program
-            logging.error(err)
-            sys.exit(err)
+        # except IOError as err:
+        #     # If loading raises an exception, exit the program
+        #     self.logger.error(err)
+        #     sys.exit(err)
+
+    def _param_error(self, key, value):
+        """Returns an error message"""
+        return ('{} argument invalid, check that {} is defined in {}'
+                .format(key, value, self.db_file))
 
     def _check_parameters_consistency(self):
         """Verify the consistency of the task parameters on the database.
-
-        This method should be considered as private and not used by
-        front-end users.
 
         The following conditions are checked. The ON parameter is
         a unique string.  ON, ACROSS and BY corresponds to column
@@ -258,12 +256,11 @@ class Task(object):
 
         Moreover ACROSS and BY are transformed into lists of str, in
         case they was str.
-        """
-        # TODO from assert to exceptions
-        if self.verbose:
-            logging.debug('Verifying input consistency...')
 
+        :raise AssertionError: if parameters are not consistent.
+        """
         assert isinstance(self.on, str), 'ON attribute must be a string'
+
         self.on = self.on.split()  # from str to list
         assert len(self.on) == 1, 'ON attribute must specifies a unique column'
 
@@ -275,25 +272,18 @@ class Task(object):
 
         # check that required columns are present
         cols = set(self.db.columns)
-        message = (' argument is invalid, check all the provided attributes'
-                   ' are defined in the database ' + self.db_file)
-
         # the argument of issuperset needs to be a list ...
-        assert cols.issuperset(self.on),     'ON' + message
-        assert cols.issuperset(self.across), 'ACROSS' + message
-        assert cols.issuperset(self.by),     'BY' + message
+        for p in {'ON': self.on,
+                  'ACROSS': self.across,
+                  'BY': self.by}.iteritems():
+            assert cols.issuperset(p[1]), self._param_error(p[0], p[1])
 
         # TODO add additional checks, for example that columns
         # in BY, ACROSS, ON are not the same ? (see task structure notes)
         # also that location columns are not used
         for col in cols:
-            assert '_' not in col, col + ': you cannot use underscore in \
-                column names'
-            assert '#' not in col, col + ': you cannot use \'#\' in \
-                column names'
-
-        if self.verbose:
-            logging.debug("Input is consistent")
+            assert '_' not in col, col + ': you cannot use underscore in column names'
+            assert '#' not in col, col + ': you cannot use \'#\' in column names'
 
     def compute_statistics(self, approximate=False):
         """Compute the statistics of the task.
@@ -316,15 +306,14 @@ class Task(object):
         self.stats['nb_by_levels'] = len(self.by_dbs)
         self.by_stats = {}
 
-        if self.verbose:
-            display = progress_display.ProgressDisplay()
-            display.add('block', 'Computing statistics for by block',
-                        self.stats['nb_by_levels'])
+        display = progress_display.ProgressDisplay(self.logger)
+        display.add('block', 'Computing statistics for by block',
+                    self.stats['nb_by_levels'])
 
         for by in self.by_dbs:
-            if self.verbose:
-                display.update('block', 1)
-                display.display()
+            display.update('block', 1)
+            display.display()
+
             stats = {}
             stats['nb_items'] = len(self.by_dbs[by])
             stats['on_levels'] = self.on_blocks[by].size()
@@ -337,11 +326,10 @@ class Task(object):
         self.stats['nb_blocks'] = sum([bystats['nb_on_across_levels']
                                        for bystats in self.by_stats.values()])
 
-        if self.verbose > 0:
-            display = progress_display.ProgressDisplay()
-            display.add(
-                'block', 'Computing statistics for by/on/across block',
-                self.stats['nb_blocks'])
+        display = progress_display.ProgressDisplay(self.logger)
+        display.add(
+            'block', 'Computing statistics for by/on/across block',
+            self.stats['nb_blocks'])
 
         for by, db in self.by_dbs.iteritems():
             stats = self.by_stats[by]
@@ -351,9 +339,9 @@ class Task(object):
             stats['nb_on_pairs'] = 0
             # iterate over on/across blocks
             for block_key, count in stats['on_across_levels'].iteritems():
-                if self.verbose > 0:
-                    display.update('block', 1)
-                    display.display()
+                display.update('block', 1)
+                display.display()
+
                 block = self.on_across_blocks[by].groups[block_key]
                 on_across_by_values = dict(db.ix[block[0]])
                 # retrieve the on and across keys (as they are stored in
@@ -710,16 +698,15 @@ class Task(object):
         else:
             self.threshold = False
 
-        display=None
-        if self.verbose > 0:
-            display = progress_display.ProgressDisplay()
-            display.add(
-                'block', 'Computing triplets for by/on/across block',
-                self.n_blocks)
-            display.add(
-                'triplets', 'Triplets considered:', self.total_n_triplets)
-            display.add(
-                'sampled_triplets', 'Triplets sampled:', self.n_triplets)
+        # display=None
+        display = progress_display.ProgressDisplay(self.logger)
+        display.add(
+            'block', 'Computing triplets for by/on/across block',
+            self.n_blocks)
+        display.add(
+            'triplets', 'Triplets considered:', self.total_n_triplets)
+        display.add(
+            'sampled_triplets', 'Triplets sampled:', self.n_triplets)
 
         self.by_block_indices = [0]
         self.current_index = 0
@@ -744,8 +731,7 @@ class Task(object):
             for by, db in self.by_dbs.iteritems():
                 # class for efficiently writing to datasets of the output file
                 # (using a buffer under the hood)
-                if self.verbose > 0:
-                    print("Writing ABX triplets to task file...")
+                self.logger.info("Writing ABX triplets to task file...")
 
                 # allow to get by values as well as values of other
                 # variables that are determined by these
@@ -782,15 +768,14 @@ class Task(object):
                 dtype=h5py.special_dtype(vlen=unicode))
             fh.file['bys'][:] = [str(by) for by in bys]
 
-        if self.verbose > 0:
-            print("done.")
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", NaturalNameWarning)
             self.generate_pairs(output)
 
     def _compute_triplets(self, by, out, out_block_index,
                           out_regs, sample, db, fh, by_values, display=None):
-        #out_index = h5io.H5IO(filename=output, datasets=datasets, group='/on_across_block_index/' + str(by) + '/')
+        #out_index = h5io.H5IO(filename=output, datasets=datasets,
+        #group='/on_across_block_index/' + str(by) + '/')
 
         # instantiate by regressors here
         self.regressors.set_by_regressors(by_values)
@@ -798,7 +783,7 @@ class Task(object):
         # iterate over on/across blocks
         for block_key, block in (self.on_across_blocks[by]
                                  .groups.iteritems()):
-            if self.verbose > 0:
+            if display is not None:
                 display.update('block', 1)
             # allow to get on, across, by values as well as values
             # of other variables that are determined by these
@@ -816,13 +801,13 @@ class Task(object):
                 out_regs.write(regressors, indexed=True)
                 out_block_index.write(on_across_block_index)
                 self.current_index += triplets.shape[0]
-                if self.verbose > 0:
+                if display is not None:
                     display.update(
                         'sampled_triplets', triplets.shape[0])
                     display.update('triplets',
                                    (self.by_stats[by]
                                     ['block_sizes'][block_key]))
-            if self.verbose > 0:
+            if display is not None:
                 display.display()
 
     # TODO clean this function (maybe do a few well-separated
@@ -845,8 +830,7 @@ class Task(object):
         try:
             _, output_tmp = tempfile.mkstemp()
             for n_by, (by, db) in enumerate(self.by_dbs.iteritems()):
-                if self.verbose > 0:
-                    print("Writing AX/BX pairs to task file...")
+                self.logger.info("Writing AX/BX pairs to task file...")
                 with h5py.File(output) as fh:
                     triplets_attrs = fh['/triplets']['by_index'][n_by][...]
                 if triplets_attrs[0] == triplets_attrs[1]:
@@ -995,8 +979,6 @@ class Task(object):
                     by_index += n_pairs_dict[by]
         finally:
             os.remove(output_tmp)
-        if self.verbose:
-            print("done.")
 
     # number of triplets when triplets with same on, across, by are counted as
     # one
@@ -1011,15 +993,16 @@ class Task(object):
             raise ValueError(
                 'Current implementation do not support computing nb_levels in '
                 'the presence of A, B, X, or ABX filters')
-        if self.verbose > 0:
-            display = progress_display.ProgressDisplay()
-            display.add(
-                'block', 'Computing nb_levels for by block',
-                self.stats['nb_by_levels'])
+
+        display = progress_display.ProgressDisplay(self.logger)
+        display.add(
+            'block', 'Computing nb_levels for by block',
+            self.stats['nb_by_levels'])
+
         for by, db in self.by_dbs.iteritems():
-            if self.verbose > 0:
-                display.update('block', 1)
-                display.display()
+            display.update('block', 1)
+            display.display()
+
             n = 0
             # iterate over on/across blocks
             for block_key, n_block in (self.by_stats[by]['on_across_levels']
@@ -1099,9 +1082,8 @@ class Task(object):
             try:
                 self.compute_nb_levels()
             except ValueError:
-                warnings.warn('Filters not fully supported, '
-                              'nb_levels per by block wont be calculated',
-                              RuntimeWarning)
+                self.logger.warning('Filters not fully supported, '
+                                    'nb_levels per by block wont be calculated')
             for by, stats in self.by_stats.iteritems():
                 stream.write('### by level: %s ###\n' % str(by))
                 stream.write('nb_triplets: %d\n' % stats['nb_triplets'])

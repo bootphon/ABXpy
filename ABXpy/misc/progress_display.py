@@ -14,7 +14,8 @@ import collections
 
 class ProgressDisplay(object):
 
-    def __init__(self):
+    def __init__(self, logger=None):
+        self.logger = logger
         self.message = collections.OrderedDict()
         self.total = collections.OrderedDict()
         self.count = collections.OrderedDict()
@@ -50,5 +51,9 @@ class ProgressDisplay(object):
                 self.total.values(),
                 self.count.values()):
             m = m + '{} {} on {}\n'.format(message, count, total)
-        sys.stdout.write(m)
-        sys.stdout.flush()
+
+        if self.logger:
+            self.logger.info(m)
+        else:
+            sys.stdout.write(m)
+            sys.stdout.flush()

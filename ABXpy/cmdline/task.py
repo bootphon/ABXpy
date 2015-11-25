@@ -2,9 +2,34 @@
 """Provides a command-line API to ABX.task"""
 
 import argparse
+import logging
 import os
 
 from ABXpy.task import Task
+
+
+def init_logger():
+    # create a task logger
+    logging.getLogger().addHandler(logging.NullHandler())
+    logger = logging.getLogger('cmdline.task')
+    logger.setLevel(logging.DEBUG)
+
+    # # create file handler which logs even debug messages
+    # fh = logging.FileHandler('task.log')
+    # fh.setLevel(logging.DEBUG)
+    # fh.setFormatter(logging.Formatter(
+    #     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    # logger.addHandler(fh)
+
+    # create console handler
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(logging.Formatter('%(levelname)s - %(name)s - %(message)s'))
+    logger.addHandler(ch)
+
+    return logger
+
+logger = init_logger()
 
 def task_parser(input_args=None):
     """Parses arguments for the Task command line API
@@ -25,7 +50,7 @@ def task_parser(input_args=None):
         prog='task.py',
         description='Specify and initialize a new ABX task, compute and '
         'display the statistics, and generate the ABX triplets and pairs.',
-        usage='%(prog)s database [output] -o ON [--help] [--verbose] '
+        usage='%(prog)s database [output] -o ON [--help] [--log LOGLEVEL] '
         '[-a ACROSS [ACROSS ...]] [-b BY [BY ...]] '
         '[-f FILT [FILT ...]] [-r REG [REG ...]] '
         '[-s SAMPLING_AMOUNT_OR_PROPORTION] '
@@ -35,8 +60,13 @@ def task_parser(input_args=None):
     message = 'must be columns defined by the database you are using '
     '(e.g. speaker or phonemes, if your database contains such columns)'
 
-    parser.add_argument('-v', '--verbose', action='store_true',
-                        help='increase output verbosity')
+
+    # Logging facilities
+    g0 = parser.add_argument_group('Logging')
+    g0.add_argument('-l', '--log', type=str, default='warning',
+                    help="Set the logger with the given level. Levels must be "
+                    "'critical', 'error', 'warning', 'info' or 'debug'. "
+                    "Default is 'warning'")
 
     # I/O files
     g1 = parser.add_argument_group('I/O files')
@@ -48,8 +78,7 @@ def task_parser(input_args=None):
     # TODO what if output file non provided ? Test/document it
     g1.add_argument('output', nargs='?', default=None,
                     help='optional: output file, where the results of the '
-                         'analysis will be put. If the --stats-only is used '
-                         'this argument is mandatory.')
+                    'analysis will be put.')
 
     # Task specification
     g2 = parser.add_argument_group('Task specification')
@@ -75,6 +104,7 @@ def task_parser(input_args=None):
                     help='optional: threshold on the maximal size of a block of'
                          ' triplets sharing the same regressors, triplets may '
                          'be sampled')
+
     # Regressors specification
     g3 = parser.add_argument_group('Regressors specification')
 
@@ -85,8 +115,8 @@ def task_parser(input_args=None):
     g4 = parser.add_argument_group('Computation parameters')
 
     g4.add_argument('--stats-only', default=False, action='store_true',
-                    help='add this flag if you only want some statistics '
-                         'about the specified task')
+                    help='this flag prints some statistics about the '
+                    'specified task on stdout')
 
     g4.add_argument('--no-verif', default=False, action='store_true',
                     help='optional: skip the verification of the database '
@@ -96,27 +126,26 @@ def task_parser(input_args=None):
                     help='optional: feature file, verify the consistency '
                          'of the feature file with the item file')
 
-    # if input_args is given, split the string
-    if input_args:
-        input_args = input_args.split()
+    # Parse arguments
+    args = (parser.parse_args(input_args.split()) if input_args
+            else parser.parse_args())
 
-    # Parse the parameters
-    args = parser.parse_args(input_args)
+    # setup the logger. Convert to upper case to allow the user to
+    # specify --log=DEBUG or --log=debug
+    numeric_level = getattr(logging, args.log.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError('Invalid log level: %s' % args.log)
+    logger.setLevel(numeric_level)
+
+
 
     # Consistency checks
-    if args.stats_only:
-        # TODO silly condition, can write stats on stdout...
-        assert args.output, ('Error: --stats-only requires an output '
-                             'file to be provided.')
-
-    elif args.output and os.path.exists(args.output):
-        if args.verbose:
-            print("WARNING: Overwriting existing task file " + args.output)
+    if args.output and os.path.exists(args.output):
+        logger.warning('Overwriting existing task file {}'.format(args.output))
         os.remove(args.output)
 
-        if args.sample and args.threshold:
-            warnings.warn('The use of sampling AND threshold is not '
-                          'tested yet', UserWarning)
+    if args.sample and args.threshold:
+        logger.warning("The use of sampling AND threshold isn't tested yet")
 
     # BY and ACROSS can accept several arguments either with '--by 1 2
     # 3' or '--by 1 --by 2 3'. Thus we need to join sublists in a
@@ -125,7 +154,7 @@ def task_parser(input_args=None):
     args.across = sum(args.across, [])
 
     # Task.__init__ need args.on being a unique string, not a list
-    assert len(args.on) == 1, 'Error: --on requires a unique string'
+    assert len(args.on) == 1, '--on requires a unique string'
     args.on = args.on[0]
 
     return args
@@ -146,18 +175,17 @@ def main():
         python task.py data.item -o c1 -b c2 c3 -f "[a == 0 for a in c3_X]"
 
     """
-    # Parse input arguments
-    args = task_parser()
+    try:
+        args = task_parser()
+        task = Task(args.database, args.on, args.across, args.by,
+                    args.filter, args.regressor)
 
-    # Create a task instance with parsed parameters
-    task = Task(args.database, args.on, args.across, args.by,
-                args.filter, args.regressor, args.verbose)
-
-    # Do the requested processing depending on --stats-only
-    if args.stats_only:
-        task.print_stats()
-    else:
-        task.generate_triplets(args.output, args.sample, args.threshold)
+        if args.stats_only:
+            task.print_stats()
+        else:
+            task.generate_triplets(args.output, args.sample, args.threshold)
+    except Exception as err:
+        raise#logger.error(err)
 
 
 if __name__ == '__main__':
