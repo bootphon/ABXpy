@@ -1,12 +1,12 @@
-cython==0.20.1
-numpy==1.8.1
-scipy==0.14.0
-h5py==2.3.0
+cython
+numpy
+scipy
+h5py
 # the newest pandas version should eliminate annoying warnings
-pandas==0.13.1
+pandas
 # for the tests and general use:
-h5features
+# h5features
 numpydoc
 mock
-pytest==2.6
+pytest
 tinytree
