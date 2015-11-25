@@ -6,8 +6,7 @@ import os
 
 import ABXpy.task
 import ABXpy.distances.distances as distances
-import ABXpy.distances.metrics.cosine as cosine
-import ABXpy.distances.metrics.dtw as dtw
+from ABXpy.distances.example_distances import dtw_cosine
 import ABXpy.score as score
 import ABXpy.analyze as analyze
 
@@ -21,11 +20,6 @@ def get_arg(key, args):
         return args[key]
     else:
         return None
-
-
-def dtw_cosine_distance(x, y):
-    return dtw.dtw(x, y, cosine.cosine_distance)
-
 
 def test_analyze(itemfile, featurefile, args, taskfile=None, distance=None,
                  distancefile=None, scorefile=None, analyzefile=None,
@@ -57,7 +51,7 @@ def test_analyze(itemfile, featurefile, args, taskfile=None, distance=None,
     task.generate_triplets()
 
     if not distance:
-        distance = dtw_cosine_distance
+        distance = dtw_cosine
     distances.compute_distances(featurefile, '/features/', taskfile,
                                 distancefile, distance)
     score.score(taskfile, distancefile, scorefile)

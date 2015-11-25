@@ -2,6 +2,7 @@
 """Provides a command-line API to ABX.verify"""
 
 import argparse
+
 from ABXpy.verify import check
 
 def parse_args():
@@ -18,9 +19,13 @@ verify the consistency between the item file and the features file""")
                         help='database description file in .item format')
     parser.add_argument('features', metavar='FEATURES_FILE',
                         help='features file in h5features format')
-    return vars(parser.parse_args())
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    check(args.item, args.features)
 
 
 if __name__ == '__main__':
-    args = parse_args()
-    check(args['item'], args['features'])
+    main()

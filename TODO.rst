@@ -25,15 +25,13 @@ Project wide TODOs
 
 * proper copyright in source
 
-* correct the multicore bug **DONE?**
-
-* integrate a generic collapse to ABX-score and output in R and csv format **URGENT**
+* integrate a generic collapse to ABX-score and output in R and csv
+  format **URGENT**
 
 * more complete test suite
 
 * more complete documentation
 
-* improve travis integration
 
 On task.py
 ==========
@@ -120,6 +118,8 @@ On database.py
 
 On distance.py
 ==============
+
+* correct the multicore bug **DONE?**
 
 * Merge main() functions in distance and distances/distances
 
