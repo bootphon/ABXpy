@@ -241,9 +241,9 @@ def run_distance_job(job_description, distance_file, distance,
                     .format(items['file'][pairs[i, 0]],
                             items['onset'][pairs[i, 0]],
                             items['offset'][pairs[i, 0]],
-                            items['file'][pairs[i, 0]],
-                            items['onset'][pairs[i, 0]],
-                            items['offset'][pairs[i, 0]]),
+                            items['file'][pairs[i, 1]],
+                            items['onset'][pairs[i, 1]],
+                            items['offset'][pairs[i, 1]]),
                 )
                 raise
         if synchronize:
