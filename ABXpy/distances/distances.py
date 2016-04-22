@@ -10,7 +10,7 @@ import numpy as np
 import pandas
 import multiprocessing
 import os
-import time
+# import time
 import traceback
 import sys
 import warnings
@@ -51,16 +51,18 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
 
     # getting 'by' datasets characteristics
     with h5py.File(pair_file) as fh:
-        by_dsets = [by_dset for by_dset in fh['unique_pairs']]
+        # by_dsets = [by_dset for by_dset in fh['feat_dbs']]
+        by_dsets = fh['bys'][...]
         by_n_pairs = []  # number of distances to be computed for each by db
         for by_dset in by_dsets:
-            by_n_pairs.append(fh['unique_pairs'][by_dset].shape[0])
+            attrs = fh['unique_pairs'].attrs[by_dset]
+            by_n_pairs.append(attrs[2] - attrs[1])
+            total_n_pairs = fh['unique_pairs/data'].shape[0]
     # initializing output datasets
     with h5py.File(distance_file) as fh:
         fh.attrs.create('done', False)
         g = fh.create_group('distances')
-        for n, by_dset in zip(by_n_pairs, by_dsets):
-            g.create_dataset(by_dset, shape=(n, 1), dtype=np.float)
+        g.create_dataset('data', shape=(total_n_pairs, 1), dtype=np.float)
     """
     #### Load balancing ####
     Heuristic: each process should have approximately
@@ -146,7 +148,6 @@ possible to do all the write concurrently if ever necessary, using parallel
 HDF5 (based on MPI-IO).
 """
 
-
 def run_distance_job(job_description, distance_file, distance,
                      feature_files, feature_groups, splitted_features,
                      job_id, distance_file_lock=None):
@@ -197,8 +198,10 @@ def run_distance_job(job_description, distance_file, distance,
         # load pairs to be computed
         # indexed relatively to the above dataframe
         with h5py.File(pair_file) as fh:
-            pair_list = fh['unique_pairs/' + by][start:stop, 0]
-            base = fh['unique_pairs'].attrs[by]
+            attrs = fh['unique_pairs'].attrs[by]
+            pair_list = fh['unique_pairs/data'][attrs[1]+start:attrs[1]+stop, 0]
+            base = attrs[0]
+
         A = np.mod(pair_list, base)
         B = pair_list // base
         pairs = np.column_stack([A, B])
@@ -237,15 +240,15 @@ def run_distance_job(job_description, distance_file, distance,
                     .format(items['file'][pairs[i, 0]],
                             items['onset'][pairs[i, 0]],
                             items['offset'][pairs[i, 0]],
-                            items['file'][pairs[i, 0]],
-                            items['onset'][pairs[i, 0]],
-                            items['offset'][pairs[i, 0]]),
+                            items['file'][pairs[i, 1]],
+                            items['onset'][pairs[i, 1]],
+                            items['offset'][pairs[i, 1]]),
                 )
                 raise
         if synchronize:
             distance_file_lock.acquire()
         with h5py.File(distance_file) as fh:
-            fh['distances/' + by][start:stop, :] = dis
+            fh['distances/data'][attrs[1]+start:attrs[1]+stop, :] = dis
         if synchronize:
             distance_file_lock.release()
 
@@ -278,41 +281,15 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
     # if splitted_features:
     #    split_feature_file(feature_file, feature_group, pair_file)
     jobs = create_distance_jobs(pair_file, distance_file, n_cpu)
-    results = []
+    # results = []
     if n_cpu > 1:
         # use of a manager seems necessary because we're using a Pool...
         distance_file_lock = multiprocessing.Manager().Lock()
         pool = multiprocessing.Pool(n_cpu)
-        try:
-            for i, job in enumerate(jobs):
-                print('launching job %d' % i)
-                # hack to get details of exceptions in child processes
-                worker = print_exception(run_distance_job)
-                result = pool.apply_async(worker,
-                                          (job, distance_file, distance,
-                                           feature_files, feature_groups,
-                                           splitted_features,
-                                           i, distance_file_lock))
-                results.append(result)
-                time.sleep(10)
-            pool.close()
-            # wait for results
-            # using 'get' allow detecting exceptions in child processes
-            finished_jobs = [False] * len(jobs)
-            while not(all(finished_jobs)):
-                for i, result in enumerate(results):
-                    try:
-                        result.get(1)  # wait 1 second
-                        finished_jobs[i] = True
-                    except multiprocessing.TimeoutError:
-                        pass
-        finally:
-            pool.close()  # in case it wasn't done before
-            # recommended in multiprocessing doc to avoid zombie process (?)
-            pool.join()
-            if all(finished_jobs):
-                with h5py.File(distance_file) as fh:
-                    fh.attrs.modify('done', True)
+        args = [(job, distance_file, distance, feature_files, feature_groups,
+                 splitted_features, i, distance_file_lock)
+                for i, job in enumerate(jobs)]
+        pool.map(worker, args)
     else:
         run_distance_job(jobs[0], distance_file, distance,
                          feature_files, feature_groups, splitted_features, 1)
@@ -320,19 +297,9 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
             fh.attrs.modify('done', True)
 
 
-# hack to get details of exceptions in child processes
-# FIXME use as a decorator?
-class print_exception(object):
-
-    def __init__(self, fun):
-        self.fun = fun
-
-    def __call__(self, *args, **kwargs):
-        try:
-            return self.fun(*args, **kwargs)
-        except Exception:
-            print(traceback.format_exc())
-            raise
+# hack, external function for visibility reasons
+def worker(args):
+    return run_distance_job(*args)
 
 
 class Features_Accessor(object):

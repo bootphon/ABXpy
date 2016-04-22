@@ -32,13 +32,12 @@ def fullrun():
     analyzefilename = 'example_items/data.csv'
 
     items.generate_db_and_feat(3, 3, 1, item_file, 2, 2, feature_file)
-    task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2',
-                           features=feature_file)
-    task.generate_triplets()
+    task = ABXpy.task.Task(item_file, 'c0', across='c1', by='c2')
+    task.generate_triplets(taskfilename)
     distances.compute_distances(feature_file, '/features/', taskfilename,
-                                distance_file, dtw_cosine_distance)
+                                distance_file, dtw_cosine_distance, n_cpu=1)
     score.score(taskfilename, distance_file, scorefilename)
-    analyze.analyze(scorefilename, taskfilename, analyzefilename)
+    analyze.analyze(taskfilename, scorefilename, analyzefilename)
 
 
 fullrun()

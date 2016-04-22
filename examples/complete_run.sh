@@ -4,7 +4,7 @@
 
 
 # directories
-curdir=`pwd`
+curdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ABXdir=$curdir/../ABXpy
 filesdir=$curdir/example_items
 
@@ -17,12 +17,12 @@ task_file=$filesdir/data.abx
 analyze_file=$filesdir/data.csv
 
 # Generating task file
-echo python $ABXdir/task.py $item_file $task_file -o c0 -a c1 -b c2 -v 1 --features $feature_file
-python $ABXdir/task.py $item_file $task_file -o c0 -a c1 -b c2 -v 1 --features $feature_file
+echo python $ABXdir/task.py $item_file $task_file -o c0 -a c1 -b c2 -v 1
+python $ABXdir/task.py $item_file $task_file -o c0 -a c1 -b c2 -v 1
 
 # Computing distances
-echo python $ABXdir/distance.py $feature_file $item_file $distance_file -d cosine
-python $ABXdir/distance.py $feature_file $task_file $distance_file -d cosine
+echo python $ABXdir/distance.py $feature_file $item_file $distance_file -j 1
+python $ABXdir/distance.py $feature_file $task_file $distance_file -j 1
 
 # Calculating the score
 echo python $ABXdir/score.py $task_file $distance_file $score_file

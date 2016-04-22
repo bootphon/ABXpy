@@ -30,6 +30,21 @@ def tables_equivalent(t1, t2):
     return True
 
 
+def get_triplets(hdf5file, by):
+    triplet_db = hdf5file['triplets']
+    triplets = triplet_db['data']
+    by_index = list(hdf5file['bys']).index(by)
+    triplets_index = triplet_db['by_index'][by_index]
+    return triplets[slice(*triplets_index)]
+
+
+def get_pairs(hdf5file, by):
+    pairs_db = hdf5file['unique_pairs']
+    pairs = pairs_db['data']
+    pairs_index = pairs_db.attrs[by][1:3]
+    return pairs[slice(*pairs_index)]
+
+
 # test1, triplets and pairs verification
 def test_basic():
     items.generate_testitems(2, 3, name='data.item')
@@ -41,14 +56,18 @@ def test_basic():
         assert stats['nb_by_levels'] == 2
         task.generate_triplets()
         f = h5py.File('data.abx', 'r')
-        triplets_block0 = f.get('triplets/0')
-        triplets_block1 = f.get('triplets/1')
+        triplets = f['triplets']['data'][...]
+        by_indexes = f['triplets']['by_index'][...]
+        triplets_block0 = triplets[slice(*by_indexes[0])]
+        triplets_block1 = triplets[slice(*by_indexes[1])]
+        triplets_block0 = get_triplets(f, '0')
+        triplets_block1 = get_triplets(f, '1')
         triplets = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0], [3, 2, 1]])
         assert tables_equivalent(triplets, triplets_block0), error_triplets
         assert tables_equivalent(triplets, triplets_block1), error_triplets
         pairs = [2, 6, 7, 3, 8, 12, 13, 9]
-        pairs_block0 = f.get('unique_pairs/0')
-        pairs_block1 = f.get('unique_pairs/1')
+        pairs_block0 = get_pairs(f, '0')
+        pairs_block1 = get_pairs(f, '1')
         assert (set(pairs) == set(pairs_block0[:, 0])), error_pairs
         assert (set(pairs) == set(pairs_block1[:, 0])), error_pairs
     finally:
@@ -70,7 +89,7 @@ def test_multiple_across():
         assert stats['nb_by_levels'] == 1
         task.generate_triplets()
         f = h5py.File('data.abx', 'r')
-        triplets_block = f.get('triplets/0')
+        triplets_block = get_triplets(f, '0')
         triplets = np.array([[0, 1, 6], [1, 0, 7], [2, 3, 4], [3, 2, 5],
                              [4, 5, 2], [5, 4, 3], [6, 7, 0], [7, 6, 1]])
         assert tables_equivalent(triplets, triplets_block)
@@ -128,16 +147,16 @@ def test_filter():
         assert stats['nb_blocks'] == 8, "incorrect stats: number of blocks"
         assert stats['nb_triplets'] == 8
         assert stats['nb_by_levels'] == 2
-        task.generate_triplets()
+        task.generate_triplets(output='data.abx')
         f = h5py.File('data.abx', 'r')
-        triplets_block0 = f.get('triplets/0')
-        triplets_block1 = f.get('triplets/1')
+        triplets_block0 = get_triplets(f, '0')
+        triplets_block1 = get_triplets(f, '1')
         triplets = np.array([[0, 1, 2], [1, 0, 3], [2, 3, 0], [3, 2, 1]])
         assert tables_equivalent(triplets, triplets_block0), error_triplets
         assert tables_equivalent(triplets, triplets_block1), error_triplets
         pairs = [2, 6, 7, 3, 8, 12, 13, 9]
-        pairs_block0 = f.get('unique_pairs/0')
-        pairs_block1 = f.get('unique_pairs/1')
+        pairs_block0 = get_pairs(f, '0')
+        pairs_block1 = get_pairs(f, '1')
         assert (set(pairs) == set(pairs_block0[:, 0])), error_pairs
         assert (set(pairs) == set(pairs_block1[:, 0])), error_pairs
     finally:
@@ -160,7 +179,7 @@ def test_filter_on_A():
         assert stats['nb_by_levels'] == 1
         task.generate_triplets()
         f = h5py.File('data.abx', 'r')
-        triplets_block0 = f.get('triplets/0')
+        triplets_block0 = get_triplets(f, '0')
         triplets = np.array([[0, 1, 2], [0, 3, 2], [2, 1, 0], [2, 3, 0]])
         assert tables_equivalent(triplets, triplets_block0), error_triplets
     finally:
@@ -183,7 +202,7 @@ def test_filter_on_B():
         assert stats['nb_by_levels'] == 1
         task.generate_triplets()
         f = h5py.File('data.abx', 'r')
-        triplets_block0 = f.get('triplets/0')
+        triplets_block0 = get_triplets(f, '0')
         triplets = np.array([[0, 1, 2], [1, 0, 3], [2, 1, 0], [3, 0, 1]])
         assert tables_equivalent(triplets, triplets_block0), error_triplets
     finally:
@@ -207,7 +226,7 @@ def test_filter_on_C():
         assert stats['nb_by_levels'] == 1
         task.generate_triplets()
         f = h5py.File('data.abx', 'r')
-        triplets_block0 = f.get('triplets/0')
+        triplets_block0 = get_triplets(f, '0')
         triplets = np.array([[2, 1, 0], [2, 3, 0], [3, 0, 1], [3, 2, 1]])
         assert tables_equivalent(triplets, triplets_block0), error_triplets
     finally:
@@ -223,4 +242,6 @@ def test_filter_on_C():
 # test_no_across()
 # test_multiple_bys()
 # test_filter()
+# test_filter_on_A()
+# test_filter_on_B()
 # test_filter_on_C()

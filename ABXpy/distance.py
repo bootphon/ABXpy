@@ -7,7 +7,7 @@ import os
 import numpy as np
 
 
-def default_distance(x, y):
+def default_distance(x, y, normalized=False):
     """ Dynamic time warping cosine distance
 
     The "feature" dimension is along the columns and the "time" dimension
@@ -15,7 +15,8 @@ def default_distance(x, y):
     """
     if x.shape[0] > 0 and y.shape[0] > 0:
         # x and y are not empty
-        d = dtw.dtw(x, y, cosine.cosine_distance)
+        d = dtw.dtw(x, y, cosine.cosine_distance,
+                    normalized=normalized)
     elif x.shape[0] == y.shape[0]:
         # both x and y are empty
         d = 0

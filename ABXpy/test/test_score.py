@@ -33,7 +33,7 @@ def test_score():
         task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
         task.generate_triplets()
         distances.compute_distances(feature_file, '/features/', taskfilename,
-                                    distance_file, dtw_cosine_distance)
+                                    distance_file, dtw_cosine_distance, n_cpu=3)
         score.score(taskfilename, distance_file, scorefilename)
     finally:
         try:
