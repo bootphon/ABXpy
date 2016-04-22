@@ -5,9 +5,9 @@ import numpy as np
 
 
 def test_small():
-    res = dtw._dtw(1, 1, np.ones(1, 1))
+    res = dtw._dtw(1, 1, np.ones((1, 1)), normalized=False)
     assert res == 1
-    res = dtw._dtw(1, 1, np.ones(1, 1), normalized=True)
+    res = dtw._dtw(1, 1, np.ones((1, 1)), normalized=True)
     assert res == 1
 
 
@@ -34,3 +34,4 @@ def test_normalized():
     dists_mid = np.concatenate([dists[:, :3], dists_mid, dists[:, 3:]], axis=1)
     res = dtw._dtw(5, 7, dists_mid, normalized=True)
     assert res == 1
+
