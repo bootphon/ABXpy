@@ -31,7 +31,7 @@ def check(item_file, features_file, verbose=0):
     """
     if verbose:
         print("Opening item file")
-    with open(filename) as f:
+    with open(item_file) as f:
         cols = str.split(f.readline())
         assert len(cols) >= 4, 'the syntax of the item file is incorrect'
         assert cols[0] == '#file', 'The first column must be named #file'
@@ -40,7 +40,7 @@ def check(item_file, features_file, verbose=0):
         assert cols[3][0] == '#', 'The fourth column must start with #'
         if verbose:
             print("Opening features file")
-        h5f = h5py.File(features)
+        h5f = h5py.File(features_file)
         files = h5f['features']['files'][:]
         for line in f:
             source = str.split(line, ' ')[0]
