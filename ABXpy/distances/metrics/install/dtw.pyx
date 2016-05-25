@@ -37,7 +37,7 @@ def dtw(x, y, metric, normalized=False):
 cpdef _dtw(IND_t N, IND_t M, CTYPE_t[:,:] dist_array, bool normalized):
     cdef IND_t i, j
     cdef CTYPE_t[:,:] cost = np.empty((N, M), dtype=CTYPE)
-    cdef CTYPE_t final_cost, cost_diag, cost_left, cost_up
+    cdef CTYPE_t final_cost, c_diag, c_left, c_up
     # initialization
     cost[0,0] = dist_array[0,0]
     for i in range(1,N):
