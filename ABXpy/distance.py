@@ -5,6 +5,7 @@ import ABXpy.distances.metrics.cosine as cosine
 import argparse
 import os
 import numpy as np
+import warnings
 
 
 def default_distance(x, y, normalized=False):
@@ -60,4 +61,8 @@ if __name__ == '__main__':
         type=int, default=1)
 
     args = parser.parse_args()
+    if os.path.exists(args.output):
+        warnings.warn("Overwriting distance file " + args.output, UserWarning)
+        os.remove(args.output)
+
     run(args.features, args.task, args.output, distance=args.distance, j=args.j)

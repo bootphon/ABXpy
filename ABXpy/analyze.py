@@ -39,6 +39,7 @@ import argparse
 import os.path as path
 from ABXpy.misc.type_fitting import fit_integer_type
 import os
+import warnings
 
 
 def npdecode(keys, max_ind):
@@ -207,7 +208,7 @@ if __name__ == '__main__':
     # print 'No such file:', outfile
     # exit()
     if os.path.exists(result_file):
-        print("Warning: overwriting analyze file {}".format(result_file))
+        warnings.warn("Overwriting results file " + args.output, UserWarning)
         os.remove(result_file)
 
     analyze(task_file, score_file, result_file)
