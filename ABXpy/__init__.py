@@ -61,3 +61,6 @@ This file only serves to signal that ABXpy is a Python package.
 # to not have to do them again in all modules? using relative imports for
 # security and python3 compatibility?
 # this should allow not having __init__.py in every subfolder
+
+
+version = "0.2.0"

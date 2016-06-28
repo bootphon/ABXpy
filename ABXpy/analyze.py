@@ -97,14 +97,13 @@ def collapse(scorefile, taskfile, fid):
 
         permut = np.argsort(new_index)
         # collapsing the score
-        mean = np.empty((len(permut),), dtype=np.float64)
-        keys = np.empty((len(permut), 2), dtype=ind_type)
-        i_unique = unique(keys, mean, permut, scores_arr, new_index)
-        mean = np.resize(mean, (i_unique + 1,))
-        keys = np.resize(keys, (i_unique + 1, 2))
+        
+        sorted_scores = scores_arr[permut]
+        sorted_index = new_index[permut]
+        mean, unique_index, counts = unique(sorted_index, sorted_scores)
 
         # retrieving the triplet indices from the unique index.
-        tmp = npdecode(keys[:, 0], n_indices)
+        tmp = npdecode(unique_index, n_indices)
 
         regs = tfrk['indexed_datasets']
         indexes = []
@@ -118,7 +117,7 @@ def collapse(scorefile, taskfile, fid):
                 aux.append(indexes[j][key[j]])
                 # aux.append((indexes[regs[j]])[key[j]])
             score = mean[i]
-            n = keys[i, 1]
+            n = counts[i]
             result = aux + [by, score, int(n)]
             fid.write('\t'.join(map(str, result)) + '\n')
             # results.append(aux + [context, score, n])
@@ -130,28 +129,19 @@ def collapse(scorefile, taskfile, fid):
     # return results
 
 
-def unique(keys, mean, permut, scores_arr, new_index):
-    #TODO cython or clearer version
-    i_unique = 0
-    # collapsing the score
-    key_reg = new_index[permut[0]]
-    keys[0, 0] = key_reg
-    i_start = 0
-    i = 0
-    for i, p in enumerate(permut[1:]):
-        i += 1
-        if new_index[p] != key_reg:
-            mean[i_unique] = (np.mean(scores_arr[permut[i_start:i]])
-                              + 1) / 2
-            keys[i_unique, 1] = i - i_start
-            i_start = i
-            i_unique += 1
-            key_reg = new_index[p]
-            keys[i_unique, 0] = key_reg
+def unique(index, scores):
+    flag = np.concatenate(
+        ([True], index[1:] != index[:-1], [True]))
+    unique_idx = np.nonzero(flag)[0]
+    counts = unique_idx[1:] - unique_idx[:-1]
+    unique_index = index[unique_idx[:-1]]
 
-    mean[i_unique] = (np.mean(scores_arr[permut[i_start:i + 1]]) + 1) / 2
-    keys[i_unique, 1] = i - i_start + 1
-    return i_unique
+    means = np.empty((len(counts)),)
+    i = 0
+    for a, c in enumerate(counts):
+        means[a] = np.mean(scores[i:i+c])
+        i += c
+    return means, unique_index, counts
 
 
 def analyze(task_file, score_file, result_file):
