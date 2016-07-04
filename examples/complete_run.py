@@ -31,6 +31,15 @@ def fullrun():
     taskfilename = 'example_items/data.abx'
     analyzefilename = 'example_items/data.csv'
 
+    # deleting pre-existing files
+    for f in [item_file, feature_file, distance_file,
+              scorefilename, taskfilename, analyzefilename]:
+        try:
+            os.remove(f)
+        except OSError:
+            pass
+
+    # running the evaluation:
     items.generate_db_and_feat(3, 3, 1, item_file, 2, 2, feature_file)
     task = ABXpy.task.Task(item_file, 'c0', across='c1', by='c2')
     task.generate_triplets(taskfilename)

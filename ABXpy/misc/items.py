@@ -78,6 +78,8 @@ def generate_named_testitems(base, n, repeats=0, name='data.item'):
 def generate_features(n_files, n_feat=2, max_frames=3, name='data.features'):
     """Random feature file generator
     """
+    if os.path.exists(name):
+        os.remove(name)
     features = []
     times = []
     files = []
