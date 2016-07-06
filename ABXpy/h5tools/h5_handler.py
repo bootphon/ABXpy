@@ -52,15 +52,15 @@ class H5Handler(object):
     # the result replaces the original datasets
     # order is specified by integers and sort is done in increasing order
     # buffer size is in Ko
-    def sort(self, buffer_size=1000, o_buffer_size=1000):
+    def sort(self, buffer_size=1000, o_buffer_size=1000, tmpdir=None):
 
         # first backup file to be sorted
-        self.backupDir = tempfile.mkdtemp()
+        self.backupDir = tempfile.mkdtemp(dir=tmpdir)
         self.backup = os.path.join(self.backupDir, os.path.basename(self.file))
         # shutil.copyfile(self.file, self.backup) #FIXME if no backup is mad cannot recover from exceptions ...
         #
         try:
-            with H5TMP() as tmp:
+            with H5TMP(tmpdir=tmpdir) as tmp:
                 with h5py.File(self.file) as f:
 
                     # check file structure
@@ -242,8 +242,8 @@ class H5Handler(object):
 # statement
 class H5TMP(object):
 
-    def __init__(self):
-        self.tmpdir = tempfile.mkdtemp()
+    def __init__(self, tmpdir=None):
+        self.tmpdir = tempfile.mkdtemp(dir=tmpdir)
         self.tmpfile = os.path.join(self.tmpdir, 'tmp.h5')
 
     def __enter__(self):

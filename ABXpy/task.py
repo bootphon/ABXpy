@@ -810,7 +810,7 @@ associated pairs
                             # complete pair 2 and shuffle ?)
                             out.write(pairs)
 
-                    sort_pairs(output_tmp, by)
+                    sort_pairs(output_tmp, by, tmpdir=tmpdir)
 
                     # counting unique
                     with np2h5.NP2H5(output_tmp) as f_out:
@@ -1025,7 +1025,7 @@ def sort_and_threshold(permut, new_index, ind_type,
         i += c
     return np.concatenate(new_permut), unique_idx
 
-def sort_pairs(output_tmp, by):
+def sort_pairs(output_tmp, by, tmpdir=None):
     # sort pairs
     handler = h5_handler.H5Handler(output_tmp, '/pairs/', str(by))
     # memory: available RAM in Mo, could be a param
@@ -1044,17 +1044,17 @@ def sort_pairs(output_tmp, by):
     if amount <= 0.75 * memory:
         # would it be beneficial to have a large o_buffer_size as
         # well ?
-        handler.sort(buffer_size=amount)
+        handler.sort(buffer_size=amount, tmpdir=tmpdir)
     # else take around 30 chunks if possible (this seems efficient
     # given the current implem, using a larger number of chunks
     # efficiently might be possible if the reading chunks part of
     # the sort was cythonized ?)
     elif amount / 30. <= 0.75 * memory:
-        handler.sort(buffer_size=amount / 30.)
+        handler.sort(buffer_size=amount / 30., tmpdir=tmpdir)
     # else take minimum number of chunks possible given the
     # available RAM
     else:
-        handler.sort(buffer_size=0.75 * memory)
+        handler.sort(buffer_size=0.75 * memory, tmpdir=tmpdir)
 
 
 """
