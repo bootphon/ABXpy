@@ -142,6 +142,7 @@ def unique(index, scores):
     for a, c in enumerate(counts):
         means[a] = np.mean(scores[i:i+c])
         i += c
+    means = (means + 1) / 2
     return means, unique_index, counts
 
 
