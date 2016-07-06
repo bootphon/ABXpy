@@ -128,5 +128,3 @@ def test_frozen_analyze():
             os.remove(analyzefilename)
         except:
             pass
-
-test_threshold_analyze()

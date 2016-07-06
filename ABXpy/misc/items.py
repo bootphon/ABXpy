@@ -118,7 +118,7 @@ def h5cmp(f1, f2):
 
 
 def csv_cmp(f1, f2):
-    with open(f1) as f1in, open(f1) as f2in:
+    with open(f1) as f1in, open(f2) as f2in:
         f1_content = f1in.readlines()
         f2_content = f2in.readlines()
     f1_content.sort()
