@@ -1080,7 +1080,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         usage="""%(prog)s database [output] -o ON [-a ACROSS [ACROSS ...]] \
 [-b BY [BY ...]] [-f FILT [FILT ...]] [-r REG [REG ...]] [-s SAMPLING_AMOUNT\
-_OR_PROPORTION] [--stats-only] [-h] [-v VERBOSE_LEVEL] \
+_OR_PROPORTION] [--stats_only] [-h] [-v VERBOSE_LEVEL] \
         [--threshold THRESHOLD] [--tempdir TEMPDIR]""",
         description='ABX task specification')
     message = """must be defined by the database you are using (e.g. speaker \
