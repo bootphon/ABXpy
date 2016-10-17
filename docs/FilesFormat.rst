@@ -10,14 +10,14 @@ Extension: .item
 This file indexes the database on which the ABX task is executed. It is a regular text file and should have the following structure:
 
 ======= ======= ====== ======== ======= =======
-#source onset   offset #label 1 label 2 label 3
+#file   onset   offset #label 1 label 2 label 3
 ======= ======= ====== ======== ======= =======
 file 1  start 1 stop 1 value 1  value 1 value 1
 file 2  start 2 stop 2 value 2  value 1 value 1
 file 3  start 3 stop 3 value 3  value 1 value 1
 ======= ======= ====== ======== ======= =======
 
-- **#source** is the name of the file minus the extension. Note that the '#' at the begining is mandatory.
+- **#file** is the name of the file minus the extension. Note that the '#' at the begining is mandatory.
 - **onset** is the instant when the sound start.
 - **offset** is the instant when the sound end.
 - the **label** columns are various regressors relevant to the discrimination task. Note that the first column must start with a **'#'**.
