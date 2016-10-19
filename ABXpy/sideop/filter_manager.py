@@ -80,9 +80,9 @@ class FilterManager(side_operations_manager.SideOperationsManager):
     def X_filter(self, on_across_by_values, db, indices):
         return vectorial_filter(lambda context: self.evaluate_X(on_across_by_values, db, indices, context), indices)
 
-    # FIXME implement ABX_filter
     def ABX_filter(self, on_across_by_values, db, triplets):
-        raise ValueError('ABX filters not implemented')
+        return vectorial_filter(lambda context: self.evaluate_ABX(on_across_by_values, db, triplets, context), triplets)
+
 
 
 def singleton_filter(generator):
@@ -100,9 +100,12 @@ def vectorial_filter(generator, indices):
     .. note:: To allow a lazy evaluation of the filter, the context is filtered
         explicitly which acts on the generator by a side-effect (dict being
         mutable in python)
-
+    
+    'indices' should be a list or array of indices or triplets, for triplets the
+    first dimension of the array or list should correspond to different
+    triplets
     """
-    kept = indices
+    kept = np.array(indices)
     context = {}
     for result in generator(context):
         still_up = np.where(result)[0]

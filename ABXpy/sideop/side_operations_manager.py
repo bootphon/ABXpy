@@ -16,6 +16,7 @@ Class working closely with task.py providing services for it, specifically by:
 """
 
 import copy
+import numpy as np
 
 
 class SideOperationsManager(object):
@@ -292,6 +293,9 @@ class SideOperationsManager(object):
     def set_ABX_context(self, context, db, triplets):
         # each column of triplets is redundant, this might be used to acess the
         # db more efficiently...
+        # this is the only call to numpy in the module...
+        # could remove this if we always used arrays...
+        triplets = np.array(triplets)
         context = self.set_A_B_X_context(
             'A_context', context, 'ABX', db, triplets[:, 0])
         context = self.set_A_B_X_context(
@@ -332,15 +336,13 @@ class SideOperationsManager(object):
 
     # possible optimization: group A, B, X context in case there is some
     # overlap ?
-    # context passed as an argument can be used to induce side-effects in the
-    # result generator, for example for lazy filter evaluation
     def evaluate_A_B_X(self, name, on_across_by_values, db, indices, context=None):
         # set up context
         # context passed as an argument can be used to induce side-effects in
         # the result generator, for example for lazy filter evaluation
         if context is None:
             context = {}
-        context = self.set_by_context({}, name, on_across_by_values)
+        context = self.set_by_context(context, name, on_across_by_values)
         context = self.set_on_across_context(
             context, name,  on_across_by_values)
         for var in context:
@@ -359,15 +361,20 @@ class SideOperationsManager(object):
     def evaluate_X(self, *args):
         return self.evaluate_A_B_X('X', *args)
 
-    # FIXME implement evaluate_ABX
-    # are db, indices the correct args ? or indices_A, indices_B, indices_X ? -> no triplets!!!
-    # def evaluate_ABX(self, on_key, across_key, by_key, db, indices, context = None):
-    #    if context is None: context = {}
-    #    context = self.set_by_context({}, name, by_key)
-    #    context = self.set_on_across_context(context, name, on_key, across_key)
-    #    for var in context:
-    #        context[var] = context[var] * len(indices)
-    #    context = self.set_ABX_context(context, db, indices)
+    def evaluate_ABX(self, on_across_by_values, db, triplets, context=None):
+        stage = 'ABX'
+        # set up context
+        # context passed as an argument can be used to induce side-effects in
+        # the result generator, for example for lazy filter evaluation
+        if context is None:
+            context = {}
+        context = self.set_by_context(context, stage, on_across_by_values)
+        context = self.set_on_across_context(context, stage, on_across_by_values)
+        for var in context:
+            context[var] = context[var] * len(triplets)
+        context = self.set_ABX_context(context, db, triplets)
+        # evaluate dbfuns
+        return result_generator(getattr(self, stage), context)
 
 
 def result_generator(db_funs, context):
