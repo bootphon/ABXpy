@@ -72,16 +72,28 @@ class FilterManager(side_operations_manager.SideOperationsManager):
         return singleton_filter(self.evaluate_on_across_by(on_across_by_values))
 
     def A_filter(self, on_across_by_values, db, indices):
-        return vectorial_filter(lambda context: self.evaluate_A(on_across_by_values, db, indices, context), indices)
+        # Caution: indices contains db-related indices
+        # but the returned result contains indices with respect to indices
+        indices_ind = np.arange(len(indices))
+        return vectorial_filter(lambda context: self.evaluate_A(on_across_by_values, db, indices, context), indices_ind)
 
     def B_filter(self, on_across_by_values, db, indices):
-        return vectorial_filter(lambda context: self.evaluate_B(on_across_by_values, db, indices, context), indices)
+        # Caution: indices contains db-related indices
+        # but the returned result contains indices with respect to indices
+        indices_ind = np.arange(len(indices))
+        return vectorial_filter(lambda context: self.evaluate_B(on_across_by_values, db, indices, context), indices_ind)
 
     def X_filter(self, on_across_by_values, db, indices):
-        return vectorial_filter(lambda context: self.evaluate_X(on_across_by_values, db, indices, context), indices)
+        # Caution: indices contains db-related indices
+        # but the returned result contains indices with respect to indices
+        indices_ind = np.arange(len(indices))
+        return vectorial_filter(lambda context: self.evaluate_X(on_across_by_values, db, indices, context), indices_ind)
 
     def ABX_filter(self, on_across_by_values, db, triplets):
-        return vectorial_filter(lambda context: self.evaluate_ABX(on_across_by_values, db, triplets, context), triplets)
+        # triplets contains db-related indices
+        # the returned result contains indices with respect to triplets
+        indices = np.arange(len(triplets))
+        return vectorial_filter(lambda context: self.evaluate_ABX(on_across_by_values, db, triplets, context), indices)
 
 
 
@@ -100,10 +112,6 @@ def vectorial_filter(generator, indices):
     .. note:: To allow a lazy evaluation of the filter, the context is filtered
         explicitly which acts on the generator by a side-effect (dict being
         mutable in python)
-    
-    'indices' should be a list or array of indices or triplets, for triplets the
-    first dimension of the array or list should correspond to different
-    triplets
     """
     kept = np.array(indices)
     context = {}
