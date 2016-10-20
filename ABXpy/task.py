@@ -585,6 +585,7 @@ class Task(object):
                 for name, reg in zip(names, regs):
                     regressors[name] = np.tile(np.array(reg),
                                                (np.size(triplets, 0), 1))
+            # lots of code duplication below...
             for names, regs in zip(self.regressors.A_names,
                                    self.regressors.A_regressors):
                 for name, reg in zip(names, regs):
@@ -611,7 +612,7 @@ class Task(object):
                         regressors[name] = regressors[name][ABX_filter_ind]
                         if self.sampling:
                             regressors[name] = regressors[name][ABX_sample_ind]
-                        regressors[name] = regressors[name][thr_sort_permut]
+                    regressors[name] = regressors[name][thr_sort_permut]
             # FIXME implement this
             #for names, regs in zip(self.regressors.ABX_names,
             #                       self.regressors.ABX_regressors):
