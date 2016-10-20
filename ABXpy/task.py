@@ -459,11 +459,14 @@ class Task(object):
         db = self.by_dbs[by]
 
         if self.filters.A:
-            A = self.filters.A_filter(on_across_by_values, db, A)
+            iA = self.filters.A_filter(on_across_by_values, db, A)
+            A = A[iA]
         if self.filters.B:
-            B = self.filters.B_filter(on_across_by_values, db, B)
+            iB = self.filters.B_filter(on_across_by_values, db, B)
+            B = B[iB]
         if self.filters.X:
-            X = self.filters.X_filter(on_across_by_values, db, X)
+            iX = self.filters.X_filter(on_across_by_values, db, X)
+            X = X[iX]
 
         # instantiate A, B, X regressors here
         if with_regressors:
@@ -487,50 +490,78 @@ class Task(object):
             iX = np.mod(indices, len(X))
             iB = np.mod(np.divide(indices, len(X)), len(B))
             iA = np.divide(indices, len(B) * len(X))
-            triplets = np.column_stack((A[iA], B[iB], X[iX]))
-
+            triplets = np.column_stack((A[iA], B[iB], X[iX]))                
+            
             # apply triplets filters
             if self.filters.ABX:
-                triplets = self.filters.ABX_filter(
+                ABX_filter_ind = self.filters.ABX_filter(
                     on_across_by_values, db, triplets)
+                triplets = triplets[ABX_filter_ind]
                 size = triplets.shape[0]
                 # if sampling in the presence of triplets filters, do it here
                 if self.sampling:
                     ind_type = fit_integer_type(
                         size, is_signed=False)
-                    indices = self.sampler.sample(size, dtype=ind_type)
-                    triplets = triplets[indices, :]
-
+                    ABX_sample_ind = self.sampler.sample(size, dtype=ind_type)
+                    triplets = triplets[ABX_sample_ind, :]            
+          
             if with_regressors:
+                # If I understand correctly, this is supposed to first give a unique
+                # id to each combination of regressors and then sort the triplets
+                # so as to have triplets with the same combination of regressors next
+                # to each other
+                # Is the on_across_block_index created ever reused
+                # for allowing indexed and thus more efficient access
+                # in later procesing (e.g. in analyze.py)
+                # or is it only for thresholding ?
                 # reindexing by regressors
                 Breg = [reg[iB] for regs in self.regressors.B_regressors for reg in regs]
                 Xreg = [reg[iX] for regs in self.regressors.X_regressors for reg in regs]
+                if self.filters.ABX:
+                    Breg = [reg[ABX_filter_ind] for reg in Breg]
+                    Xreg = [reg[ABX_filter_ind] for reg in Xreg]
+                    if self.sampling:
+                        Breg = [reg[ABX_sample_ind] for reg in Breg]
+                        Xreg = [reg[ABX_sample_ind] for reg in Xreg]
                 regs = np.array(Breg + Xreg).T
 
                 if len(regs) != 0:
                     n_regs = np.max(regs, 0) + 1
-                    new_index = regs[:, 0].astype(ind_type)
+                    #FIXME how do we know that all regressors are in integer
+                    # format here ? This is only guaranteed
+                    # for indexed regressors...
+                    assert np.prod(n_regs) < 18446744073709551615, "type not big enough"
+                    reg_ind_type = fit_integer_type(np.prod(n_regs),
+                                                    is_signed=False)
+                    new_index = regs[:, 0].astype(reg_ind_type)
                     for i in range(1, len(n_regs)):
-                        new_index = regs[:, i] + n_regs[i] * new_index
-
+                        new_index = regs[:, i] + n_regs[i] * new_index     
                     permut = np.argsort(new_index)
-                    new_permut, on_across_block_index = sort_and_threshold(
-                        permut, new_index, ind_type,
+                    # the organization should be revamped: the real sorting is
+                    # done by the line just above, whild the 'sort_and_threshold'
+                    # function is only really doing something when thresholding,
+                    # otherwise it is just generating the on_across_block_index
+                    # which would be better done in another function...
+                    thr_sort_permut, on_across_block_index = sort_and_threshold(
+                        permut, new_index, reg_ind_type,
                         threshold=self.threshold)
-
-                    iA = iA[new_permut]
-                    iB = iB[new_permut]
-                    iX = iX[new_permut]
-                    triplets = triplets[new_permut]
-
+                    triplets = triplets[thr_sort_permut]
 
         else:
             # empty block...
             triplets = np.empty(shape=(0, 3), dtype=self.types[by])
-            indices = np.empty(shape=size, dtype=np.uint8)
-            iA = indices
-            iB = indices
-            iX = indices
+            # the following lines assign empty values to all the variables used
+            # to set regressors
+            # would be nicer to let the regressor code detect empty triplets
+            # and handle it by itself... (it is useless if not(with_regressors))
+            iA = np.empty(shape=0, dtype=np.uint8)
+            iB = np.empty(shape=0, dtype=np.uint8)
+            iX = np.empty(shape=0, dtype=np.uint8)
+            if self.filters.ABX:
+                ABX_filter_ind = np.empty(shape=0, dtype=np.uint8)
+                if self.sampling:
+                    ABX_sample_ind = np.empty(shape=0, dtype=np.uint8)
+            thr_sort_permut = np.empty(shape=0, dtype=np.uint8)
 
         if with_regressors:
             if self.regressors.ABX:  # instantiate ABX regressors here
@@ -558,17 +589,32 @@ class Task(object):
                                    self.regressors.A_regressors):
                 for name, reg in zip(names, regs):
                     regressors[name] = reg[iA]
+                    if self.filters.ABX:
+                        regressors[name] = regressors[name][ABX_filter_ind]
+                        if self.sampling:
+                            regressors[name] = regressors[name][ABX_sample_ind]
+                    regressors[name] = regressors[name][thr_sort_permut]
             for names, regs in zip(self.regressors.B_names,
                                    self.regressors.B_regressors):
                 for name, reg in zip(names, regs):
                     regressors[name] = reg[iB]
+                    if self.filters.ABX:
+                        regressors[name] = regressors[name][ABX_filter_ind]
+                        if self.sampling:
+                            regressors[name] = regressors[name][ABX_sample_ind]
+                    regressors[name] = regressors[name][thr_sort_permut]
             for names, regs in zip(self.regressors.X_names,
                                    self.regressors.X_regressors):
                 for name, reg in zip(names, regs):
                     regressors[name] = reg[iX]
+                    if self.filters.ABX:
+                        regressors[name] = regressors[name][ABX_filter_ind]
+                        if self.sampling:
+                            regressors[name] = regressors[name][ABX_sample_ind]
+                        regressors[name] = regressors[name][thr_sort_permut]
             # FIXME implement this
-            # for names, regs in zip(self.regressors.ABX_names,
-            #                        self.regressors.ABX_regressors):
+            #for names, regs in zip(self.regressors.ABX_names,
+            #                       self.regressors.ABX_regressors):
             #    for name, reg in zip(names, regs):
             #        regressors[name] = reg[indices,:]
             return triplets, regressors, np.array(on_across_block_index)[:, None]
