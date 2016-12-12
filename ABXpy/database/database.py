@@ -1,4 +1,3 @@
-
 # make sure the rest of the ABXpy package is accessible
 import os
 import sys
@@ -13,12 +12,12 @@ import numpy
 import ABXpy.misc.tinytree as tinytree
 
 
-#FIXME use just one isolated | as a separator instead of two #
+# FIXME use just one isolated | as a separator instead of two #
 
 # custom read_table that ignore empty entries at the end of a file (they
 # can result from trailing white spaces at the end for example)
 def read_table(filename):
-    db = pandas.read_table(filename, sep='[ \t]+')
+    db = pandas.read_table(filename, sep='[ \t]+', engine='python')
     # removes row with all null values (None or NaN...)
     db = db.dropna(how='all')
     return db

@@ -1,11 +1,9 @@
 """The sampler class implementing incremental sampling without replacement.
-Incremental meaning that you don't have to draw the whole sample at once,
-instead at any given time you can get a piece of the sample of a size you
-specify.
-This is useful for very large sample sizes.
-"""
-# -*- coding: utf-8 -*-
-"""
+
+Incremental meaning that you don't have to draw the whole sample at
+once, instead at any given time you can get a piece of the sample of a
+size you specify.  This is useful for very large sample sizes.
+
 Created on Mon Nov 18 03:14:53 2013
 
 @author: Thomas Schatz
@@ -15,24 +13,25 @@ import numpy as np
 import math
 
 
-"""Class for sampling without replacement in an incremental fashion
-
-Toy example of usage:
-    sampler = IncrementalSampler(10**4, 10**4, step=100, \
-relative_indexing=False)
-    complete_sample = np.concatenate([sample for sample in sampler])
-    assert all(complete_sample==range(10**4))
-
-More realistic example of usage: sampling without replacement 1 million items
-from a total of 1 trillion items, considering 100 millions items at a time
-    sampler = IncrementalSampler(10**12, 10**6, step=10**8, \
-relative_indexing=False)
-    complete_sample = np.concatenate([sample for sample in sampler])
-"""
-
-
 class IncrementalSampler(object):
+    """Class for sampling without replacement in an incremental fashion
 
+    Toy example of usage:
+
+        sampler = IncrementalSampler(10**4, 10**4, step=100, \
+            relative_indexing=False)
+        complete_sample = np.concatenate([sample for sample in sampler])
+        assert all(complete_sample==range(10**4))
+
+    More realistic example of usage: sampling without replacement 1
+    million items from a total of 1 trillion items, considering 100
+    millions items at a time
+
+        sampler = IncrementalSampler(10**12, 10**6, step=10**8, \
+            relative_indexing=False)
+        complete_sample = np.concatenate([sample for sample in sampler])
+
+    """
     # sampling K sample in a a population of size N
     # both K and N can be very large
 
@@ -122,16 +121,15 @@ class IncrementalSampler(object):
         return sample
 
 
-# function np.random.hypergeometric is buggy so I did my own implementation...
-# (error, at least, line 784 in computation of variance: sample used instead
-# of m, but this can't be all of it ?)
+# function np.random.hypergeometric is buggy so I did my own
+# implementation...  (error, at least, line 784 in computation of
+# variance: sample used instead of m, but this can't be all of it ?)
 # following algo HRUA by Ernst Stadlober as implemented in numpy
 # (https://github.com/numpy/numpy/blob/master/numpy/random/mtrand/
-    #distributions.c and see original ref in zotero)
-# this is 100 to 200 times slower than np.random.hypergeometric, but it works
-# reliably
-# could be optimized a lot if needed (for small samples in particular but also
-# generally)
+# distributions.c and see original ref in zotero)
+# this is 100 to 200 times slower than np.random.hypergeometric, but
+# it works reliably could be optimized a lot if needed (for small
+# samples in particular but also generally)
 # seems at worse to require comparable execution time when compared to the
 # actual rejection sampling, so probably not going to be so bad all in all
 def hypergeometric_sample(N, K, n):
@@ -240,7 +238,7 @@ def rejection_sampling(n, N, dtype=np.int64):
     remaining = n
     sample = np.array([], dtype=dtype)
     while remaining > 0:
-        new_sample = np.random.randint(0, N, remaining).astype(dtype)
+        new_sample = np.random.randint(0, int(N), int(remaining)).astype(dtype)
         # keeping only unique element:
         sample = np.union1d(sample, np.unique(new_sample))
         remaining = n - sample.shape[0]
