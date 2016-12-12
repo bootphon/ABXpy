@@ -27,7 +27,7 @@ def default_distance(x, y, normalized=False):
     return d
 
 
-def run(features, task, output, distance=None, j=1):
+def run(features, task, output, distance=None, j=1, group='features'):
     j = int(j)
     if distance:
         distancepair = distance.split('.')
@@ -38,9 +38,9 @@ def run(features, task, output, distance=None, j=1):
         distancefun = getattr(__import__(mod), distancefunction)
     else:
         distancefun = default_distance
-        
-    distances.compute_distances(features, '/features/', task,
-                                output, distancefun, n_cpu=j)
+
+    distances.compute_distances(
+        features, group, task, output, distancefun, n_cpu=j)
 
 
 if __name__ == '__main__':
@@ -48,6 +48,10 @@ if __name__ == '__main__':
         description='Compute distances for the ABX discrimination task')
     parser.add_argument(
         'features', help='h5features file containing the feature to evaluate')
+    parser.add_argument(
+        '-g', '--group', default='features',
+        help='group to read in the h5features file, default is %(default)s')
+
     parser.add_argument(
         'task', help='task file')
     parser.add_argument(
@@ -65,4 +69,5 @@ if __name__ == '__main__':
         warnings.warn("Overwriting distance file " + args.output, UserWarning)
         os.remove(args.output)
 
-    run(args.features, args.task, args.output, distance=args.distance, j=args.j)
+    run(args.features, args.task, args.output,
+        distance=args.distance, j=args.j, group=args.group)
