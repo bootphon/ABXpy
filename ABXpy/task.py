@@ -490,8 +490,8 @@ class Task(object):
             iX = np.mod(indices, len(X))
             iB = np.mod(np.divide(indices, len(X)), len(B))
             iA = np.divide(indices, len(B) * len(X))
-            triplets = np.column_stack((A[iA], B[iB], X[iX]))                
-            
+            triplets = np.column_stack((A[iA], B[iB], X[iX]))
+
             # apply triplets filters
             if self.filters.ABX:
                 ABX_filter_ind = self.filters.ABX_filter(
@@ -503,8 +503,8 @@ class Task(object):
                     ind_type = fit_integer_type(
                         size, is_signed=False)
                     ABX_sample_ind = self.sampler.sample(size, dtype=ind_type)
-                    triplets = triplets[ABX_sample_ind, :]            
-          
+                    triplets = triplets[ABX_sample_ind, :]
+
             if with_regressors:
                 # If I understand correctly, this is supposed to first give a unique
                 # id to each combination of regressors and then sort the triplets
@@ -527,33 +527,40 @@ class Task(object):
 
                 if len(regs) != 0:
                     n_regs = np.max(regs, 0) + 1
-                    #FIXME how do we know that all regressors are in integer
+                    # FIXME how do we know that all regressors are in integer
                     # format here ? This is only guaranteed
                     # for indexed regressors...
-                    assert np.prod(n_regs) < 18446744073709551615, "type not big enough"
+                    assert np.prod(n_regs) < 18446744073709551615, \
+                        "type not big enough"
                     reg_ind_type = fit_integer_type(np.prod(n_regs),
                                                     is_signed=False)
                     new_index = regs[:, 0].astype(reg_ind_type)
                     for i in range(1, len(n_regs)):
-                        new_index = regs[:, i] + n_regs[i] * new_index     
+                        new_index = regs[:, i] + n_regs[i] * new_index
                     permut = np.argsort(new_index)
-                    # the organization should be revamped: the real sorting is
-                    # done by the line just above, whild the 'sort_and_threshold'
-                    # function is only really doing something when thresholding,
-                    # otherwise it is just generating the on_across_block_index
-                    # which would be better done in another function...
+                    # the organization should be revamped: the real
+                    # sorting is done by the line just above, whild
+                    # the 'sort_and_threshold' function is only really
+                    # doing something when thresholding, otherwise it
+                    # is just generating the on_across_block_index
+                    # which would be better done in another
+                    # function...
                     thr_sort_permut, on_across_block_index = sort_and_threshold(
                         permut, new_index, reg_ind_type,
                         threshold=self.threshold)
                     triplets = triplets[thr_sort_permut]
+                else:
+                    # FIXME was a bug breaking tests -> variable need
+                    # to be defined
+                    thr_sort_permut = np.empty(shape=0, dtype=np.uint8)
 
         else:
             # empty block...
             triplets = np.empty(shape=(0, 3), dtype=self.types[by])
-            # the following lines assign empty values to all the variables used
-            # to set regressors
-            # would be nicer to let the regressor code detect empty triplets
-            # and handle it by itself... (it is useless if not(with_regressors))
+            # the following lines assign empty values to all the
+            # variables used to set regressors would be nicer to let
+            # the regressor code detect empty triplets and handle it
+            # by itself... (it is useless if not(with_regressors)
             iA = np.empty(shape=0, dtype=np.uint8)
             iB = np.empty(shape=0, dtype=np.uint8)
             iX = np.empty(shape=0, dtype=np.uint8)
@@ -595,6 +602,7 @@ class Task(object):
                         if self.sampling:
                             regressors[name] = regressors[name][ABX_sample_ind]
                     regressors[name] = regressors[name][thr_sort_permut]
+
             for names, regs in zip(self.regressors.B_names,
                                    self.regressors.B_regressors):
                 for name, reg in zip(names, regs):
@@ -604,6 +612,7 @@ class Task(object):
                         if self.sampling:
                             regressors[name] = regressors[name][ABX_sample_ind]
                     regressors[name] = regressors[name][thr_sort_permut]
+
             for names, regs in zip(self.regressors.X_names,
                                    self.regressors.X_regressors):
                 for name, reg in zip(names, regs):
@@ -613,15 +622,16 @@ class Task(object):
                         if self.sampling:
                             regressors[name] = regressors[name][ABX_sample_ind]
                     regressors[name] = regressors[name][thr_sort_permut]
+
             # FIXME implement this
-            #for names, regs in zip(self.regressors.ABX_names,
+            # for names, regs in zip(self.regressors.ABX_names,
             #                       self.regressors.ABX_regressors):
             #    for name, reg in zip(names, regs):
             #        regressors[name] = reg[indices,:]
-            return triplets, regressors, np.array(on_across_block_index)[:, None]
+            return triplets, regressors, np.array(
+                on_across_block_index)[:, None]
         else:
             return triplets
-
 
     # FIXME add a mechanism to allow the specification of a random seed in a
     # way that would produce reliably the same triplets on different machines
@@ -710,7 +720,7 @@ associated pairs
                 group='triplets', dataset='on_across_block_index',
                 n_rows=self.stats['nb_blocks'], n_columns=1,
                 item_type=fit_integer_type(self.stats['nb_blocks']),
-                fixed_size=False)  #TODO add item type
+                fixed_size=False)  # TODO add item type
             empty_by_blocks = []
             bys = []
             for by, db in self.by_dbs.iteritems():
@@ -746,7 +756,7 @@ associated pairs
             for by in empty_by_blocks:
                 del self.by_dbs[by]
             fh.file.create_dataset(
-                'bys', (aux.shape[0] -1,),
+                'bys', (aux.shape[0] - 1,),
                 dtype=h5py.special_dtype(vlen=unicode))
             fh.file['bys'][:] = [str(by) for by in bys]
             fh.file['triplets'].create_dataset(
@@ -906,7 +916,7 @@ associated pairs
 
             # Now merge all datasets
             by_index = 0
-            with np2h5.NP2H5(output) as f_out:            
+            with np2h5.NP2H5(output) as f_out:
                 n_rows = sum(n_pairs_dict.itervalues())
                 out_unique_pairs = f_out.add_dataset(
                     'unique_pairs', 'data', n_rows=n_rows, n_columns=1,
@@ -1190,7 +1200,7 @@ or phonemes, if your database contains columns defining these attributes)"""
     if not(args.stats_only):
         if args.tempdir is not None and not os.path.exists(args.tempdir):
             os.makedirs(args.tempdir)
-        
+
         # generate triplets and unique pairs
         task.generate_triplets(args.output, args.sample, args.threshold,
                                tmpdir=args.tempdir)
