@@ -312,6 +312,7 @@ class Features_Accessor(object):
         features = {}
         for ix, f, on, off in zip(items.index, items['file'],
                                   items['onset'], items['offset']):
+            f=str(f)
             t = np.where(np.logical_and(self.times[f] >= on,
                                         self.times[f] <= off))[0]
             # if len(t) == 0:
