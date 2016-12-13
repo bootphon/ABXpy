@@ -3,7 +3,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+import shutil
 import sys
+
 package_path = os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.realpath(__file__))))
 if not(package_path in sys.path):
@@ -50,12 +52,13 @@ def test_analyze():
         analyze.analyze(taskfilename, scorefilename, analyzefilename)
     finally:
         try:
-            os.remove(item_file)
-            os.remove(feature_file)
-            os.remove(taskfilename)
-            os.remove(distance_file)
-            os.remove(scorefilename)
-            os.remove(analyzefilename)
+            shutil.rmtree('test_items')
+            # os.remove(item_file)
+            # os.remove(feature_file)
+            # os.remove(taskfilename)
+            # os.remove(distance_file)
+            # os.remove(scorefilename)
+            # os.remove(analyzefilename)
         except:
             pass
 
@@ -70,13 +73,14 @@ def test_threshold_analyze():
         scorefilename = 'test_items/data.score'
         taskfilename = 'test_items/data.abx'
         analyzefilename = 'test_items/data.csv'
-        threshold=2
+        threshold = 2
 
         items.generate_db_and_feat(3, 3, 1, item_file, 2, 3, feature_file)
         task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
         task.generate_triplets(taskfilename, threshold=threshold)
-        distances.compute_distances(feature_file, '/features/', taskfilename,
-                                    distance_file, dtw_cosine_distance, n_cpu=1)
+        distances.compute_distances(
+            feature_file, '/features/', taskfilename,
+            distance_file, dtw_cosine_distance, n_cpu=1)
         score.score(taskfilename, distance_file, scorefilename)
         analyze.analyze(taskfilename, scorefilename, analyzefilename)
         number_triplets = np.loadtxt(analyzefilename, dtype=int,
@@ -84,12 +88,13 @@ def test_threshold_analyze():
         assert np.all(number_triplets == threshold)
     finally:
         try:
-            os.remove(item_file)
-            os.remove(feature_file)
-            os.remove(taskfilename)
-            os.remove(distance_file)
-            os.remove(scorefilename)
-            os.remove(analyzefilename)
+            shutil.rmtree('test_items')
+            # os.remove(item_file)
+            # os.remove(feature_file)
+            # os.remove(taskfilename)
+            # os.remove(distance_file)
+            # os.remove(scorefilename)
+            # os.remove(analyzefilename)
         except:
             pass
 
@@ -122,9 +127,10 @@ def test_frozen_analyze():
 
     finally:
         try:
-            os.remove(taskfilename)
-            os.remove(distance_file)
-            os.remove(scorefilename)
-            os.remove(analyzefilename)
+            shutil.rmtree('test_items')
+            # os.remove(taskfilename)
+            # os.remove(distance_file)
+            # os.remove(scorefilename)
+            # os.remove(analyzefilename)
         except:
             pass

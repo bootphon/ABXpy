@@ -34,4 +34,3 @@ def test_normalized():
     dists_mid = np.concatenate([dists[:, :3], dists_mid, dists[:, 3:]], axis=1)
     res = dtw._dtw(5, 7, dists_mid, normalized=True)
     assert res == 1
-
