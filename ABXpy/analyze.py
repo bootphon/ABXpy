@@ -40,7 +40,10 @@ import os.path as path
 from ABXpy.misc.type_fitting import fit_integer_type
 import os
 import warnings
+import sys
 
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 def npdecode(keys, max_ind):
     """Vectorized implementation of the decoding of the labels:
