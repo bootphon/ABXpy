@@ -23,7 +23,7 @@ ctypedef np.intp_t IND_t # array index type
 CTYPE = np.float64 # cost type 
 
 
-def dtw(x, y, metric, normalized=False):
+def dtw(x, y, metric, normalized):
     if x.shape[0] == 0 or y.shape[0] == 0:
         raise ValueError('Cannot compute distance between empty representations')
     else:
@@ -50,7 +50,6 @@ cpdef _dtw(IND_t N, IND_t M, CTYPE_t[:,:] dist_array, bool normalized):
             cost[i,j] = dist_array[i,j] + min(cost[i-1,j], cost[i-1,j-1], cost[i,j-1])
 
     final_cost = cost[N-1, M-1]
-
     if normalized:
         path_len = 1
         i = N-1

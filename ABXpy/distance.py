@@ -8,7 +8,7 @@ import numpy as np
 import warnings
 
 
-def default_distance(x, y, normalized=False):
+def default_distance(x, y, normalized):
     """ Dynamic time warping cosine distance
 
     The "feature" dimension is along the columns and the "time" dimension
@@ -27,7 +27,7 @@ def default_distance(x, y, normalized=False):
     return d
 
 
-def run(features, task, output, distance=None, j=1, group='features'):
+def run(features, task, output, normalized, distance=None, j=1, group='features'):
     j = int(j)
     if distance:
         distancepair = distance.split('.')
@@ -40,7 +40,7 @@ def run(features, task, output, distance=None, j=1, group='features'):
         distancefun = default_distance
 
     distances.compute_distances(
-        features, group, task, output, distancefun, n_cpu=j)
+        features, group, task, output, distancefun, normalized=normalized, n_cpu=j)
 
 
 if __name__ == '__main__':
@@ -63,11 +63,20 @@ if __name__ == '__main__':
     parser.add_argument(
         '-j', help='number of cpus to use',
         type=int, default=1)
+    parser.add_argument(
+        '-n', '--normalization', type=int, default=None,
+        help='if dtw distance selected, compute with normalization or with'
+        'sum. If put to 1 : computes with normalization, if put to 0 : '
+        'computes with sum. Common choice is to use normalization (-n 1)')
 
     args = parser.parse_args()
     if os.path.exists(args.output):
         warnings.warn("Overwriting distance file " + args.output, UserWarning)
         os.remove(args.output)
-
-    run(args.features, args.task, args.output,
+    
+    # if dtw distance selected, fore use of normalization parameter : 
+    if (args.distance == None and args.normalization == None) :
+        sys.exit("ERROR : DTW normalization parameter not specified !")
+    
+    run(args.features, args.task, args.output, normalized= args.normalization,
         distance=args.distance, j=args.j, group=args.group)
