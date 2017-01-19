@@ -28,8 +28,8 @@ def frozen_file(ext):
     return os.path.join(frozen_folder, 'data') + '.' + ext
 
 
-def dtw_cosine_distance(x, y):
-    return dtw.dtw(x, y, cosine.cosine_distance)
+def dtw_cosine_distance(x, y, normalized):
+    return dtw.dtw(x, y, cosine.cosine_distance, normalized)
 
 
 def test_analyze():
@@ -47,7 +47,8 @@ def test_analyze():
         task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
         task.generate_triplets(taskfilename)
         distances.compute_distances(feature_file, '/features/', taskfilename,
-                                    distance_file, dtw_cosine_distance, n_cpu=1)
+                                    distance_file, dtw_cosine_distance,
+                                    normalized = True, n_cpu=1)
         score.score(taskfilename, distance_file, scorefilename)
         analyze.analyze(taskfilename, scorefilename, analyzefilename)
     finally:
@@ -80,7 +81,8 @@ def test_threshold_analyze():
         task.generate_triplets(taskfilename, threshold=threshold)
         distances.compute_distances(
             feature_file, '/features/', taskfilename,
-            distance_file, dtw_cosine_distance, n_cpu=1)
+            distance_file, dtw_cosine_distance,
+            normalized = True, n_cpu=1)
         score.score(taskfilename, distance_file, scorefilename)
         analyze.analyze(taskfilename, scorefilename, analyzefilename)
         number_triplets = np.loadtxt(analyzefilename, dtype=int,
@@ -116,7 +118,8 @@ def test_frozen_analyze():
         task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
         task.generate_triplets(taskfilename)
         distances.compute_distances(feature_file, '/features/', taskfilename,
-                                    distance_file, dtw_cosine_distance, n_cpu=1)
+                                    distance_file, dtw_cosine_distance,
+                                    normalized = True, n_cpu=1)
         score.score(taskfilename, distance_file, scorefilename)
         analyze.analyze(taskfilename, scorefilename, analyzefilename)
 
