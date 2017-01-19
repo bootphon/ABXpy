@@ -3,7 +3,9 @@
 # -*- coding: utf-8 -*-
 
 import os
+import shutil
 import sys
+
 package_path = os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.realpath(__file__))))
 if not(package_path in sys.path):
@@ -32,15 +34,17 @@ def test_score():
         items.generate_db_and_feat(3, 3, 1, item_file, 2, 3, feature_file)
         task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
         task.generate_triplets()
-        distances.compute_distances(feature_file, '/features/', taskfilename,
-                                    distance_file, dtw_cosine_distance, n_cpu=3)
+        distances.compute_distances(
+            feature_file, '/features/', taskfilename,
+            distance_file, dtw_cosine_distance, n_cpu=3)
         score.score(taskfilename, distance_file, scorefilename)
     finally:
         try:
-            os.remove(item_file)
-            os.remove(feature_file)
-            os.remove(taskfilename)
-            os.remove(distance_file)
-            os.remove(scorefilename)
+            shutil.rmtree('test_items')
+            # os.remove(item_file)
+            # os.remove(feature_file)
+            # os.remove(taskfilename)
+            # os.remove(distance_file)
+            # os.remove(scorefilename)
         except:
             pass
