@@ -1,5 +1,6 @@
 """This file contains test for the examples of the package"""
 import os.path as path
+import shutil
 import subprocess
 
 
@@ -13,7 +14,20 @@ complete_run_py = path.join(examples_folder, 'complete_run.py')
 
 
 def test_complete_run_sh():
-    subprocess.check_call(['bash', complete_run_sh])
+    try:
+        subprocess.check_call(['bash', complete_run_sh])
+    finally:
+        try:
+            shutil.rmtree('./example_items')
+        except:
+            pass
+
 
 def test_complete_run_py():
-    subprocess.check_call(['python', complete_run_py])
+    try:
+        subprocess.check_call(['python', complete_run_py])
+    finally:
+        try:
+            shutil.rmtree('./example_items')
+        except:
+            pass
