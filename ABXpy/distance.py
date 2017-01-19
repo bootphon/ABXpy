@@ -40,7 +40,8 @@ def run(features, task, output, normalized, distance=None, j=1, group='features'
         distancefun = default_distance
 
     distances.compute_distances(
-        features, group, task, output, distancefun, normalized=normalized, n_cpu=j)
+        features, group, task, output,
+        distancefun, normalized=normalized, n_cpu=j)
 
 
 if __name__ == '__main__':
@@ -59,13 +60,14 @@ if __name__ == '__main__':
     parser.add_argument(
         '-d', '--distance',
         help='distance module to use (distancemodule.distancefunction, '
-        'default to dtw cosine distance', metavar='distancemodule.distancefunction')
+        'default to dtw cosine distance',
+        metavar='distancemodule.distancefunction')
     parser.add_argument(
         '-j', help='number of cpus to use',
         type=int, default=1)
     parser.add_argument(
         '-n', '--normalization', type=int, default=None,
-        help='if dtw distance selected, compute with normalization or with'
+        help='if dtw distance selected, compute with normalization or with '
         'sum. If put to 1 : computes with normalization, if put to 0 : '
         'computes with sum. Common choice is to use normalization (-n 1)')
 
@@ -73,10 +75,10 @@ if __name__ == '__main__':
     if os.path.exists(args.output):
         warnings.warn("Overwriting distance file " + args.output, UserWarning)
         os.remove(args.output)
-    
-    # if dtw distance selected, fore use of normalization parameter : 
-    if (args.distance == None and args.normalization == None) :
+
+    # if dtw distance selected, fore use of normalization parameter :
+    if (args.distance is None and args.normalization is None):
         sys.exit("ERROR : DTW normalization parameter not specified !")
-    
-    run(args.features, args.task, args.output, normalized= args.normalization,
+
+    run(args.features, args.task, args.output, normalized=args.normalization,
         distance=args.distance, j=args.j, group=args.group)
