@@ -18,8 +18,8 @@ import ABXpy.score as score
 import ABXpy.misc.items as items
 
 
-def dtw_cosine_distance(x, y):
-    return dtw.dtw(x, y, cosine.cosine_distance)
+def dtw_cosine_distance(x, y, normalized):
+    return dtw.dtw(x, y, cosine.cosine_distance, normalized)
 
 
 def test_score():
@@ -36,7 +36,8 @@ def test_score():
         task.generate_triplets()
         distances.compute_distances(
             feature_file, '/features/', taskfilename,
-            distance_file, dtw_cosine_distance, n_cpu=3)
+            distance_file, dtw_cosine_distance,
+            normalized = True, n_cpu=3)
         score.score(taskfilename, distance_file, scorefilename)
     finally:
         try:

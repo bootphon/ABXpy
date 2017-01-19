@@ -17,8 +17,8 @@ import ABXpy.misc.items as items
 import ABXpy.analyze as analyze
 
 
-def dtw_cosine_distance(x, y):
-    return dtw.dtw(x, y, cosine.cosine_distance)
+def dtw_cosine_distance(x, y, normalized):
+    return dtw.dtw(x, y, cosine.cosine_distance, normalized)
 
 
 def fullrun():
@@ -44,7 +44,8 @@ def fullrun():
     task = ABXpy.task.Task(item_file, 'c0', across='c1', by='c2')
     task.generate_triplets(taskfilename)
     distances.compute_distances(feature_file, '/features/', taskfilename,
-                                distance_file, dtw_cosine_distance, n_cpu=1)
+                                distance_file, dtw_cosine_distance,
+                                normalized = True, n_cpu=1)
     score.score(taskfilename, distance_file, scorefilename)
     analyze.analyze(taskfilename, scorefilename, analyzefilename)
 

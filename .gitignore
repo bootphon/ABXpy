@@ -65,3 +65,9 @@ test/__pycache__
 # Emacs
 *~
 \#*\#
+
+# Cythonized output
+ABXpy/distances/metrics/install/*.c
+
+# Example items
+examples/example_items/data.*

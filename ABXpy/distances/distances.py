@@ -150,7 +150,7 @@ HDF5 (based on MPI-IO).
 
 def run_distance_job(job_description, distance_file, distance,
                      feature_files, feature_groups, splitted_features,
-                     job_id, distance_file_lock=None):
+                     job_id, normalize, distance_file_lock=None):
     if distance_file_lock is None:
         synchronize = False
     else:
@@ -232,7 +232,18 @@ def run_distance_job(job_description, distance_file, distance,
                                       items['offset'][pairs[i, 1]]),
                               UserWarning)
             try:
-                dis[i, 0] = distance(dataA, dataB)
+                if normalize is not None : 
+                    if normalize==1:
+                        normalize=True
+                    elif normalize==0:
+                        normalize=False
+                    else:
+                        print('normalized parameter neither 1 nor 0,'
+                        'using normalization')
+                        normalize=True
+                    dis[i,0] = distance(dataA, dataB, normalized=normalize)
+                else:
+                    dis[i, 0] = distance(dataA, dataB)
             except:
                 sys.stderr.write(
                     'Error when calculating the distance between item {}, {} - {} '
@@ -258,7 +269,7 @@ def run_distance_job(job_description, distance_file, distance,
 # and/or have an external utility for concatenating them?
 # get rid of the group in feature file (never used ?)
 def compute_distances(feature_file, feature_group, pair_file, distance_file,
-                      distance, n_cpu=None, mem=1000,
+                      distance, normalized, n_cpu=None, mem=1000,
                       feature_file_as_list=False):
     #with h5py.File(distance_file) as fh:
     #    fh.attrs.create('distance', pickle.dumps(distance))
@@ -287,12 +298,12 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
         distance_file_lock = multiprocessing.Manager().Lock()
         pool = multiprocessing.Pool(n_cpu)
         args = [(job, distance_file, distance, feature_files, feature_groups,
-                 splitted_features, i, distance_file_lock)
+                 splitted_features, i, normalized, distance_file_lock)
                 for i, job in enumerate(jobs)]
         pool.map(worker, args)
     else:
         run_distance_job(jobs[0], distance_file, distance,
-                         feature_files, feature_groups, splitted_features, 1)
+                         feature_files, feature_groups, splitted_features, 1, normalized)
         with h5py.File(distance_file) as fh:
             fh.attrs.modify('done', True)
 
@@ -349,8 +360,8 @@ if __name__ == '__main__':
     import metrics.cosine as cosine
     import metrics.dtw as dtw
 
-    def dtw_cosine_distance(x, y):
-        return dtw.dtw(x, y, cosine.cosine_distance)
+    def dtw_cosine_distance(x, y,normalized):
+        return dtw.dtw(x, y, cosine.cosine_distance,normalized)
 
     # parser (the usage string is specified explicitly because the default
     # does not show that the mandatory arguments must come before the
@@ -371,6 +382,10 @@ if __name__ == '__main__':
         '-o', '--output', help='optional: output distance file')
     g1.add_argument(
         '-n', '--ncpu', default=None, help='optional: number of cpus to use')
+    g1.add_argument(
+        '-no', '--normalized', help='optional: if dtw distance selected,'
+        'specifies if the distance is computed with a sum (-no 0) or '
+        'with normalization (-no 1) ')
     args = parser.parse_args()
     compute_distances(args.features, '/features/', args.task,
-                      args.output, dtw_cosine_distance, n_cpu=args.ncpu)
+                      args.output, dtw_cosine_distance, normalized=args.normalized, n_cpu=args.ncpu)
