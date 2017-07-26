@@ -1,18 +1,21 @@
-# -*- coding: utf-8 -*-
-"""
+"""Class  providing services for task.py
+
+- finds out the best point to execute side-operations (such as
+  filtering and regressor generation) in the ABX task computation
+  flow:
+
+    * basically the more related a given side-operation is to the
+      on/across/by structure of the ABX task, the earlier it can be
+      executed and the lowest the computational cost is
+
+- providing methods to actually carry out these side-operations at the
+  point in the execution flow to which they were attributed
+
+
 Created on Tue Nov 12 06:39:40 2013
 
 :author: Thomas Schatz
 
-Class working closely with task.py providing services for it, specifically by:
-    - finding out the best point to execute side-operations (such as filtering
-      and regressor generation) in the ABX task computation flow:
-
-        * basically the more related a given side-operation is to the
-          on/across/by structure of the ABX task, the earlier it can be
-          executed and the lowest the computational cost is
-    - providing methods to actually carry out these side-operations at the
-      point in the execution flow to which they were attributed
 """
 
 import copy
@@ -27,14 +30,16 @@ class SideOperationsManager(object):
         self.extensions = ['', '_A', '_B', '_X', '_AB', '_AX', '_1', '_2']
         self.all_cols = {
             node.name for tree in db_hierarchy for node in tree.preOrder()}
-        # FIXME add some checks that the original column names will not cause
-        # parsing problems
+
+        # FIXME add some checks that the original column names will
+        # not cause parsing problems
         self.extended_cols = [
             col + ext for col in self.all_cols for ext in self.extensions]
         self.extended_cols_by_column = [
             [col + ext for col in self.all_cols] for ext in self.extensions]
-        # find on/by/across descendant columns
-        # db_hierarchy is a list of ABX.lib.tinytree object
+
+        # find on/by/across descendant columns db_hierarchy is a list
+        # of ABX.lib.tinytree object
         roots = [tree.findChild(lambda x: x.name == on[0])
                  for tree in db_hierarchy]
         for root in roots:
@@ -42,6 +47,7 @@ class SideOperationsManager(object):
                 on_root = root
                 break
         self.on_cols = {node.name for node in on_root.preOrder()}
+
         across_roots = []
         for col in across:
             roots = [tree.findChild(lambda x: x.name == col)
@@ -50,8 +56,10 @@ class SideOperationsManager(object):
                 if not(root is None):
                     across_roots.append(root)
                     break
+
         self.across_cols = {col for root in across_roots for col in {
             node.name for node in root.preOrder()}}
+
         by_roots = []
         for col in by:
             roots = [tree.findChild(lambda x: x.name == col)
@@ -60,34 +68,67 @@ class SideOperationsManager(object):
                 if not(root is None):
                     by_roots.append(root)
                     break
+
         self.by_cols = {col for root in by_roots for col in {
             node.name for node in root.preOrder()}}
+
         # other columns
         self.other_cols = set.difference(
-            self.all_cols, set.union(self.on_cols, self.across_cols, self.by_cols))
+            self.all_cols,
+            set.union(self.on_cols, self.across_cols, self.by_cols))
 
-        # containers could also add AX, AB, BX for further optimization (but
-        # wait to see if this can really be useful)
-        self.by = []  # one value for a whole 'by' database
-        self.on_across_by = []  # one value for a whole ABX cell
-        self.A = []  # value dependent on specific items in A column
-        # value dependent on specific items in B column (or on their 'on'
-        # property which we do not treat as a special case as there can be very
-        # few elements with the same 'on' in a row in the B column)
+        # FIXME containers could also add AX, AB, BX for further
+        # optimization (but wait to see if this can really be useful)
+
+        # one value for a whole 'by' database
+        self.by = []
+
+        # one value for a whole ABX cell
+        self.on_across_by = []
+
+        # value dependent on specific items in A column
+        self.A = []
+
+        # value dependent on specific items in B column (or on their
+        # 'on' property which we do not treat as a special case as
+        # there can be very few elements with the same 'on' in a row
+        # in the B column)
         self.B = []
-        # value dependent on specific items in X column (or on their 'across'
-        # property which we do not treat as a special case as there can be very
-        # few elements with the same 'across' in a row in the X colum)
-        self.X = []
-        self.ABX = []  # most general case
 
-        self.by_context = {'by': set(), 'generic': set(), 'on_across_by': set(
-        ), 'A': set(), 'B': set(), 'X': set(), 'ABX': set()}
+        # value dependent on specific items in X column (or on their
+        # 'across' property which we do not treat as a special case as
+        # there can be very few elements with the same 'across' in a
+        # row in the X colum)
+        self.X = []
+
+        # most general case
+        self.ABX = []
+
+        self.by_context = {
+            'by': set(),
+            'generic': set(),
+            'on_across_by': set(),
+            'A': set(),
+            'B': set(),
+            'X': set(),
+            'ABX': set()}
+
         self.generic_context = {'generic': set()}
+
         self.on_context = {
-            'on_across_by': set(), 'A': set(), 'B': set(), 'X': set(), 'ABX': set()}
+            'on_across_by': set(),
+            'A': set(),
+            'B': set(),
+            'X': set(),
+            'ABX': set()}
+
         self.across_context = {
-            'on_across_by': set(), 'A': set(), 'B': set(), 'X': set(), 'ABX': set()}
+            'on_across_by': set(),
+            'A': set(),
+            'B': set(),
+            'X': set(),
+            'ABX': set()}
+
         self.A_context = {'A': set(), 'ABX': set()}
         self.B_context = {'B': set(), 'ABX': set()}
         self.X_context = {'X': set(), 'ABX': set()}
@@ -111,8 +152,6 @@ class SideOperationsManager(object):
                 break
         return radical, suffix
 
-     # check that something with a AX, AB or 1, 2 extension is an on/across
-     # descendant and a correct one for AX, AB
     def check_extensions(self, elements):
         """Check that something with a AX, AB or 1, 2 extension is an on/across
         descendant and a correct one for AX, AB.
@@ -177,16 +216,21 @@ class SideOperationsManager(object):
         else:
             # find elements that do not depend on _1, _AX, AB, or (A or X and
             # are descendants of on) or (A or B and are descendants of across)
-            condition = lambda r, s: (not(s in ['_1', '_AX', '_AB'])
-                                      and not(s in ['_A', '_X']
-                                              and r in self.on_cols)
-                                      and not(s in ['A', 'B']
-                                              and r in self.across_cols))
+            def condition(r, s):
+                return (
+                    not(s in ['_1', '_AX', '_AB'])
+                    and not(s in ['_A', '_X'] and r in self.on_cols)
+                    and not(s in ['A', 'B'] and r in self.across_cols))
+
+            # fill db_variables
             db_variables['on'] = {(r, s) for r, s in elements if (
-                not(condition(r, s)) and r in self.on_cols)}  # fill db_variables
+                not(condition(r, s)) and r in self.on_cols)}
             db_variables['across'] = {
-                (r, s) for r, s in elements if (not(condition(r, s)) and r in self.across_cols)}
+                (r, s) for r, s in elements
+                if (not(condition(r, s)) and r in self.across_cols)}
+
             elements = {e for e in elements if condition(e[0], e[1])}
+
             # if there are none, classify as on_across_by
             if not(elements):
                 self.on_across_by.append(db_fun)
@@ -196,12 +240,16 @@ class SideOperationsManager(object):
                     db_variables['across'])
         return elements, db_variables
 
-    # detect operations that depend on only one of the A, B or X factors inside an on/across/by block
-    # other operations are classified as ABX (the most general)
+    # detect operations that depend on only one of the A, B or X
+    # factors inside an on/across/by block other operations are
+    # classified as ABX (the most general)
     def classify_ABX(self, elements, db_fun, db_variables):
-        """
-        the only left extensions are either not descendant of on/across/by or descendant of across and _X or descendant of on and _B (i.e. _2)
-        we do not try to batch the _2 because we think they are potentially too small, instead if necessary we should batch several consecutive calls
+        """the only left extensions are either not descendant of
+        on/across/by or descendant of across and _X or descendant of
+        on and _B (i.e. _2) we do not try to batch the _2 because we
+        think they are potentially too small, instead if necessary we
+        should batch several consecutive calls
+
         """
         # set up db_variables
         # FIXME could/should group these three contexts ???? + ABX ????
@@ -269,8 +317,8 @@ class SideOperationsManager(object):
     # could use arrays instead of lists for speed ?
     def set_generic_context(self, context, stage, db):
         for radical, extension in self.generic_context[stage]:
-            # note that in the current implementation the extension is always
-            # ''
+            # note that in the current implementation the extension is
+            # always ''
             context[radical + extension] = list(db[radical])
         return context
 
@@ -286,15 +334,15 @@ class SideOperationsManager(object):
     def set_A_B_X_context(self, context_field, context, stage, db, indices):
         field = getattr(self, context_field)
         for radical, extension in field[stage]:
-            # FIXME might be faster to index once for all the columns ???
+            # FIXME might be faster to index once for all the columns?
             context[radical + extension] = list(db[radical][indices])
         return context
 
     def set_ABX_context(self, context, db, triplets):
-        # each column of triplets is redundant, this might be used to acess the
-        # db more efficiently...
-        # this is the only call to numpy in the module...
-        # could remove this if we always used arrays...
+        # each column of triplets is redundant, this might be used to
+        # acess the db more efficiently... this is the only call to
+        # numpy in the module... could remove this if we always used
+        # arrays...
         triplets = np.array(triplets)
         context = self.set_A_B_X_context(
             'A_context', context, 'ABX', db, triplets[:, 0])
@@ -308,11 +356,12 @@ class SideOperationsManager(object):
     # evaluation for filters
     def evaluate_by(self, by_values):
         context = self.set_by_context({}, 'by', by_values)  # set up context
+
         # evaluate dbfun
         return singleton_result_generator(self.by, context)
 
-    # context passed as an argument can be used to induce side-effects in the
-    # result generator, for example for lazy filter evaluation
+    # context passed as an argument can be used to induce side-effects
+    # in the result generator, for example for lazy filter evaluation
     def evaluate_generic(self, by_values, db, context=None):
         # set up context
         if context is None:
@@ -321,25 +370,28 @@ class SideOperationsManager(object):
         for var in context:
             context[var] = context[var] * len(db)
         context = self.set_generic_context(context, 'generic', db)
+
         # evaluate dbfuns
         return result_generator(self.generic, context)
 
-    # from this point on, by design, we are sure that generic variables cannot
-    # be needed for context
+    # from this point on, by design, we are sure that generic
+    # variables cannot be needed for context
     def evaluate_on_across_by(self, on_across_by_values):
         # set up context
         context = self.set_by_context({}, 'on_across_by', on_across_by_values)
         context = self.set_on_across_context(
             context, 'on_across_by', on_across_by_values)
+
         # evaluate dbfuns
         return singleton_result_generator(self.on_across_by, context)
 
-    # possible optimization: group A, B, X context in case there is some
-    # overlap ?
-    def evaluate_A_B_X(self, name, on_across_by_values, db, indices, context=None):
-        # set up context
-        # context passed as an argument can be used to induce side-effects in
-        # the result generator, for example for lazy filter evaluation
+    # possible optimization: group A, B, X context in case there is
+    # some overlap ?
+    def evaluate_A_B_X(self, name, on_across_by_values, db, indices,
+                       context=None):
+        # set up context. context passed as an argument can be used to
+        # induce side-effects in the result generator, for example for
+        # lazy filter evaluation
         if context is None:
             context = {}
         context = self.set_by_context(context, name, on_across_by_values)
@@ -349,6 +401,7 @@ class SideOperationsManager(object):
             context[var] = context[var] * len(indices)
         context = self.set_A_B_X_context(
             name + '_context', context, name, db, indices)
+
         # evaluate dbfuns
         return result_generator(getattr(self, name), context)
 
@@ -363,16 +416,19 @@ class SideOperationsManager(object):
 
     def evaluate_ABX(self, on_across_by_values, db, triplets, context=None):
         stage = 'ABX'
-        # set up context
-        # context passed as an argument can be used to induce side-effects in
-        # the result generator, for example for lazy filter evaluation
+
+        # set up context. context passed as an argument can be used to
+        # induce side-effects in the result generator, for example for
+        # lazy filter evaluation
         if context is None:
             context = {}
         context = self.set_by_context(context, stage, on_across_by_values)
-        context = self.set_on_across_context(context, stage, on_across_by_values)
+        context = self.set_on_across_context(
+            context, stage, on_across_by_values)
         for var in context:
             context[var] = context[var] * len(triplets)
         context = self.set_ABX_context(context, db, triplets)
+
         # evaluate dbfuns
         return result_generator(getattr(self, stage), context)
 
@@ -388,13 +444,15 @@ def singleton_result_generator(db_funs, context):
     # each time
     return (db_fun.evaluate(copy.deepcopy(context))[0] for db_fun in db_funs)
 
-# db_fun.evaluate returns [[np_array_output_1_dbfun_1, np_array_output_2_dbfun_1,...], [np_array_output_1_dbfun_2, ...], ...]
-# Would the previous functions change with VLEN outputs that would change
-# this pattern ?
+# db_fun.evaluate returns [[np_array_output_1_dbfun_1,
+# np_array_output_2_dbfun_1,...], [np_array_output_1_dbfun_2, ...],
+# ...]
+#
+# Would the previous functions change with VLEN outputs that would
+# change this pattern ?
 
-"""
-def test():
-    import ABX.lib.database
-    _, db_h = ABX.lib.database.load('../test/AI/corpus/AI.item')
-    som = SideOperationsManager(db_h, ['consonant'], ['talker'], ['syllable_type', 'vowel'])
-"""
+# def test():
+#     import ABX.lib.database
+#     _, db_h = ABX.lib.database.load('../test/AI/corpus/AI.item')
+#     som = SideOperationsManager(
+#         db_h, ['consonant'], ['talker'], ['syllable_type', 'vowel'])

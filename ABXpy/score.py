@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """This module is used for computing the score of a task (see `task Module`_ on
 how to create a task)
 
@@ -34,23 +35,26 @@ In python:
     #TODO shouldn't this be available from score
     # calculate the scores:
     ABXpy.score('data.abx', 'myDistance.???', 'data.score')
-"""
-# -*- coding: utf-8 -*-
-"""
+
+
+
 Created on Mon Oct 14 12:28:05 2013
 
 @author: Thomas Schatz
 """
 
-# make sure the rest of the ABXpy package is accessible
+import argparse
 import os
 import sys
+
+import h5py
+import numpy as np
+
+# make sure the rest of the ABXpy package is accessible
 package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 if not(package_path in sys.path):
     sys.path.append(package_path)
 
-import h5py
-import numpy as np
 import ABXpy.h5tools.h52np as h52np
 import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.misc.type_fitting as type_fitting
@@ -128,12 +132,7 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
                     idx_start = idx_end
 
 
-# FIXME write command-line interface
-# detects whether the script was called from command-line
-if __name__ == '__main__':
-
-    import argparse
-
+def main():
     # parser (the usage string is specified explicitly because the default
     # does not show that the mandatory arguments must come before the mandatory
     # ones; otherwise parsing is not possible beacause optional arguments can
@@ -155,3 +154,9 @@ if __name__ == '__main__':
         print("Warning: overwriting score file {}".format(args.score))
         os.remove(args.score)
     score(args.task, args.distance, args.score)
+
+
+# FIXME write command-line interface
+# detects whether the script was called from command-line
+if __name__ == '__main__':
+    main()

@@ -6,20 +6,28 @@ Created on Tue Oct 15 09:48:31 2013
 """
 
 
-"""
-Sort rows of a several two dimenional numeric dataset (possibly with just one column) according to numeric key in two-dimensional key dataset 
-with just one column (the first dimension of all datasets involved must match). The result replaces the original dataset
-buffer size is in kilobytes.
+"""Sort rows of a several two dimenional numeric dataset (possibly
+with just one column) according to numeric key in two-dimensional key
+dataset with just one column (the first dimension of all datasets
+involved must match). The result replaces the original dataset buffer
+size is in kilobytes.
 
 Two things need improvement:
-    backup solution is too slow for big files
-    the case of very small files should be handled nicely by using internal sort
-    
-To gain time: could try to parallelize the sort, however not easy how it would work for the merging part...
-Also cythonizing the 'read chunk' part might help getting more efficient when there are many chunks
 
-Also should write a function to determine buffer_size based on amount of RAM and size of the file to be sorted:
-    aim for 30 chunks or the least possible without exploding the RAM, except if file can be loaded in memory as a whole, then do internal sorting
+  * backup solution is too slow for big files
+
+  * the case of very small files should be handled nicely by using
+    internal sort
+
+To gain time: could try to parallelize the sort, however not easy how
+it would work for the merging part...  Also cythonizing the 'read
+chunk' part might help getting more efficient when there are many
+chunks
+
+Also should write a function to determine buffer_size based on amount
+of RAM and size of the file to be sorted: aim for 30 chunks or the
+least possible without exploding the RAM, except if file can be loaded
+in memory as a whole, then do internal sorting
 
 """
 
@@ -48,17 +56,18 @@ class H5Handler(object):
         self.datasets = [keyset] + datasets
         self.sources = zip(self.groups, self.datasets)
 
-    # sort the content of several datasets with n lines and varying number of columns in an h5file according to the order specified in the first column of the 'key' dataset
-    # the result replaces the original datasets
-    # order is specified by integers and sort is done in increasing order
-    # buffer size is in Ko
+    # sort the content of several datasets with n lines and varying
+    # number of columns in an h5file according to the order specified
+    # in the first column of the 'key' dataset the result replaces the
+    # original datasets order is specified by integers and sort is
+    # done in increasing order buffer size is in Ko
     def sort(self, buffer_size=1000, o_buffer_size=1000, tmpdir=None):
 
         # first backup file to be sorted
         self.backupDir = tempfile.mkdtemp(dir=tmpdir)
         self.backup = os.path.join(self.backupDir, os.path.basename(self.file))
-        # shutil.copyfile(self.file, self.backup) #FIXME if no backup is mad cannot recover from exceptions ...
-        #
+        # shutil.copyfile(self.file, self.backup)
+        # FIXME if no backup is mad cannot recover from exceptions ...
         try:
             with H5TMP(tmpdir=tmpdir) as tmp:
                 with h5py.File(self.file) as f:

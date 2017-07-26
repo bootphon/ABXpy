@@ -2,11 +2,12 @@
 
 Incremental meaning that you don't have to draw the whole sample at
 once, instead at any given time you can get a piece of the sample of a
-size you specify.  This is useful for very large sample sizes.
+size you specify. This is useful for very large sample sizes.
 
 Created on Mon Nov 18 03:14:53 2013
 
 @author: Thomas Schatz
+
 """
 
 import numpy as np
@@ -34,7 +35,6 @@ class IncrementalSampler(object):
     """
     # sampling K sample in a a population of size N
     # both K and N can be very large
-
     def __init__(self, N, K, step=None, relative_indexing=True,
                  dtype=np.int64):
         assert K <= N
@@ -71,6 +71,7 @@ class IncrementalSampler(object):
         ----------
         n : int
             the size of the chunk
+
         Returns
         -------
         sample : numpy.array
@@ -78,11 +79,13 @@ class IncrementalSampler(object):
             in the sample or absolutely, depending on the value of
             relative_indexing specified when initialising the sampler
             (default value is True)
+
         """
         self.type = dtype
         position = self.initial_N - self.N
         if n > self.N:
             n = self.N
+
         # expected number of sampled items
         expected_k = n * self.K / np.float(self.N)
         if expected_k > 10 ** 5:
@@ -97,8 +100,10 @@ class IncrementalSampler(object):
             sample = np.concatenate(sample)
         else:
             sample = self.simple_sample(n)
-        if not(self.relative_indexing):
+
+        if not self.relative_indexing:
             sample = sample + position
+
         return sample
 
     def simple_sample(self, n):
@@ -191,15 +196,18 @@ def hypergeometric_sample(N, K, n):
     return k
 
 
-# returns uniform samples in [0, N-1] without replacement
-# the values 0.6 and 100 are based on empirical tests of the functions and
-# would need to be changed if the functions are changed
+# returns uniform samples in [0, N-1] without replacement the values
+# 0.6 and 100 are based on empirical tests of the functions and would
+# need to be changed if the functions are changed
 def sample_without_replacement(n, N, dtype=np.int64):
     """Returns uniform samples in [0, N-1] without replacement. It will use
     Knuth sampling or rejection sampling depending on the parameters n and N.
 
-    .. note:: the values 0.6 and 100 are based on empirical tests of the \
-    functions and would need to be changed if the functions are changed
+    .. note::
+
+        the values 0.6 and 100 are based on empirical tests of the
+        functions and would need to be changed if the functions are
+        changed
 
     """
     if N > 100 and n / float(N) < 0.6:
@@ -209,15 +217,15 @@ def sample_without_replacement(n, N, dtype=np.int64):
     return sample
 
 
-# this one would benefit a lot from being cythonized, efficient if n close to N
-# (np.random.choice with replace=False is cythonized and similar in spirit but
-# not better because it shuffles
-# the whole array of size N which is wasteful; once cythonized Knuth_sampling
-# should be superior to it
-# in all situation)
+# this one would benefit a lot from being cythonized, efficient if n
+# close to N (np.random.choice with replace=False is cythonized and
+# similar in spirit but not better because it shuffles the whole array
+# of size N which is wasteful; once cythonized Knuth_sampling should
+# be superior to it in all situation)
 def Knuth_sampling(n, N, dtype=np.int64):
-    """This is the usual sampling function when n is comparable to N
-    """
+    """This is the usual sampling function when n is comparable to N"""
+    n = int(n)
+
     t = 0  # total input records dealt with
     m = 0  # number of items selected so far
     sample = np.zeros(shape=n, dtype=dtype)
@@ -230,11 +238,10 @@ def Knuth_sampling(n, N, dtype=np.int64):
     return sample
 
 
-# maybe use array for the first iteration then use python native sets for
-# faster set operations ?
+# maybe use array for the first iteration then use python native sets
+# for faster set operations ?
 def rejection_sampling(n, N, dtype=np.int64):
-    """Using rejection sampling to keep a good performance if n << N
-    """
+    """Using rejection sampling to keep a good performance if n << N"""
     remaining = n
     sample = np.array([], dtype=dtype)
     while remaining > 0:
@@ -243,6 +250,7 @@ def rejection_sampling(n, N, dtype=np.int64):
         sample = np.union1d(sample, np.unique(new_sample))
         remaining = n - sample.shape[0]
     return sample
+
 
 """
 Profiling hypergeometric sampling + sampling without replacement together:
@@ -293,7 +301,7 @@ for e, b in zip(tt, ra):
 
 """
 
-### Profiling rejection sampling and Knuth sampling ###
+# ## Profiling rejection sampling and Knuth sampling ###
 # could create an automatic test for finding the turning point and offset
 # between Knuth and rejection
 

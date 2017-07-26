@@ -1,33 +1,30 @@
 #!/bin/bash
-#This test contains a full run of the ABX pipeline in command line
-#with randomly created database and features
+#
+# This test contains a full run of the ABX pipeline in command line
+# with randomly created database and features
 
+set -e
 
-# directories
-curdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ABXdir=$curdir/../ABXpy
-filesdir=$curdir/example_items
+cd $(dirname $(realpath "${BASH_SOURCE[0]}"))
 
-# files
-item_file=$filesdir/data.item
-feature_file=$filesdir/data.features
-distance_file=$filesdir/data.distance
-score_file=$filesdir/data.score
-task_file=$filesdir/data.abx
-analyze_file=$filesdir/data.csv
+# input files already here
+item=example_items/data.item
+features=example_items/data.features
 
-# Generating task file
-echo python $ABXdir/task.py $item_file $task_file -o c0 -a c1 -b c2 -v 1
-python $ABXdir/task.py $item_file $task_file -o c0 -a c1 -b c2 -v 1
+# output files produced by ABX
+task=example_items/data.abx
+distance=example_items/data.distance
+score=example_items/data.score
+analyze=example_items/data.csv
 
-# Computing distances
-echo python $ABXdir/distance.py $feature_file $item_file $distance_file -j 1
-python $ABXdir/distance.py $feature_file $task_file $distance_file -n 1 -j 1
+# generating task file
+abx-task $item $task --verbose --on c0 --across c1 --by c2
 
-# Calculating the score
-echo python $ABXdir/score.py $task_file $distance_file $score_file
-python $ABXdir/score.py $task_file $distance_file $score_file
+# computing distances
+abx-distance $features $task $distance --normalization 1 --njobs 1
 
-# Collapsing the results
-echo python $ABXdir/analyze.py $score_file $task_file $analyze_file
-python $ABXdir/analyze.py $score_file $task_file $analyze_file
+# calculating the score
+abx-score $task $distance $score
+
+# collapsing the results
+abx-analyze $score $task $analyze

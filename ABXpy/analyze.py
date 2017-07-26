@@ -1,4 +1,5 @@
 from __future__ import division
+
 """This module is used to analyse the results of an ABX discrimination task
 
 It collapses the result and give the mean score for each block of triplets
@@ -24,26 +25,27 @@ In python:
     import ABXpy.analyze
     # Prerequisite: calculate a task data.abx, and a score data.score
     ABXpy.analyze.analyze(data.score, data.abx, data.csv)
-"""
-# -*- coding: utf-8 -*-
-"""
+
+
 Created on Mon Oct 14 12:28:22 2013
 
 @author: Thomas Schatz
+
 """
+
 import h5py
 import numpy as np
-# import pandas
-# import ast
 import argparse
 import os.path as path
-from ABXpy.misc.type_fitting import fit_integer_type
 import os
 import warnings
 import sys
 
+from ABXpy.misc.type_fitting import fit_integer_type
+
 reload(sys)
 sys.setdefaultencoding('utf8')
+
 
 def npdecode(keys, max_ind):
     """Vectorized implementation of the decoding of the labels:
@@ -60,8 +62,7 @@ def npdecode(keys, max_ind):
 
 
 def unique_rows(arr):
-    """Numpy unique applied to the row only.
-    """
+    """Numpy unique applied to the row only"""
     return (np.unique(np.ascontiguousarray(arr)
                       .view(np.dtype((np.void,
                                       arr.dtype.itemsize * arr.shape[1]))))
@@ -69,8 +70,9 @@ def unique_rows(arr):
 
 
 def collapse(scorefile, taskfile, fid):
-    """Collapses the results for each triplets sharing the same on, across and
-    by labels.
+    """Collapses the results for each triplets sharing the same on, across
+    and by labels.
+
     """
     # We make the assumption that everything fits in memory...
     scorefid = h5py.File(scorefile)
@@ -100,8 +102,8 @@ def collapse(scorefile, taskfile, fid):
             new_index = indices[:, i] + n_indices[i] * new_index
 
         permut = np.argsort(new_index)
+
         # collapsing the score
-        
         sorted_scores = scores_arr[permut]
         sorted_index = new_index[permut]
         mean, unique_index, counts = unique(sorted_index, sorted_scores)
@@ -119,7 +121,6 @@ def collapse(scorefile, taskfile, fid):
             aux = list()
             for j in range(nregs):
                 aux.append(indexes[j][int(key[j])])
-                # aux.append((indexes[regs[j]])[key[j]])
             score = mean[i]
             n = counts[i]
             result = aux + [by, score, int(n)]
@@ -160,34 +161,32 @@ def analyze(task_file, score_file, result_file):
         the file containing the score of a task
     result_file: string, csv file
         the file that will contain the analysis results
+
     """
     with open(result_file, 'w+') as fid:
         taskfid = h5py.File(task_file)
         aux = taskfid['regressors']
         tfrk = aux[aux.keys()[0]]
         regs = tfrk['indexed_datasets']
-        string = ""
+        string = ''
         for reg in regs:
-            string += reg + "\t"
-        string += "by\tscore\tn\n"
+            string += reg + '\t'
+        string += 'by\tscore\tn\n'
         fid.write(string)
         taskfid.close()
         collapse(score_file, task_file, fid)
-        # for r in results:
-        #     fid.write('\t'.join(map(str, r)) + '\n')
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        prog='analyze.py',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description='Collapse results of ABX score on type of ABX triplet.',
-        epilog="""Example usage:
+        epilog='''Example usage:
 
 $ ./analyze.py abx.score abx.task abx.csv
 
 compute the average the scores in abx.score by type of ABX triplet
-and output the results in tab separated csv format.""")
+and output the results in tab separated csv format.''')
     parser.add_argument('scorefile', metavar='SCORE',
                         help='score file in hdf5 format')
     parser.add_argument('taskfile', metavar='TASK',
@@ -197,22 +196,27 @@ and output the results in tab separated csv format.""")
     return vars(parser.parse_args())
 
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
+
     score_file = args['scorefile']
     if not path.exists(score_file):
         print('No such file: {}'.format(score_file))
         exit()
+
     task_file = args['taskfile']
     if not path.exists(task_file):
         print('No such file: {}'.format(task_file))
         exit()
+
     result_file = args['output']
-    # if not path.exists(outfile):
-    # print 'No such file:', outfile
-    # exit()
     if os.path.exists(result_file):
-        warnings.warn("Overwriting results file " + args['output'], UserWarning)
+        warnings.warn(
+            'Overwriting results file ' + args['output'], UserWarning)
         os.remove(result_file)
 
     analyze(task_file, score_file, result_file)
+
+
+if __name__ == '__main__':
+    main()

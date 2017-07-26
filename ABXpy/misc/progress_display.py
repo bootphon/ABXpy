@@ -19,6 +19,7 @@ class ProgressDisplay(object):
         self.total = collections.OrderedDict()
         self.count = collections.OrderedDict()
         self.init = True
+
         # FIXME the goal of this is to determine whether using \033[<n>A will
         # move the standard output n lines backwards, but I'm not sure this is
         # something that would work on all tty devices ... might rather be a
@@ -54,20 +55,20 @@ class ProgressDisplay(object):
         sys.stdout.flush()
 
 
-# Test
-import time
+# # Test
+# import time
 
 
-def testProgressDisplay():
+# def testProgressDisplay():
 
-    d = ProgressDisplay()
-    d.add('m1', 'truc 1', 12)
-    d.add('m2', 'truc 2', 48)
-    d.add('m3', 'truc 3', 24)
+#     d = ProgressDisplay()
+#     d.add('m1', 'truc 1', 12)
+#     d.add('m2', 'truc 2', 48)
+#     d.add('m3', 'truc 3', 24)
 
-    for i in range(12):
-        d.update('m1', 1)
-        d.update('m2', 4)
-        d.update('m3', 2)
-        d.display()
-        time.sleep(0.1)
+#     for i in range(12):
+#         d.update('m1', 1)
+#         d.update('m2', 4)
+#         d.update('m3', 2)
+#         d.display()
+#         time.sleep(0.1)
