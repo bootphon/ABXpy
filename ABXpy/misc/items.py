@@ -25,22 +25,25 @@ except ImportError:
 
 
 def generate_testitems(base, n, repeats=0, name='data.item'):
-    """Minimal item file generator for task.py
-    """
-    res = np.empty((base ** n * (repeats + 1) + 1, n + 2), dtype='|S5')
-    res[0, 0] = '#item'
-    res[0, 1] = '#src'
+    """Minimal item file generator for task.py"""
+    res = np.empty((base ** n * (repeats + 1) + 1, n + 4), dtype='|S6')
+    res[0, 0] = '#file'
+    res[0, 1] = 'onset'
+    res[0, 2] = 'offset'
+    res[0, 3] = '#src'
 
-    for j, _ in enumerate(res[0, 2:]):
-        res[0, j + 2] = 'c' + str(j)
+    for j, _ in enumerate(res[0, 4:]):
+        res[0, j + 4] = 'c' + str(j)
 
     for i, _ in enumerate(res[1:, 0]):
         res[i + 1, 0] = 's' + str(i)
+        res[i + 1, 1] = 'n' + str(i)
+        res[i + 1, 2] = 'f' + str(i)
 
-    for i, _ in enumerate(res[1:, 1]):
-        res[i + 1, 1] = 'i' + str(i)
+    for i, _ in enumerate(res[1:, 3]):
+        res[i + 1, 3] = 'i' + str(i)
 
-    aux = res[1:, 2:]
+    aux = res[1:, 4:]
     for (i, j), _ in np.ndenumerate(aux):
         aux[i][j] = (i / (base ** j) % base)
 

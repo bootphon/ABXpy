@@ -23,8 +23,6 @@ def read_table(filename):
     return db
 
 # function that loads a database
-
-
 def load(filename, features_info=False):
     # reading the main database using pandas (it is now a DataFrame)
     ext = '.item'
@@ -35,18 +33,24 @@ def load(filename, features_info=False):
     # finding '#' (to separate location info from attribute info) and fixing
     # names of columns
     columns = db.columns.tolist()
+
+    # check the 3 first columns are '#file', 'onset', 'offset'
+    assert ' '.join(columns[:3]) == '#file onset offset', (
+        'The first 3 columns of the item file must be "#file onset offset"'
+        'They are "{}"'.format(' '.join(columns[:3])))
+
     l = []
     for i, c in enumerate(columns):
         if c[0] == "#":
             l.append(i)
             columns[i] = c[1:]
     db.columns = pandas.Index(columns)
-    assert len(l) > 0 and l[
-        0] == 0, ('The first column name in the database main file must be '
-                  'prefixed with # (sharp)')
-    assert len(
-        l) == 2, ('Exactly two column names in the database main file must be'
-                  ' prefixed with a # (sharp)')
+    assert len(l) > 0 and l[0] == 0, (
+        'The first column name in the database main file must be '
+        'prefixed with # (sharp)')
+    assert len(l) == 2, (
+        'Exactly two column names in the database main file must be'
+        ' prefixed with a # (sharp)')
     feat_db = db[db.columns[:l[1]]]
     db = db[db.columns[l[1]:]]
     # verbose print("  Read input File '"+filename+"'. Defined conditions:

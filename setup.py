@@ -60,13 +60,13 @@ setup(
         'ABXpy.sideop',
         'ABXpy.distances.metrics'],
 
-    # FIXME add cython as well?
     install_requires=[
         "python >= 2.7",
         "h5py >= 2.2.1",
         "numpy >= 1.8.0",
         "pandas >= 0.13.1",
         "scipy >= 0.13.0",
+        "cython",
         "tables",
     ],
 
