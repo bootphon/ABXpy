@@ -13,6 +13,7 @@ import ABXpy.sampling as sampling
 import numpy as np
 import ABXpy.misc.items as items
 import random
+import warnings
 from scipy.stats import chisquare as chisquare
 
 
@@ -72,9 +73,11 @@ def _test_uniformity(N, K, n, nbins=10, significance=0.001):
 
 def test_simple_completion():
     for i in range(1000):
-        N = random.randint(1000, 10000) + 1
-        _test_completion(N, K=random.randrange(100, N / 2),
-                         n=random.randrange(50, N))
+        N = random.randint(1000, 10000)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            _test_completion(N, K=random.randrange(100, N / 2),
+                             n=random.randrange(50, N))
 
 
 def test_simple_no_replace():
