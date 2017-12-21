@@ -164,8 +164,6 @@ class H5Handler(object):
                                 # find for each chunk the amount to be read
                                 amounts = [
                                     buf.nb_lower_than(min_tail) for buf in i_buf[0]]
-                                print(min_tail)
-                                print(amounts)
 
                                 # get the order on key for the concatenated
                                 # data
