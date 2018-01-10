@@ -192,6 +192,8 @@ def run_distance_job(job_description, distance_file, distance,
             accessor = Features_Accessor(times, features)
             get_features = accessor.get_features_from_splitted
         # load pandas dataframe containing info for loading the features
+        if synchronize:
+            distance_file_lock.acquire()
         store = pandas.HDFStore(pair_file)
         by_db = store['feat_dbs/' + by]
         store.close()
@@ -201,6 +203,8 @@ def run_distance_job(job_description, distance_file, distance,
             attrs = fh['unique_pairs'].attrs[by]
             pair_list = fh['unique_pairs/data'][attrs[1]+start:attrs[1]+stop, 0]
             base = attrs[0]
+        if synchronize:
+            distance_file_lock.release()
 
         A = np.mod(pair_list, base)
         B = pair_list // base
