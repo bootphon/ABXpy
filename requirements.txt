@@ -9,3 +9,5 @@ h5features
 numpydoc
 mock
 pytest==2.6
+libgfortran==1
+tables==2.4.0
