@@ -176,12 +176,12 @@ def run_distance_job(job_description, distance_file, distance,
             accessor = Features_Accessor(times, features)
             get_features = accessor.get_features_from_splitted
         # load pandas dataframe containing info for loading the features
-        store = pandas.HDFStore(pair_file)
+        store = pandas.HDFStore(pair_file, 'r')
         by_db = store['feat_dbs/' + by]
         store.close()
         # load pairs to be computed
         # indexed relatively to the above dataframe
-        with h5py.File(pair_file) as fh:
+        with h5py.File(pair_file, 'r') as fh:
             pair_list = fh['unique_pairs/' + by][start:stop, 0]
             base = fh['unique_pairs'].attrs[by]
         A = np.mod(pair_list, base)
