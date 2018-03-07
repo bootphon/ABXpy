@@ -10,4 +10,4 @@ numpydoc
 mock
 pytest==2.6
 libgfortran==1
-tables
+tables==2.4.0
