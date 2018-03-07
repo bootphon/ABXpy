@@ -164,7 +164,7 @@ def collapse(scorefile, taskfile, fid):
         for i, key in enumerate(tmp):
             aux = list()
             for j in range(nregs):
-                aux.append(indexes[j][key[j]])
+                aux.append(indexes[j][int(key[j])])
                 # aux.append((indexes[regs[j]])[key[j]])
             score = mean[i, 1]
             n = mean[i, 2]
