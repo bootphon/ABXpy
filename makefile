@@ -1,5 +1,4 @@
-test:
-	make install
+test: install
 	py.test -s ABXpy/test
 
 install:
