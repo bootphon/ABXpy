@@ -110,21 +110,21 @@ def test_simple_uniformity():
                          n=random.randrange(50, N))
 
 
-import matplotlib.pyplot as plt
-
-
-def plot_uniformity(nb_resamples, N, K):
-    indices = []
-    for i in range(nb_resamples):
-        if i % 1000 == 0:
-            print('%d resamples left to do' % (nb_resamples - i))
-        sampler = sampling.sampler.IncrementalSampler(N, K)
-        current_N = 0
-        while current_N < N:
-            n = min(random.randrange(N / 10), N - current_N)
-            indices = indices + list(sampler.sample(n) + current_N)
-            current_N = current_N + n
-    plt.hist(indices, bins=100)
+# import matplotlib.pyplot as plt
+#
+#
+# def plot_uniformity(nb_resamples, N, K):
+#     indices = []
+#     for i in range(nb_resamples):
+#         if i % 1000 == 0:
+#             print('%d resamples left to do' % (nb_resamples - i))
+#         sampler = sampling.sampler.IncrementalSampler(N, K)
+#         current_N = 0
+#         while current_N < N:
+#             n = min(random.randrange(N / 10), N - current_N)
+#             indices = indices + list(sampler.sample(n) + current_N)
+#             current_N = current_N + n
+#     plt.hist(indices, bins=100)
 
 
 # test_simple_uniformity()
