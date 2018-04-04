@@ -28,7 +28,7 @@ before_install:
   # - sudo apt-get install -qq libhdf5-serial-dev python-h5py
 
 install:
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
+  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION
   # Ideally, the line below would be used with an environment.yml
   # For the moment, it is preferable to use setup.py
   # - conda install --yes python=$TRAVIS_PYTHON_VERSION cython numpy scipy h5py pandas pytest pytables matplotlib
