@@ -80,33 +80,33 @@ def test_simple_completion():
         N = random.randint(1000, 10000)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            _test_completion(N, K=random.randrange(100, N / 2),
+            _test_completion(N, K=random.randrange(100, N // 2),
                              n=random.randrange(50, N))
 
 
 def test_simple_no_replace():
     for i in range(100):
         N = random.randint(1000, 10000)
-        _test_no_replace(N, random.randint(100, N / 2))
+        _test_no_replace(N, random.randint(100, N // 2))
 
 
 def test_hard_completion():
     for i in range(3):
         N = random.randint(10 ** 6, 10 ** 7)
-        _test_completion(N, K=random.randrange(10 ** 5, N / 2),
+        _test_completion(N, K=random.randrange(10 ** 5, N // 2),
                          n=random.randrange(10 ** 5, N))
 
 
 def test_hard_no_replace():
     for i in range(3):
         N = random.randint(10 ** 6, 10 ** 7)
-        _test_no_replace(N, K=random.randrange(10 ** 5, N / 2))
+        _test_no_replace(N, K=random.randrange(10 ** 5, N // 2))
 
 
 def test_simple_uniformity():
     for i in range(100):
         N = random.randint(1000, 10000)
-        _test_completion(N, K=random.randrange(100, N / 2),
+        _test_completion(N, K=random.randrange(100, N // 2),
                          n=random.randrange(50, N))
 
 
