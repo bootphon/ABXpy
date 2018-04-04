@@ -11,6 +11,7 @@ import sys
 from six import iteritems
 import collections
 import os
+from past.builtins import basestring
 
 import h5py
 import numpy as np
@@ -91,7 +92,7 @@ class H5IO(object):
                 g.attrs['empty'] = True
                 g.attrs['sorted'] = False
                 # h5 dtype for storing variable length strings
-                str_dtype = h5py.special_dtype(vlen=unicode)
+                str_dtype = h5py.special_dtype(vlen=str)
                 g.create_dataset(
                     'managed_datasets', data=datasets, dtype=str_dtype)
                 raw_datasets = list(set(datasets).difference(indexed_datasets))
@@ -363,9 +364,9 @@ class H5IO(object):
 # efficient in general to index string outputs, it's actually mandatory
 # because determining chunk_size would fail for non-indexed strings
 def get_dtype(data):
-    str_dtype = h5py.special_dtype(vlen=unicode)
+    str_dtype = h5py.special_dtype(vlen=str)
     # allow for the use of strings
-    if isinstance(data[0], str) or isinstance(data[0], unicode):
+    if isinstance(data[0], basestring):
         dtype = str_dtype
     # could add some checks that the dtype is one of those supported by h5 ?
     elif hasattr(data, 'dtype'):
