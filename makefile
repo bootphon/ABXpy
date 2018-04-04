@@ -1,9 +1,12 @@
-test: install
-	py.test -s ABXpy/test
+.PHONY: test build install clean
+	
+test:
+	python setup.py test
+
+build:
+	python setup.py build
 
 install:
-	python ABXpy/distances/metrics/install/install_dtw.py
-	python setup.py build
 	python setup.py install
 
 clean:

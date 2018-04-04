@@ -1,42 +1,29 @@
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+from setuptools import setup
 from distutils.core import Command
 from distutils.extension import Extension
-from Cython.Build import cythonize
+from setuptools.command.build_ext import build_ext as _build_ext
+
+
+import pkg_resources
 import os
-import numpy
 
 
-class PyTest(Command):
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
+class build_ext(_build_ext):
     def finalize_options(self):
-        pass
-
-    def run(self):
-        import subprocess
-        try:
-            import pytest
-        except ImportError:
-            raise ImportError(
-                'You need to have pytest to run the tests,'
-                ' try installing it (pip install pytest)')
-        errno = subprocess.call(['pytest', '-s', 'ABXpy/test'])
-        raise SystemExit(errno)
+        _build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
 
 
 extension = Extension(
     'ABXpy.distances.metrics.dtw',
     sources=[os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
-        'ABXpy', 'distances', 'metrics', 'install', 'dtw.pyx')],
+        'ABXpy', 'distances', 'metrics', 'dtw', 'dtw.pyx')],
     extra_compile_args=['-O3'],
-    include_dirs=[numpy.get_include()])
+)
 
 
 setup(
@@ -50,7 +37,6 @@ setup(
 
     packages=[
         'ABXpy',
-        'ABXpy.test',
         'ABXpy.database',
         'ABXpy.dbfun',
         'ABXpy.distances',
@@ -58,19 +44,33 @@ setup(
         'ABXpy.misc',
         'ABXpy.sampling',
         'ABXpy.sideop',
-        'ABXpy.distances.metrics'],
+        'ABXpy.distances.metrics',
+    ],
+
+    setup_requires=[
+        # Setuptools 18.0 properly handles Cython extensions.
+        'setuptools>=18.0',
+        'numpy>=1.9.0',
+        "pytest-runner",
+    ],
 
     install_requires=[
         "h5py >= 2.2.1",
         "numpy >= 1.8.0",
         "pandas >= 0.13.1",
         "scipy >= 0.13.0",
-        "cython",
         "tables",
+        "future",
+    ],
+    
+    tests_require=[
+        "h5features",
+        "pytest>=2.6",
     ],
 
-    ext_modules=cythonize(extension),
-    cmdclass={'test': PyTest},
+    ext_modules=[extension],
+
+    cmdclass={'build_ext': build_ext},
 
     entry_points={'console_scripts': [
         'abx-task = ABXpy.task:main',
