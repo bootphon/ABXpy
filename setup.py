@@ -1,11 +1,25 @@
+import os
+import sys
 from setuptools import setup, find_packages
 from distutils.core import Command
 from distutils.extension import Extension
 from setuptools.command.build_ext import build_ext as _build_ext
+from setuptools.command.test import test as TestCommand
 
 
-import pkg_resources
-import os
+class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = ''
+
+    def run_tests(self):
+        import shlex
+        # import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(shlex.split(self.pytest_args))
+        sys.exit(errno)
 
 
 class build_ext(_build_ext):
@@ -52,7 +66,7 @@ setup(
         "tables",
         "future",
     ],
-    
+
     tests_require=[
         "h5features",
         "pytest>=2.6",
@@ -60,7 +74,8 @@ setup(
 
     ext_modules=[extension],
 
-    cmdclass={'build_ext': build_ext},
+    cmdclass={'build_ext': build_ext,
+              'test': PyTest},
 
     entry_points={'console_scripts': [
         'abx-task = ABXpy.task:main',
