@@ -41,7 +41,7 @@ extension = Extension(
 
 setup(
     name='ABXpy',
-    version='0.1.0',
+    version='0.1.1',
     author='Thomas Schatz',
     description='ABX discrimination task',
     long_description=open('README.rst').read(),
@@ -61,7 +61,6 @@ setup(
         'ABXpy.distances.metrics'],
 
     install_requires=[
-        "python >= 2.7",
         "h5py >= 2.2.1",
         "numpy >= 1.8.0",
         "pandas >= 0.13.1",
