@@ -35,8 +35,8 @@ import numpy as np
 import tempfile
 import os
 import h5py
-import np2h5
-import h52np  # FIXME shutil
+
+from . import np2h5, h52np
 
 
 class H5Handler(object):
