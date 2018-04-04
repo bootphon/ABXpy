@@ -866,7 +866,7 @@ class Task(object):
         max_ind_dict = {}
         try:
             _, output_tmp = tempfile.mkstemp(dir=tmpdir)
-            for n_by, (by, db) in iteritems(enumerate(self.by_dbs)):
+            for n_by, (by, db) in enumerate(iteritems(self.by_dbs)):
                 if self.verbose > 0:
                     print("Writing AX/BX pairs to task file...")
                 with h5py.File(output) as fh:
