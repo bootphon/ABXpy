@@ -28,55 +28,51 @@ except ImportError:
 
 def generate_testitems(base, n, repeats=0, name='data.item'):
     """Minimal item file generator for task.py"""
-    res = np.empty((base ** n * (repeats + 1) + 1, n + 4), dtype='|S6')
-    res[0, 0] = '#file'
-    res[0, 1] = 'onset'
-    res[0, 2] = 'offset'
-    res[0, 3] = '#src'
+    dim_i, dim_j = base ** n * (repeats + 1) + 1, n + 4
 
-    for j, _ in enumerate(res[0, 4:]):
-        res[0, j + 4] = 'c' + str(j)
+    def fun(i, j):
+        if i == 0:
+            if j < 4:
+                return ['#file', 'onset', 'offset', '#src'][j]
+            else:
+                return 'c%s' % j
+        elif j < 4:
+            return 'snfi'[j] + str(i)
+        else:
+            i -= 1
+            j -= 4
+            return i // (base ** j) % base
 
-    for i, _ in enumerate(res[1:, 0]):
-        res[i + 1, 0] = 's' + str(i)
-        res[i + 1, 1] = 'n' + str(i)
-        res[i + 1, 2] = 'f' + str(i)
-
-    for i, _ in enumerate(res[1:, 3]):
-        res[i + 1, 3] = 'i' + str(i)
-
-    aux = res[1:, 4:]
-    for (i, j), _ in np.ndenumerate(aux):
-        aux[i][j] = (i / (base ** j) % base)
-
+    res = [[fun(i, j) for j in range(dim_j)]
+           for i in range(dim_i)]
     np.savetxt(name, res, delimiter=' ', fmt='%s')
 
 
 def generate_named_testitems(base, n, repeats=0, name='data.item'):
     """Extended item file generator
     """
-    res = np.empty((base ** n * (repeats + 1) + 1, n + 4), dtype='|S6')
-    res[0, 0] = '#file'
-    res[0, 1] = 'onset'
-    res[0, 2] = 'offset'
-    res[0, 3] = '#item'
 
-    for j, _ in enumerate(res[0, 4:]):
-        res[0, j + 4] = 'c' + str(j)
+    dim_i, dim_j = base ** n * (repeats + 1) + 1, n + 4
 
-    for i, _ in enumerate(res[1:, 0]):
-        res[i + 1, 0] = 's' + str(i)
+    def fun(i, j):
+        if i == 0:
+            if j < 4:
+                return ['#file', 'onset', 'offset', '#item'][j]
+            else:
+                return 'c%s' % j
+        elif j == 0:
+            return 's%s' % i
+        elif j in [1, 2]:
+            return 0
+        elif j == 3:
+            return 'i' + str(i)
+        else:
+            i -= 1
+            j -= 4
+            return 'c%s_v%s' % (j, i // (base ** j) % base)
 
-    res[1:, 1] = np.zeros(res[1:, 1].shape)
-    res[1:, 2] = np.zeros(res[1:, 2].shape)
-
-    for i, _ in enumerate(res[1:, 3]):
-        res[i + 1, 3] = 'i' + str(i)
-
-    aux = res[1:, 4:]
-    for (i, j), _ in np.ndenumerate(aux):
-        aux[i][j] = 'c' + str(j) + '_v' + str(i / (base ** j) % base)
-
+    res = [[fun(i, j) for j in range(dim_j)]
+           for i in range(dim_i)]
     np.savetxt(name, res, delimiter=' ', fmt='%s')
 
 
