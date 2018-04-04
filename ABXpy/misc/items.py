@@ -35,9 +35,9 @@ def generate_testitems(base, n, repeats=0, name='data.item'):
             if j < 4:
                 return ['#file', 'onset', 'offset', '#src'][j]
             else:
-                return 'c%s' % j
+                return 'c%s' % (j - 4)
         elif j < 4:
-            return 'snfi'[j] + str(i)
+            return 'snfi'[j] + str(i - 1)
         else:
             i -= 1
             j -= 4
@@ -59,13 +59,13 @@ def generate_named_testitems(base, n, repeats=0, name='data.item'):
             if j < 4:
                 return ['#file', 'onset', 'offset', '#item'][j]
             else:
-                return 'c%s' % j
+                return 'c%s' % (j - 4)
         elif j == 0:
-            return 's%s' % i
+            return 's%s' % (i - 1)
         elif j in [1, 2]:
             return 0
         elif j == 3:
-            return 'i' + str(i)
+            return 'i%s' % (i-1)
         else:
             i -= 1
             j -= 4
