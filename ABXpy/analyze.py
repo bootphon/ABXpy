@@ -40,6 +40,7 @@ import os.path as path
 import os
 import warnings
 import sys
+from imp import reload
 
 from ABXpy.misc.type_fitting import fit_integer_type
 
