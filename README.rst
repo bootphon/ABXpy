@@ -90,7 +90,7 @@ Then install ABXPy
 
 	git clone https://github.com/bootphon/ABXpy.git
 	cd ABXpy
-	python setup.py install
+	make install
 
 The module should work with the anaconda distribution of python. However, you may get some (unrelevant) warnings while running task.py.
 
