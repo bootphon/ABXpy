@@ -42,6 +42,7 @@ Created on Mon Oct 14 12:28:05 2013
 
 @author: Thomas Schatz
 """
+from __future__ import print_function
 
 import argparse
 import os

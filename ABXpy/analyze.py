@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 
 """This module is used to analyse the results of an ABX discrimination task
 

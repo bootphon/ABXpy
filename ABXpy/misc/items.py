@@ -7,6 +7,7 @@ Created on Thu Apr 24 18:05:41 2014
 @author: thiolliere
 """
 
+from __future__ import print_function
 import numpy as np
 import sys
 import os
@@ -99,7 +100,7 @@ def generate_db_and_feat(base, n, repeats=0, name_db='data.item', n_feat=2,
     """Item and feature files generator
     """
     generate_named_testitems(base, n, repeats, name_db)
-    print name_db
+    print(name_db)
     n_files = (base ** n) * (repeats + 1)
     generate_features(n_files, n_feat, max_frames, name_feat)
 

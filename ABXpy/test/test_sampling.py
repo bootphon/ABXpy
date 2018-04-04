@@ -2,19 +2,22 @@
 with task.py"""
 # -*- coding: utf-8 -*-
 
+from __future__ import print_function
 import os
 import sys
+import random
+import warnings
+
+from scipy.stats import chisquare as chisquare
+import numpy as np
+
 package_path = os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.realpath(__file__))))
 if not(package_path in sys.path):
     sys.path.append(package_path)
 import ABXpy.task
 import ABXpy.sampling as sampling
-import numpy as np
 import ABXpy.misc.items as items
-import random
-import warnings
-from scipy.stats import chisquare as chisquare
 
 
 # FIXME problems when K > N/2 (not important ?)
