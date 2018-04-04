@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from distutils.core import Command
 from distutils.extension import Extension
 from setuptools.command.build_ext import build_ext as _build_ext
@@ -35,17 +35,7 @@ setup(
     url='https://github.com/bootphon/ABXpy',
     license='license/LICENSE.txt',
 
-    packages=[
-        'ABXpy',
-        'ABXpy.database',
-        'ABXpy.dbfun',
-        'ABXpy.distances',
-        'ABXpy.h5tools',
-        'ABXpy.misc',
-        'ABXpy.sampling',
-        'ABXpy.sideop',
-        'ABXpy.distances.metrics',
-    ],
+    packages=find_packages(exclude='test'),
 
     setup_requires=[
         # Setuptools 18.0 properly handles Cython extensions.
