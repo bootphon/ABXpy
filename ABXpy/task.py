@@ -66,6 +66,7 @@ import argparse
 import os
 import sys
 import tempfile
+from builtins import str
 
 import h5py
 import numpy as np
@@ -195,7 +196,7 @@ class Task(object):
             raise AssertionError('item file {} not found'.format(db_name))
 
         # check 'on' is a string
-        if not isinstance(on, basestring):
+        if not isinstance(on, str):
             raise AssertionError('ON attribute must be specified by a string')
 
         # parse input arguments
@@ -254,7 +255,7 @@ class Task(object):
         """Helper method to load an argument as a list"""
         if arg is None:
             return []
-        elif isinstance(arg, basestring):
+        elif isinstance(arg, str):
             return [arg]
         else:
             return arg
