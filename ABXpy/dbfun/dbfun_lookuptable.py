@@ -30,14 +30,9 @@ if not(package_path in sys.path):
 import ABXpy.misc.type_fitting as type_fitting
 # FIXME should remove above dependency on rest of ABX...
 
-import h5py
-import numpy
-import operator
-import collections
-
-from . import dbfun
-from . import dbfun_compute
-
+# Only solution I found for circular
+# imports in both Python 2 and 3
+from . import *
 
 # FIXME when data is missing: potentially use DB_column ?
 # FIXME make sure extension for other kind of input/output is easy: maybe use
