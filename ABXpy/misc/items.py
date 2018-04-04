@@ -1,3 +1,4 @@
+from __future__ import print_function
 # -*- coding: utf-8 -*-
 """Generate test files for the test functions
 """
@@ -7,7 +8,6 @@ Created on Thu Apr 24 18:05:41 2014
 @author: thiolliere
 """
 
-from __future__ import print_function
 import numpy as np
 import sys
 import os

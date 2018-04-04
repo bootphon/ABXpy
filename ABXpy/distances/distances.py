@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 """
 Created on Thu May  8 04:07:43 2014
 
 @author: Thomas Schatz
 """
 
-from __future__ import print_function
 import h5py
 import numpy as np
 import pandas

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 """
 Created on Tue Oct 15 09:48:31 2013
 
@@ -31,7 +32,6 @@ in memory as a whole, then do internal sorting
 
 """
 
-from __future__ import print_function
 import numpy as np
 import tempfile
 import os

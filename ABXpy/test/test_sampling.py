@@ -1,8 +1,9 @@
+from __future__ import print_function
+
 """This test script contains the tests for the sampling module and its use
 with task.py"""
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
 import os
 import sys
 import random

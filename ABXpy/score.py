@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 """This module is used for computing the score of a task (see `task Module`_ on
 how to create a task)
 
@@ -42,7 +44,6 @@ Created on Mon Oct 14 12:28:05 2013
 
 @author: Thomas Schatz
 """
-from __future__ import print_function
 
 import argparse
 import os

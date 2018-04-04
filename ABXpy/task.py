@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 """This module is used for creating a new task and preprocessing.
 
 This module contains the functions to specify and initialise a new ABX
@@ -61,7 +62,6 @@ attribute; A,B and X share the same 'by' attribute
 
 """
 
-from __future__ import print_function
 import argparse
 import os
 import sys

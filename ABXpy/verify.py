@@ -1,3 +1,4 @@
+from __future__ import print_function
 """This script is used to verify the consistency of your input files.
 
 Usage
@@ -17,7 +18,6 @@ In python:
     # create a new task and compute the statistics
     ABXpy.verify.check('my_data.item', 'my_data.h5f')
 """
-from __future__ import print_function
 import argparse
 
 
