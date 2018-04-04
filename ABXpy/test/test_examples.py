@@ -2,6 +2,7 @@
 import os.path as path
 import shutil
 import subprocess
+import sys
 
 
 examples_folder = path.join(
@@ -25,7 +26,7 @@ def test_complete_run_sh():
 
 def test_complete_run_py():
     try:
-        subprocess.check_call(['python', complete_run_py])
+        subprocess.check_call([sys.executable, complete_run_py])
     finally:
         try:
             shutil.rmtree('./example_items')
