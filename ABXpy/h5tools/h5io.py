@@ -20,7 +20,8 @@ import h5py
 import collections
 import os
 import numpy as np
-import np2h5
+
+from . import np2h5
 
 
 # API functions:

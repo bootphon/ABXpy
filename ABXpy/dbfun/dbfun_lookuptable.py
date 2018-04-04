@@ -28,8 +28,9 @@ import h5py
 import numpy
 import operator
 import collections
-import dbfun
-import dbfun_compute
+
+from . import dbfun
+from . import dbfun_compute
 
 
 # FIXME when data is missing: potentially use DB_column ?

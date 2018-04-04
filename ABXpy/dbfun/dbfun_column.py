@@ -6,7 +6,8 @@ Created on Fri Dec 20 13:36:52 2013
 """
 
 import numpy as np
-import dbfun
+
+from . import dbfun
 
 
 class DBfun_Column(dbfun.DBfun):

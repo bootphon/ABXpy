@@ -31,6 +31,7 @@ in memory as a whole, then do internal sorting
 
 """
 
+from __future__ import print_function
 import numpy as np
 import tempfile
 import os
