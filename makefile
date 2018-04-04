@@ -3,6 +3,9 @@
 test:
 	python setup.py test
 
+ftest: # fails on first error
+	python setup.py test -a '-x'
+
 build:
 	python setup.py build
 
