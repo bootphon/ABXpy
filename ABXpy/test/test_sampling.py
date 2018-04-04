@@ -44,7 +44,7 @@ def _test_completion(N, K, n):
     """
     sampler = sampling.sampler.IncrementalSampler(N, K)
     count = 0
-    for j in range(N / n):
+    for j in range(N // n):
         indices = sampler.sample(n)
         count += len(indices)
     indices = sampler.sample(N % n)
