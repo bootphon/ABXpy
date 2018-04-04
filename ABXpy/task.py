@@ -562,8 +562,8 @@ class Task(object):
 
             # generate triplets from indices
             iX = np.mod(indices, len(X))
-            iB = np.mod(np.divide(indices, len(X)), len(B))
-            iA = np.divide(indices, len(B) * len(X))
+            iB = np.mod(np.floor_divide(indices, len(X)), len(B))
+            iA = np.floor_divide(indices, len(B) * len(X))
             triplets = np.column_stack((A[iA], B[iB], X[iX]))
 
             # apply triplets filters
