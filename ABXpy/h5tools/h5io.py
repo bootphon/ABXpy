@@ -8,18 +8,20 @@ Created on Sun Jan 19 17:06:15 2014
 # make sure the rest of the ABXpy package is accessible
 import os
 import sys
+from six import iteritems
+import collections
+import os
+
+import h5py
+import numpy as np
+
+
 package_path = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 if not(package_path in sys.path):
     sys.path.append(package_path)
 import ABXpy.misc.type_fitting as type_fitting
 # FIXME should remove above dependency on rest of ABX...
-
-
-import h5py
-import collections
-import os
-import numpy as np
 
 from . import np2h5
 
@@ -45,7 +47,7 @@ class H5IO(object):
         if datasets is not None:
             if isinstance(datasets, collections.Mapping):
                 indexed_datasets = [
-                    key for key, value in datasets.iteritems() if not(value is None)]
+                    key for key, value in iteritems(datasets) if not(value is None)]
                 indexed_datasets_indexes = [
                     value for value in datasets.values() if not(value is None)]
                 if not(set(datasets.values()).difference([None]) == set(indexes.keys())):
@@ -103,7 +105,7 @@ class H5IO(object):
                     g.create_dataset(
                         'indexed_datasets_indexes', data=indexed_datasets_indexes, dtype=str_dtype)
                     index_group = g.create_group('indexes')
-                    for key, value in indexes.iteritems():
+                    for key, value in iteritems(indexes):
                         index_group.create_dataset(
                             key, data=value, dtype=get_dtype(value))
                     non_fused = [
@@ -116,7 +118,7 @@ class H5IO(object):
                     g.create_dataset(
                         'fused_datasets', data=fused.keys(), dtype=str_dtype)
                     h = g.create_group('fused')
-                    for name, fused_dsets in fused.iteritems():
+                    for name, fused_dsets in iteritems(fused):
                         i = h.create_group(name)
                         i.create_dataset(
                             'datasets', data=fused_dsets, dtype=str_dtype)
@@ -243,7 +245,7 @@ class H5IO(object):
 
     def __convert_input_data__(self, data):
         res = {}
-        for dset, d in data.iteritems():
+        for dset, d in iteritems(data):
             if not(hasattr(d, 'shape')):
                 d = np.array(d)  # risky type conversion ?
             if len(d.shape) == 1:
@@ -257,7 +259,7 @@ class H5IO(object):
         sample_data = self.__parse_input_data__(sample_data)
         sample_data = self.__convert_input_data__(sample_data)
         dims = {dset: 1 if len(data.shape) == 1 else data.shape[
-            1] for dset, data in sample_data.iteritems()}
+            1] for dset, data in iteritems(sample_data)}
         # needed for raw_datasets only
         dtypes = {
             dset: get_dtype(sample_data[dset]) for dset in self.raw_datasets}
@@ -335,7 +337,7 @@ class H5IO(object):
     # stuff?)
     def __compute_indexes__(self, data):
         data = dict([(dset, [self.indexes[self.indexed_datasets_indexes[self.indexed_datasets.index(dset)]].index(
-            e) for e in d]) if dset in self.indexed_datasets else (dset, d) for dset, d in data.iteritems()])
+            e) for e in d]) if dset in self.indexed_datasets else (dset, d) for dset, d in iteritems(data)])
         return data
 
     def __compute_keys__(self, dset, values):

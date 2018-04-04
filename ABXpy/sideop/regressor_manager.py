@@ -8,6 +8,8 @@ Created on Mon Dec 16 05:01:53 2013
 # make sure the rest of the ABXpy package is accessible
 import os
 import sys
+from six import iteritems
+
 package_path = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 if not(package_path in sys.path):
@@ -122,7 +124,7 @@ class RegressorManager(side_operations_manager.SideOperationsManager):
                 [name for name_list in getattr(
                     self, field + '_names') for name in name_list]
             for dictionary in getattr(self, field + '_indexes'):
-                for key, index in dictionary.iteritems():
+                for key, index in iteritems(dictionary):
                     indexes[key] = index
         return names, indexes
 
