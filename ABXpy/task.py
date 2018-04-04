@@ -972,7 +972,7 @@ class Task(object):
                 out_unique_pairs = f_out.add_dataset(
                     'unique_pairs', 'data', n_rows=n_rows, n_columns=1,
                     item_type=np.int64, fixed_size=False)
-                for n_by, (by, db) in iteritems(enumerate(self.by_dbs)):
+                for n_by, (by, db) in enumerate(iteritems(self.by_dbs)):
                     triplets_attrs = f_out.file['/triplets']['by_index'][n_by]
                     if triplets_attrs[0] == triplets_attrs[1]:
                         # subdataset is empty
