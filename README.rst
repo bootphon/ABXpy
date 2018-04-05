@@ -67,39 +67,20 @@ See examples/complete_run.sh for a command line run and examples/complete_run.py
 Installation
 ------------
 
-You can install the package using anaconda
+You can install the package using pip:
 
-First, create a conda environment with the necessary packages
-	
 ::
 
-	conda create -n abx python=2.7 numpy h5py pandas scipy cython pytables ipython flake8 pytest matplotlib
-	
-Then activate the env
-::
-	
-	source activate abx
-
-Then install h5features
-::
-
-	pip install git+https://github.com/bootphon/h5features.git
-
-Then install ABXPy
-::
-
-	git clone https://github.com/bootphon/ABXpy.git
-	cd ABXpy
-	make install
+  pip install git+https://github.com/bootphon/ABXpy
 
 The module should work with the anaconda distribution of python. However, you may get some (unrelevant) warnings while running task.py.
 
 Run the tests
 -------------
 
-Note that you will need `h5features module <http://h5features.readthedocs.org/en/latest/h5features.html>`_ in your path for some tests to work.
+::
 
-    make test
+  make test
 
 Generate the documentation
 ---------------------------
