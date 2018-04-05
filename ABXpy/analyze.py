@@ -1,4 +1,4 @@
-from __future__ import division, print_function
+from __future__ import division, print_function, unicode_literals
 
 """This module is used to analyse the results of an ABX discrimination task
 
@@ -40,12 +40,8 @@ import os.path as path
 import os
 import warnings
 import sys
-from imp import reload
 
 from ABXpy.misc.type_fitting import fit_integer_type
-
-reload(sys)
-sys.setdefaultencoding('utf8')
 
 
 def npdecode(keys, max_ind):
