@@ -67,7 +67,19 @@ See examples/complete_run.sh for a command line run and examples/complete_run.py
 Installation
 ------------
 
-You can install the package using pip:
+The package installation requires `cython`, and it must be installed by hand for the moment.
+
+::
+
+  pip install cython
+  
+or
+
+::
+
+  conda install cython
+
+You can then install the package using pip:
 
 ::
 
