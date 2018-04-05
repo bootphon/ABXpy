@@ -424,11 +424,7 @@ class DBfun_LookupTable(dbfun.DBfun):
 def get_dtype(data):
     str_dtype = h5py.special_dtype(vlen=unicode)
     # allow for the use of strings
-<<<<<<< HEAD
-    if isinstance(data[0], str) or isinstance(data[0], unicode):
-=======
     if isinstance(data[0], basestring):
->>>>>>> d6049bc... use basestring with isinstanceof
         dtype = str_dtype
     # could add some checks that the dtype is one of those supported by h5 ?
     elif hasattr(data, 'dtype'):
