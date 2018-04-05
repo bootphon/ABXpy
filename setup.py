@@ -1,8 +1,7 @@
 import os
 import sys
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 from distutils.core import Command
-from distutils.extension import Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 from setuptools.command.test import test as TestCommand
 
