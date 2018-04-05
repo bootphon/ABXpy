@@ -5,7 +5,7 @@
 
 set -e
 
-cd $(dirname $(readlink -f "${BASH_SOURCE[0]}"))
+cd "$( dirname "${BASH_SOURCE[0]}" )"
 
 # input files already here
 item=example_items/data.item
