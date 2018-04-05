@@ -7,7 +7,7 @@ from setuptools.command.test import test as TestCommand
 
 
 class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
+    user_options = [('pytest-args=', 'a', 'Arguments to pass to pytest')]
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
@@ -32,9 +32,7 @@ class build_ext(_build_ext):
 
 extension = Extension(
     'ABXpy.distances.metrics.dtw',
-    sources=[os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        'ABXpy', 'distances', 'metrics', 'dtw', 'dtw.pyx')],
+    sources=['ABXpy/distances/metrics/dtw/dtw.pyx'],
     extra_compile_args=['-O3'],
 )
 
@@ -51,24 +49,24 @@ setup(
     packages=find_packages(exclude='test'),
 
     setup_requires=[
-        # Setuptools 18.0 properly handles Cython extensions.
         'setuptools>=18.0',
+        'cython',
         'numpy>=1.9.0',
-        "pytest-runner",
+        'pytest-runner',
     ],
 
     install_requires=[
-        "h5py >= 2.2.1",
-        "numpy >= 1.8.0",
-        "pandas >= 0.13.1",
-        "scipy >= 0.13.0",
-        "tables",
-        "future",
+        'h5py >= 2.2.1',
+        'numpy >= 1.8.0',
+        'pandas >= 0.13.1',
+        'scipy >= 0.13.0',
+        'tables',
+        'future',
     ],
 
     tests_require=[
-        "h5features",
-        "pytest>=2.6",
+        'h5features',
+        'pytest>=2.6',
     ],
 
     ext_modules=[extension],
