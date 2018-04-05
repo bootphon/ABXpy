@@ -15,3 +15,5 @@ install:
 clean:
 	find . -name '*.pyc' -delete
 	find . -name '*.so' -delete
+	python setup.py clean --all
+	rm -rf ABXpy/distances/metrics/dtw/*.c

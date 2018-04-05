@@ -48,8 +48,8 @@ setup(
     packages=find_packages(exclude='test'),
 
     setup_requires=[
-        'setuptools>=18.0',
         'cython',
+        'setuptools>=18.0',
         'numpy>=1.9.0',
         'pytest-runner',
     ],
