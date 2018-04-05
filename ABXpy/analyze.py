@@ -125,7 +125,7 @@ def collapse(scorefile, taskfile, fid):
             score = mean[i]
             n = counts[i]
             result = aux + [by, score, int(n)]
-            fid.write('\t'.join(map(str, result)) + '\n')
+            fid.write('\t'.join(map(str, result)) + u'\n')
             # results.append(aux + [context, score, n])
             # wf_tmp.write('\t'.join(map(str, results[-1])) + '\n')
     scorefid.close()
@@ -169,7 +169,7 @@ def analyze(task_file, score_file, result_file):
         aux = taskfid['regressors']
         tfrk = aux[aux.keys()[0]]
         regs = tfrk['indexed_datasets']
-        string = ''
+        string = u''
         for reg in regs:
             string += reg + '\t'
         string += 'by\tscore\tn\n'
