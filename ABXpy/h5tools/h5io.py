@@ -54,10 +54,10 @@ class H5IO(object):
                 if not(set(datasets.values()).difference([None]) == set(indexes.keys())):
                     raise ValueError(
                         'Indexes and datasets declaration are inconsistent.')
-                datasets = datasets.keys()
+                datasets = list(datasets)
             else:
-                indexed_datasets = indexes.keys()
-                indexed_datasets_indexes = indexes.keys()
+                indexed_datasets = list(indexes)
+                indexed_datasets_indexes = list(indexes)
                 if not(set(indexes.keys()).issubset(datasets)):
                     raise ValueError(
                         'Indexes and datasets declaration are inconsistent.')
@@ -117,7 +117,7 @@ class H5IO(object):
                 # fused datasets
                 if fused:
                     g.create_dataset(
-                        'fused_datasets', data=fused.keys(), dtype=str_dtype)
+                        'fused_datasets', data=list(fused), dtype=str_dtype)
                     h = g.create_group('fused')
                     for name, fused_dsets in iteritems(fused):
                         i = h.create_group(name)
