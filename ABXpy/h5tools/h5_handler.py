@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 """
 Created on Tue Oct 15 09:48:31 2013
 
@@ -35,8 +36,8 @@ import numpy as np
 import tempfile
 import os
 import h5py
-import np2h5
-import h52np  # FIXME shutil
+
+from . import np2h5, h52np
 
 
 class H5Handler(object):

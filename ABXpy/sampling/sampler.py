@@ -1,3 +1,4 @@
+from __future__ import print_function
 """The sampler class implementing incremental sampling without replacement.
 
 Incremental meaning that you don't have to draw the whole sample at

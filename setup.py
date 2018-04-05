@@ -1,77 +1,77 @@
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils.core import setup
+import sys
+from setuptools import setup, find_packages, Extension
 from distutils.core import Command
-from distutils.extension import Extension
-from Cython.Build import cythonize
-import os
-import numpy
+from setuptools.command.build_ext import build_ext as _build_ext
+from setuptools.command.test import test as TestCommand
 
 
-class PyTest(Command):
-    user_options = []
+class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'a', 'Arguments to pass to pytest')]
 
     def initialize_options(self):
-        pass
+        TestCommand.initialize_options(self)
+        self.pytest_args = ''
 
+    def run_tests(self):
+        import shlex
+        # import here, cause outside the eggs aren't loaded
+        import pytest
+        errno = pytest.main(shlex.split(self.pytest_args))
+        sys.exit(errno)
+
+
+class build_ext(_build_ext):
     def finalize_options(self):
-        pass
-
-    def run(self):
-        import subprocess
-        try:
-            import pytest
-        except ImportError:
-            raise ImportError(
-                'You need to have pytest to run the tests,'
-                ' try installing it (pip install pytest)')
-        errno = subprocess.call(['pytest', '-s', 'ABXpy/test'])
-        raise SystemExit(errno)
+        _build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
 
 
 extension = Extension(
     'ABXpy.distances.metrics.dtw',
-    sources=[os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        'ABXpy', 'distances', 'metrics', 'install', 'dtw.pyx')],
+    sources=['ABXpy/distances/metrics/dtw/dtw.pyx'],
     extra_compile_args=['-O3'],
-    include_dirs=[numpy.get_include()])
+)
 
 
 setup(
     name='ABXpy',
-    version='0.1.0',
+    version='0.1.1',
     author='Thomas Schatz',
     description='ABX discrimination task',
     long_description=open('README.rst').read(),
     url='https://github.com/bootphon/ABXpy',
     license='license/LICENSE.txt',
 
-    packages=[
-        'ABXpy',
-        'ABXpy.test',
-        'ABXpy.database',
-        'ABXpy.dbfun',
-        'ABXpy.distances',
-        'ABXpy.h5tools',
-        'ABXpy.misc',
-        'ABXpy.sampling',
-        'ABXpy.sideop',
-        'ABXpy.distances.metrics'],
+    packages=find_packages(exclude='test'),
 
-    install_requires=[
-        "python >= 2.7",
-        "h5py >= 2.2.1",
-        "numpy >= 1.8.0",
-        "pandas >= 0.13.1",
-        "scipy >= 0.13.0",
-        "cython",
-        "tables",
+    setup_requires=[
+        'cython',
+        'setuptools>=18.0',
+        'numpy>=1.9.0',
+        'pytest-runner',
     ],
 
-    ext_modules=cythonize(extension),
-    cmdclass={'test': PyTest},
+    install_requires=[
+        'h5py >= 2.2.1',
+        'numpy >= 1.8.0',
+        'pandas >= 0.13.1',
+        'scipy >= 0.13.0',
+        'tables',
+        'future',
+    ],
+
+    tests_require=[
+        'h5features',
+        'pytest>=2.6',
+    ],
+
+    ext_modules=[extension],
+
+    cmdclass={'build_ext': build_ext,
+              'test': PyTest},
 
     entry_points={'console_scripts': [
         'abx-task = ABXpy.task:main',

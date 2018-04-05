@@ -1,12 +1,19 @@
+.PHONY: test build install clean
+	
 test:
-	make install
-	py.test -s ABXpy/test
+	python setup.py test
+
+ftest: # fails on first error
+	python setup.py test -a '-x'
+
+build:
+	python setup.py build
 
 install:
-	python ABXpy/distances/metrics/install/install_dtw.py
-	python setup.py build
 	python setup.py install
 
 clean:
 	find . -name '*.pyc' -delete
 	find . -name '*.so' -delete
+	python setup.py clean --all
+	rm -rf ABXpy/distances/metrics/dtw/*.c

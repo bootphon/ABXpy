@@ -17,6 +17,12 @@ table fits in RAM memory.
 # make sure the rest of the ABXpy package is accessible
 import os
 import sys
+import operator
+import collections
+from past.builtins import basestring
+import h5py
+import numpy
+
 package_path = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 if not(package_path in sys.path):
@@ -24,13 +30,9 @@ if not(package_path in sys.path):
 import ABXpy.misc.type_fitting as type_fitting
 # FIXME should remove above dependency on rest of ABX...
 
-import h5py
-import numpy
-import operator
-import collections
-import dbfun
-import dbfun_compute
-
+# Only solution I found for circular
+# imports in both Python 2 and 3
+from . import *
 
 # FIXME when data is missing: potentially use DB_column ?
 # FIXME make sure extension for other kind of input/output is easy: maybe use
@@ -422,7 +424,7 @@ class DBfun_LookupTable(dbfun.DBfun):
 def get_dtype(data):
     str_dtype = h5py.special_dtype(vlen=unicode)
     # allow for the use of strings
-    if isinstance(data[0], str) or isinstance(data[0], unicode):
+    if isinstance(data[0], basestring):
         dtype = str_dtype
     # could add some checks that the dtype is one of those supported by h5 ?
     elif hasattr(data, 'dtype'):

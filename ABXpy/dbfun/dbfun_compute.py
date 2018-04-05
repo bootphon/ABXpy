@@ -11,10 +11,12 @@ Implements the DBfun API
 
 
 import ast
-import dbfun
-import dbfun_lookuptable
-import lookuptable_connector
+import sys
 
+# Only solution I found for circular
+# imports in both Python 2 and 3
+from . import *
+from . import dbfun
 
 # FIXME remove dbfun prefix from dbfun_lookuptable and dbfun_connector ?
 class DBfun_Compute(dbfun.DBfun):

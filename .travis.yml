@@ -2,29 +2,43 @@ language: python
 python:
     - "2.7"
 
-# Setup anaconda
 before_install:
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda2/bin:$PATH
-  - conda update --yes conda
+  # Setup anaconda
+  # inspired by https://conda.io/docs/user-guide/tasks/use-conda-with-travis-ci.html
+  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda update -q --yes conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
-  - sudo apt-get install -qq python-numpy python-scipy
-  - sudo apt-get install -qq libhdf5-serial-dev python-h5py
-# Install packages
+
+  # @louisabraham: I commented the lines below, they are
+  # most probably not required
+  # - sudo apt-get install -qq python-numpy python-scipy
+  # - sudo apt-get install -qq libhdf5-serial-dev python-h5py
+
 install:
-  - conda install --yes python=2.7 cython numpy scipy h5py pandas pytest pytables matplotlib
-  - conda install --yes -c primatelang h5features
+  # TODO: remove cython, it should be handled https://github.com/pypa/setuptools/issues/1317
+  # TODO: remove unittest2, the error got fixed this morning https://github.com/h5py/h5py/commit/a54de719751c58029f22ed0d00c5d8c51a873e8a
+  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION unittest2 cython
+  # Ideally, the line below would be used with an environment.yml
+  # For the moment, it is preferable to use setup.py
+  # - conda install --yes python=$TRAVIS_PYTHON_VERSION cython numpy scipy h5py pandas pytest pytables matplotlib
+  # - conda install --yes -c primatelang h5features
   #- pip install -t /home/travis/miniconda2/lib/python2.7/site-packages --no-deps h5features
-  - export PATH=/home/travis/virtualenv/python2.7.8/build:$PATH
-  # Coverage packages are on my binstar channel
+  - source activate test-environment
   - make install
-  - python setup.py install
 
 script: 
-    - "py.test -s ABXpy/test"
+    - make test
+
 # after_success:
 #     coveralls

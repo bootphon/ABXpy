@@ -1,20 +1,24 @@
+from __future__ import print_function
+
 """This test script contains the tests for the sampling module and its use
 with task.py"""
 # -*- coding: utf-8 -*-
 
 import os
 import sys
+import random
+import warnings
+
+from scipy.stats import chisquare as chisquare
+import numpy as np
+
 package_path = os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.realpath(__file__))))
 if not(package_path in sys.path):
     sys.path.append(package_path)
 import ABXpy.task
 import ABXpy.sampling as sampling
-import numpy as np
 import ABXpy.misc.items as items
-import random
-import warnings
-from scipy.stats import chisquare as chisquare
 
 
 # FIXME problems when K > N/2 (not important ?)
@@ -40,7 +44,7 @@ def _test_completion(N, K, n):
     """
     sampler = sampling.sampler.IncrementalSampler(N, K)
     count = 0
-    for j in range(N / n):
+    for j in range(N // n):
         indices = sampler.sample(n)
         count += len(indices)
     indices = sampler.sample(N % n)
@@ -76,51 +80,51 @@ def test_simple_completion():
         N = random.randint(1000, 10000)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            _test_completion(N, K=random.randrange(100, N / 2),
+            _test_completion(N, K=random.randrange(100, N // 2),
                              n=random.randrange(50, N))
 
 
 def test_simple_no_replace():
     for i in range(100):
         N = random.randint(1000, 10000)
-        _test_no_replace(N, random.randint(100, N / 2))
+        _test_no_replace(N, random.randint(100, N // 2))
 
 
 def test_hard_completion():
     for i in range(3):
         N = random.randint(10 ** 6, 10 ** 7)
-        _test_completion(N, K=random.randrange(10 ** 5, N / 2),
+        _test_completion(N, K=random.randrange(10 ** 5, N // 2),
                          n=random.randrange(10 ** 5, N))
 
 
 def test_hard_no_replace():
     for i in range(3):
         N = random.randint(10 ** 6, 10 ** 7)
-        _test_no_replace(N, K=random.randrange(10 ** 5, N / 2))
+        _test_no_replace(N, K=random.randrange(10 ** 5, N // 2))
 
 
 def test_simple_uniformity():
     for i in range(100):
         N = random.randint(1000, 10000)
-        _test_completion(N, K=random.randrange(100, N / 2),
+        _test_completion(N, K=random.randrange(100, N // 2),
                          n=random.randrange(50, N))
 
 
-import matplotlib.pyplot as plt
-
-
-def plot_uniformity(nb_resamples, N, K):
-    indices = []
-    for i in range(nb_resamples):
-        if i % 1000 == 0:
-            print('%d resamples left to do' % (nb_resamples - i))
-        sampler = sampling.sampler.IncrementalSampler(N, K)
-        current_N = 0
-        while current_N < N:
-            n = min(random.randrange(N / 10), N - current_N)
-            indices = indices + list(sampler.sample(n) + current_N)
-            current_N = current_N + n
-    plt.hist(indices, bins=100)
+# import matplotlib.pyplot as plt
+#
+#
+# def plot_uniformity(nb_resamples, N, K):
+#     indices = []
+#     for i in range(nb_resamples):
+#         if i % 1000 == 0:
+#             print('%d resamples left to do' % (nb_resamples - i))
+#         sampler = sampling.sampler.IncrementalSampler(N, K)
+#         current_N = 0
+#         while current_N < N:
+#             n = min(random.randrange(N / 10), N - current_N)
+#             indices = indices + list(sampler.sample(n) + current_N)
+#             current_N = current_N + n
+#     plt.hist(indices, bins=100)
 
 
 # test_simple_uniformity()

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 """This module is used for creating a new task and preprocessing.
 
 This module contains the functions to specify and initialise a new ABX
@@ -65,6 +66,9 @@ import argparse
 import os
 import sys
 import tempfile
+
+from six import iteritems
+from past.builtins import basestring
 
 import h5py
 import numpy as np
@@ -271,7 +275,6 @@ class Task(object):
         message = (
             ' argument is invalid, check that all the provided attributes '
             'are defined in the database {}'.format(self.database))
-
         # the argument of issuperset needs to be a list ...
         assert cols.issuperset(self.on), 'ON' + message
         assert cols.issuperset(self.across), 'ACROSS' + message
@@ -349,7 +352,7 @@ class Task(object):
         # index due to generic filtering
         self.types = {
             key: fit_integer_type(np.max(db.index.values), is_signed=False)
-            for key, db in self.by_dbs.iteritems()}
+            for key, db in iteritems(self.by_dbs)}
 
     def compute_statistics(self, approximate=False):
         """Compute the statistics of the task
@@ -403,7 +406,7 @@ class Task(object):
                 'block', 'Computing statistics for by/on/across block',
                 self.stats['nb_blocks'])
 
-        for by, db in self.by_dbs.iteritems():
+        for by, db in iteritems(self.by_dbs):
             stats = self.by_stats[by]
             stats['block_sizes'] = {}
             stats['nb_triplets'] = 0
@@ -411,7 +414,7 @@ class Task(object):
             stats['nb_on_pairs'] = 0
 
             # iterate over on/across blocks
-            for block_key, count in stats['on_across_levels'].iteritems():
+            for block_key, count in iteritems(stats['on_across_levels']):
                 if self.verbose:
                     display.update('block', 1)
                     display.display()
@@ -560,8 +563,8 @@ class Task(object):
 
             # generate triplets from indices
             iX = np.mod(indices, len(X))
-            iB = np.mod(np.divide(indices, len(X)), len(B))
-            iA = np.divide(indices, len(B) * len(X))
+            iB = np.mod(np.floor_divide(indices, len(X)), len(B))
+            iA = np.floor_divide(indices, len(B) * len(X))
             triplets = np.column_stack((A[iA], B[iB], X[iX]))
 
             # apply triplets filters
@@ -759,7 +762,7 @@ class Task(object):
 
             empty_by_blocks = []
             bys = []
-            for by, db in self.by_dbs.iteritems():
+            for by, db in iteritems(self.by_dbs):
                 # class for efficiently writing to datasets of the output file
                 # (using a buffer under the hood)
                 if self.verbose:
@@ -816,7 +819,7 @@ class Task(object):
         self.regressors.set_by_regressors(by_values)
 
         # iterate over on/across blocks
-        on_across_blocks = self.on_across_blocks[by].groups.iteritems()
+        on_across_blocks = iteritems(self.on_across_blocks[by].groups)
         for block_key, block in on_across_blocks:
             if self.verbose:
                 display.update('block', 1)
@@ -863,7 +866,7 @@ class Task(object):
         max_ind_dict = {}
         try:
             _, output_tmp = tempfile.mkstemp(dir=tmpdir)
-            for n_by, (by, db) in enumerate(self.by_dbs.iteritems()):
+            for n_by, (by, db) in enumerate(iteritems(self.by_dbs)):
                 if self.verbose > 0:
                     print("Writing AX/BX pairs to task file...")
                 with h5py.File(output) as fh:
@@ -969,7 +972,7 @@ class Task(object):
                 out_unique_pairs = f_out.add_dataset(
                     'unique_pairs', 'data', n_rows=n_rows, n_columns=1,
                     item_type=np.int64, fixed_size=False)
-                for n_by, (by, db) in enumerate(self.by_dbs.iteritems()):
+                for n_by, (by, db) in enumerate(iteritems(self.by_dbs)):
                     triplets_attrs = f_out.file['/triplets']['by_index'][n_by]
                     if triplets_attrs[0] == triplets_attrs[1]:
                         # subdataset is empty
@@ -1012,7 +1015,7 @@ class Task(object):
                 'block', 'Computing nb_levels for by block',
                 self.stats['nb_by_levels'])
 
-        for by, db in self.by_dbs.iteritems():
+        for by, db in iteritems(self.by_dbs):
             if self.verbose:
                 display.update('block', 1)
                 display.display()
@@ -1020,7 +1023,7 @@ class Task(object):
             n = 0
             # iterate over on/across blocks
             for block_key, n_block in (
-                    self.by_stats[by]['on_across_levels'].iteritems()):
+                    iteritems(self.by_stats[by]['on_across_levels'])):
                 block = self.on_across_blocks[by].groups[block_key]
                 on_across_by_values = dict(db.ix[block[0]])
                 on, across = on_across_from_key(block_key)
@@ -1084,7 +1087,7 @@ class Task(object):
 
         stream.write('\n\n###### by blocks stats ######\n\n')
         if not(summarized):
-            for by, stats in self.by_stats.iteritems():
+            for by, stats in iteritems(self.by_stats):
                 stream.write('### by level: %s ###\n' % str(by))
                 pprint.pprint(stats, stream)
         else:
@@ -1095,7 +1098,7 @@ class Task(object):
                     "Filters not fully supported, nb_levels per "
                     "by block wont be calculated", RuntimeWarning)
 
-            for by, stats in self.by_stats.iteritems():
+            for by, stats in iteritems(self.by_stats):
                 stream.write('### by level: %s ###\n' % str(by))
                 stream.write('nb_triplets: %d\n' % stats['nb_triplets'])
 
