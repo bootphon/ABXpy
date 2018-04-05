@@ -67,7 +67,7 @@ import os
 import sys
 import tempfile
 
-from six import iteritems
+from six import iteritems, itervalues
 from past.builtins import basestring
 
 import h5py
@@ -968,7 +968,7 @@ class Task(object):
             # Now merge all datasets
             by_index = 0
             with np2h5.NP2H5(output) as f_out:
-                n_rows = sum(n_pairs_dict.itervalues())
+                n_rows = sum(itervalues(n_pairs_dict))
                 out_unique_pairs = f_out.add_dataset(
                     'unique_pairs', 'data', n_rows=n_rows, n_columns=1,
                     item_type=np.int64, fixed_size=False)
