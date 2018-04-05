@@ -66,7 +66,7 @@ import argparse
 import os
 import sys
 import tempfile
-from builtins import str
+
 from six import iteritems
 from past.builtins import basestring
 
