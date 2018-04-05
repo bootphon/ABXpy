@@ -30,7 +30,7 @@ before_install:
 install:
   # TODO: remove cython and numpy, they are now handled by setup.py
   # TODO: remove unittest2, the error got fixed this morning https://github.com/h5py/h5py/commit/a54de719751c58029f22ed0d00c5d8c51a873e8a
-  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION cython numpy unittest2 #pytest
+  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION unittest2 #pytest
   # Ideally, the line below would be used with an environment.yml
   # For the moment, it is preferable to use setup.py
   # - conda install --yes python=$TRAVIS_PYTHON_VERSION cython numpy scipy h5py pandas pytest pytables matplotlib
