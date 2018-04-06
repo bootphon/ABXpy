@@ -37,6 +37,8 @@ install:
   # - conda install --yes -c primatelang h5features
   #- pip install -t /home/travis/miniconda2/lib/python2.7/site-packages --no-deps h5features
   - source activate test-environment
+  # TODO: remove that after it is merged
+  - pip install -U git+https://github.com/louisabraham/PyTables.git#develop
   - make install
 
 script: 
