@@ -333,8 +333,7 @@ class Task(object):
 
                 if len(self.across) > 1:
                     self.antiacross_blocks[by_key] = dict()
-                    for across_key in (self.across_blocks[by_key]
-                                       .groups.iterkeys()):
+                    for across_key in self.across_blocks[by_key].groups:
                         b = True
                         for i, col in enumerate(self.across):
                             b = b * (by_frame[col] != across_key[i])
