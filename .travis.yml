@@ -30,7 +30,7 @@ before_install:
 install:
   # TODO: remove cython, it should be handled https://github.com/pypa/setuptools/issues/1317
   # TODO: remove unittest2, the error got fixed this morning https://github.com/h5py/h5py/commit/a54de719751c58029f22ed0d00c5d8c51a873e8a
-  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION unittest2 cython
+  - conda create --yes -q -n test-environment python=$TRAVIS_PYTHON_VERSION unittest2 cython hdf5
   # Ideally, the line below would be used with an environment.yml
   # For the moment, it is preferable to use setup.py
   # - conda install --yes python=$TRAVIS_PYTHON_VERSION cython numpy scipy h5py pandas pytest pytables matplotlib
@@ -38,7 +38,9 @@ install:
   #- pip install -t /home/travis/miniconda2/lib/python2.7/site-packages --no-deps h5features
   - source activate test-environment
   # TODO: remove that after it is merged
+  - conda install hdf5
   - pip install -U git+https://github.com/louisabraham/PyTables.git#develop
+
   - make install
 
 script: 
