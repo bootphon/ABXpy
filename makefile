@@ -4,7 +4,7 @@ test:
 	python setup.py test
 
 ftest: # fails on first error
-	python setup.py test -a '-x'
+	python setup.py test -a '-sx'
 
 build:
 	python setup.py build

@@ -55,7 +55,7 @@ class H5Handler(object):
         self.file = h5file
         self.groups = [keygroup] + groups
         self.datasets = [keyset] + datasets
-        self.sources = zip(self.groups, self.datasets)
+        self.sources = list(zip(self.groups, self.datasets))
 
     # sort the content of several datasets with n lines and varying
     # number of columns in an h5file according to the order specified

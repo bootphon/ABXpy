@@ -1,4 +1,4 @@
-from __future__ import division, print_function
+from __future__ import division, print_function, unicode_literals
 
 """This module is used to analyse the results of an ABX discrimination task
 
@@ -40,12 +40,8 @@ import os.path as path
 import os
 import warnings
 import sys
-from imp import reload
 
 from ABXpy.misc.type_fitting import fit_integer_type
-
-reload(sys)
-sys.setdefaultencoding('utf8')
 
 
 def npdecode(keys, max_ind):
@@ -125,7 +121,7 @@ def collapse(scorefile, taskfile, fid):
             score = mean[i]
             n = counts[i]
             result = aux + [by, score, int(n)]
-            fid.write('\t'.join(map(str, result)) + '\n')
+            fid.write('\t'.join(map(str, result)) + u'\n')
             # results.append(aux + [context, score, n])
             # wf_tmp.write('\t'.join(map(str, results[-1])) + '\n')
     scorefid.close()
@@ -167,9 +163,9 @@ def analyze(task_file, score_file, result_file):
     with open(result_file, 'w+') as fid:
         taskfid = h5py.File(task_file)
         aux = taskfid['regressors']
-        tfrk = aux[aux.keys()[0]]
+        tfrk = aux[list(aux)[0]]
         regs = tfrk['indexed_datasets']
-        string = ''
+        string = u''
         for reg in regs:
             string += reg + '\t'
         string += 'by\tscore\tn\n'

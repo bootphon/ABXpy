@@ -94,7 +94,7 @@ class H5IO(object):
                 # h5 dtype for storing variable length strings
                 str_dtype = h5py.special_dtype(vlen=str)
                 g.create_dataset(
-                    'managed_datasets', data=datasets, dtype=str_dtype)
+                    'managed_datasets', data=get_array(datasets), dtype=str_dtype)
                 raw_datasets = list(set(datasets).difference(indexed_datasets))
                 if raw_datasets:
                     g.create_dataset(
@@ -102,18 +102,18 @@ class H5IO(object):
                 # indexed datasets
                 if indexed_datasets:
                     g.create_dataset(
-                        'indexed_datasets', data=indexed_datasets, dtype=str_dtype)
+                        'indexed_datasets', data=get_array(indexed_datasets), dtype=str_dtype)
                     g.create_dataset(
-                        'indexed_datasets_indexes', data=indexed_datasets_indexes, dtype=str_dtype)
+                        'indexed_datasets_indexes', data=get_array(indexed_datasets_indexes), dtype=str_dtype)
                     index_group = g.create_group('indexes')
                     for key, value in iteritems(indexes):
                         index_group.create_dataset(
-                            key, data=value, dtype=get_dtype(value))
+                            key, data=get_array(value), dtype=get_dtype(value))
                     non_fused = [
                         dset for dset in indexed_datasets if not(dset in all_fused_dsets)]
                     if non_fused:
                         g.create_dataset(
-                            'non_fused_datasets', data=non_fused, dtype=str_dtype)
+                            'non_fused_datasets', data=get_array(non_fused), dtype=str_dtype)
                 # fused datasets
                 if fused:
                     g.create_dataset(
@@ -374,6 +374,11 @@ def get_dtype(data):
     else:
         dtype = np.array(data).dtype
     return dtype
+
+def get_array(data):
+    if isinstance(data[0], basestring):
+        return np.array(data, dtype='S')
+    return data
 
 
 def test_h5io():

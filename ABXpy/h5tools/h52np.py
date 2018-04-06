@@ -21,6 +21,7 @@ import numpy as np
 import bisect
 import h5py
 from past.builtins import basestring
+from builtins import object
 
 class H52NP(object):
 
@@ -174,7 +175,7 @@ class H52NPbuffer(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         return self.read()
 
     # true only if the input file has been totally read and the buffer is empty

@@ -67,7 +67,7 @@ import os
 import sys
 import tempfile
 
-from six import iteritems
+from six import iteritems, itervalues
 from past.builtins import basestring
 
 import h5py
@@ -333,8 +333,7 @@ class Task(object):
 
                 if len(self.across) > 1:
                     self.antiacross_blocks[by_key] = dict()
-                    for across_key in (self.across_blocks[by_key]
-                                       .groups.iterkeys()):
+                    for across_key in self.across_blocks[by_key].groups:
                         b = True
                         for i, col in enumerate(self.across):
                             b = b * (by_frame[col] != across_key[i])
@@ -799,7 +798,7 @@ class Task(object):
 
             fh.file.create_dataset(
                 'bys', (aux.shape[0] - 1,),
-                dtype=h5py.special_dtype(vlen=unicode))
+                dtype=h5py.special_dtype(vlen=str))
             fh.file['bys'][:] = [str(by) for by in bys]
 
             fh.file['triplets'].create_dataset(
@@ -968,7 +967,7 @@ class Task(object):
             # Now merge all datasets
             by_index = 0
             with np2h5.NP2H5(output) as f_out:
-                n_rows = sum(n_pairs_dict.itervalues())
+                n_rows = sum(itervalues(n_pairs_dict))
                 out_unique_pairs = f_out.add_dataset(
                     'unique_pairs', 'data', n_rows=n_rows, n_columns=1,
                     item_type=np.int64, fixed_size=False)
