@@ -163,7 +163,7 @@ def analyze(task_file, score_file, result_file):
     with open(result_file, 'w+') as fid:
         taskfid = h5py.File(task_file)
         aux = taskfid['regressors']
-        tfrk = aux[aux.keys()[0]]
+        tfrk = aux[list(aux)[0]]
         regs = tfrk['indexed_datasets']
         string = u''
         for reg in regs:
