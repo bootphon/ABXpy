@@ -67,33 +67,19 @@ See examples/complete_run.sh for a command line run and examples/complete_run.py
 Installation
 ------------
 
-Special instruction for Python 3
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-For the package to work with Python 3, you need to have a version of PyTables
-that includes the commits done at git+https://github.com/louisabraham/PyTables.git#develop.
-
-::
-  
-  pip install -U git+https://github.com/louisabraham/PyTables.git#develop
-  
-If you get the error message `Could not find a local HDF5 installation.`, use
+The package installation requires `cython`, and it must be installed by hand for the moment.
 
 ::
 
-  conda install hdf5
-
+  pip install cython
+  
 or
 
 ::
 
-  pip install -U git+https://github.com/louisabraham/PyTables.git#develop --install-option='--hdf5=/path/to/lib/hdf5'
+  conda install cython
 
-
-ABXpy installation
-^^^^^^^^^^^^^^^^^^
-
-You can install the package using pip:
+You can then install the package using pip:
 
 ::
 
