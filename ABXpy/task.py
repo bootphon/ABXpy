@@ -799,7 +799,7 @@ class Task(object):
 
             fh.file.create_dataset(
                 'bys', (aux.shape[0] - 1,),
-                dtype=h5py.special_dtype(vlen=unicode))
+                dtype=h5py.special_dtype(vlen=str))
             fh.file['bys'][:] = [str(by) for by in bys]
 
             fh.file['triplets'].create_dataset(
