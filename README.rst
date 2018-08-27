@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/bootphon/ABXpy.svg?branch=master)](https://travis-ci.org/bootphon/ABXpy) [![DOI](https://zenodo.org/badge/23788452.svg)](https://zenodo.org/badge/latestdoi/23788452)
-
+.. image:: https://travis-ci.org/bootphon/ABXpy.svg?branch=master
+    :target: https://travis-ci.org/bootphon/ABXpy
 
 ABX discrimination test.
 ========================
