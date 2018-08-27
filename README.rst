@@ -1,5 +1,7 @@
 .. image:: https://travis-ci.org/bootphon/ABXpy.svg?branch=master
     :target: https://travis-ci.org/bootphon/ABXpy
+.. image:: https://zenodo.org/badge/23788452.svg
+   :target: https://zenodo.org/badge/latestdoi/23788452
 
 ABX discrimination test.
 ========================
