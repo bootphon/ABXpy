@@ -20,15 +20,7 @@ before_install:
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 
 install:
-  # TODO: remove cython, it should be handled
-  # https://github.com/pypa/setuptools/issues/1317
-
-
-  # Ideally, the line below would be used with an environment.yml. For
-  # the moment, it is preferable to use setup.py
   - conda create -n test-environment --yes python=$TRAVIS_PYTHON_VERSION cython numpy scipy h5py pandas pytest pytables matplotlib
-  # - conda install --yes -c primatelang h5features
-  # - pip install -t /home/travis/miniconda2/lib/python2.7/site-packages --no-deps h5features
   - source activate test-environment
   - make install
 
