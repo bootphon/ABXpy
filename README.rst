@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/bootphon/ABXpy.svg?branch=master)](https://travis-ci.org/bootphon/ABXpy)
+[![DOI](https://zenodo.org/badge/23788452.svg)](https://zenodo.org/badge/latestdoi/23788452)
+
+
 ABX discrimination test.
 ========================
 
@@ -72,7 +76,7 @@ The package installation requires `cython`, and it must be installed by hand for
 ::
 
   pip install cython
-  
+
 or
 
 ::
@@ -108,7 +112,7 @@ Note that you will get warnings if you don't have the `h5features module <http:/
 Citation
 ---------
 
-If you use this software in your research, please cite: 
+If you use this software in your research, please cite:
   ABX discriminability, Schatz T., Bach F. and Dupoux E., in preparation.
 
 Travis status
