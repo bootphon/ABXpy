@@ -10,7 +10,7 @@ ABX discrimination is a term that is used for three stimuli presented on an ABX 
 
 This package contains the operations necessary to initialize, calculate and analyse the results of an ABX discrimination task.
 
-Check out the full documentation at `read the docs <http://abxpy.readthedocs.org/en/latest/ABXpy.html>`_.
+**Check out the full documentation at `readthedocs <http://abxpy.readthedocs.org/en/latest/ABXpy.html>`_.**
 
 Organisation
 ------------
