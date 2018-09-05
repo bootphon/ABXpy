@@ -115,11 +115,3 @@ Citation
 
 If you use this software in your research, please cite:
   ABX discriminability, Schatz T., Bach F. and Dupoux E., in preparation.
-
-Travis status
--------------
-
-This package is continuously integrated with Travis-CI:
-
-.. image:: https://travis-ci.org/bootphon/ABXpy.svg?branch=master
-    :target: https://travis-ci.org/bootphon/ABXpy
