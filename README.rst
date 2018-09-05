@@ -3,8 +3,8 @@
 .. image:: https://zenodo.org/badge/23788452.svg
    :target: https://zenodo.org/badge/latestdoi/23788452
 
-ABX discrimination test.
-========================
+ABX discrimination test
+=======================
 
 ABX discrimination is a term that is used for three stimuli presented on an ABX trial. The third is the focus. The first two stimuli (A and B) are standard, S1 and S2 in a randomly chosen order, and the subjects' task is to choose which of the two is matched by the final stimulus (X). (Glottopedia)
 
