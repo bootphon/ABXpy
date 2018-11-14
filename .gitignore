@@ -28,6 +28,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+.eggs/
 
 # Installer logs
 pip-log.txt
@@ -68,6 +69,7 @@ test/__pycache__
 
 # Cythonized output
 ABXpy/distances/metrics/dtw/*.c
+ABXpy/distances/metrics/install/*.c
 
 # Example items
 examples/example_items/data.*
