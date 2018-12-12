@@ -1,0 +1,39 @@
+package:
+  name: abxpy
+  version: "0.1.1"
+
+source:
+  path: . 
+
+requirements:
+    build:
+      - python
+      - setuptools
+      - cython
+      - numpy
+      - scipy
+      - h5py
+      - pandas
+      - future
+      - pytest
+      - pytables
+      - matplotlib
+    
+    entry_points:
+      - abx-task = ABXpy.task:main
+      - abx-distance = ABXpy.distance:main
+      - abx-analyze = ABXpy.analyze:main
+      - abx-score = ABXpy.score:main
+  
+    run:
+      - python
+      - cython
+      - h5features
+      - h5py>=2.2.1
+      - numpy>=1.8.0
+      - pandas>=0.13.1
+      - scipy>=0.13.0
+      - h5py
+      - pytables
+      - matplotlib
+      - future

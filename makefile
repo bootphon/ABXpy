@@ -17,3 +17,9 @@ clean:
 	find . -name '*.so' -delete
 	python setup.py clean --all
 	rm -rf ABXpy/distances/metrics/dtw/*.c
+
+conda:
+	rm -rf conda_build
+	conda build --output-folder conda_build -n .
+	#conda convert --platform all outputdir/linux-64/*.tar.bz2 -o conda_build/
+	anaconda upload --force -u coml conda_build/*/*.tar.bz2
