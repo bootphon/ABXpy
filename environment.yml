@@ -1,0 +1,16 @@
+name: ABXpy
+dependencies:
+  - python=2.7
+  - setuptools
+  - cython
+  - numpy
+  - pytest
+  - pytest-runner
+  - h5py
+  - pandas
+  - scipy
+  - pytables
+  - numpydoc
+  - mock
+  - pip:
+      - git+https://github.com/bootphon/h5features.git
