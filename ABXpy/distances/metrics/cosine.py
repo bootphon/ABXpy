@@ -23,7 +23,7 @@ def cosine_distance(x, y):
     d = np.dot(x, y.T) / (np.outer(x2, y2))
     # DPX: to prevent the stupid scipy to collapse the array into scalar
     if d.shape == (1, 1):
-        d = np.array([[np.float64(scipy.arccos(d) / np.pi)]])
+        d = np.array([[np.float64(scipy.arccos(d[0,0]) / np.pi)]])
     else:
         # costly in time (half of the time), so check if really useful for dtw
         d = np.float64(scipy.arccos(d) / np.pi)
