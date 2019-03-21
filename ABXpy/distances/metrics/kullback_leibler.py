@@ -45,7 +45,8 @@ def kl_divergence(x, y, thresholded=True, symmetrized=True, normalize=True):
     res = __kl_divergence(x, y)
     if symmetrized:
         res = 0.5 * res + 0.5 * __kl_divergence(y, x).transpose()
-    return np.float64(res)
+    shape=res.shape
+    return np.float64(res).reshape(shape)
 
 
 def js_divergence(x, y, normalize=True):
