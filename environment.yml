@@ -1,16 +1,17 @@
 name: ABXpy
 dependencies:
-  - python=2.7
-  - setuptools
   - cython
-  - numpy
-  - pytest
-  - pytest-runner
   - h5py
-  - pandas
-  - scipy
-  - pytables
+  - numpy
   - numpydoc
   - mock
+  - pip
+  - python=2.7
+  - pandas
+  - pytables
+  - pytest
+  - pytest-runner
+  - scipy
+  - setuptools
   - pip:
       - git+https://github.com/bootphon/h5features.git
