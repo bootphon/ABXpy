@@ -3,7 +3,7 @@ Zerospeech2015 Challenge
 
 This repository contains the code necessary to replicate the track 1 evaluation of the Zerospeech2015 challenge.
 
-The complete description of the challenge can be found `here <http://www.lscp.net/persons/dupoux/bootphon/zerospeech2014/website/>`_.
+The complete description of the challenge can be found `here <https://zerospeech.com/2015>`_.
 
 
 Installation:
