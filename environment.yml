@@ -10,6 +10,7 @@ dependencies:
   - pandas
   - pytables
   - pytest
+  - pytest-cov
   - pytest-runner
   - scipy
   - setuptools
