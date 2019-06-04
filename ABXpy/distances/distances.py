@@ -272,16 +272,20 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
     else:
         feature_files = feature_file
         feature_groups = feature_group
+
     # FIXME if there are other datasets in feature_file this is not accurate
     mem_needed = 0
     for feature_file in feature_files:
         feature_size = os.path.getsize(feature_file) / float(2 ** 20)
         mem_needed = feature_size * n_cpu + mem_needed
+
     splitted_features = False
-    #splitted_features = mem_needed > mem
+    # splitted_features = mem_needed > mem
     # if splitted_features:
     #    split_feature_file(feature_file, feature_group, pair_file)
+
     jobs = create_distance_jobs(pair_file, distance_file, n_cpu)
+
     # results = []
     if n_cpu > 1:
         # use of a manager seems necessary because we're using a Pool...
@@ -292,8 +296,9 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
                 for i, job in enumerate(jobs)]
         pool.map(worker, args)
     else:
-        run_distance_job(jobs[0], distance_file, distance,
-                         feature_files, feature_groups, splitted_features, 1, normalized)
+        run_distance_job(
+            jobs[0], distance_file, distance,
+            feature_files, feature_groups, splitted_features, 1, normalized)
         with h5py.File(distance_file) as fh:
             fh.attrs.modify('done', True)
 
@@ -309,13 +314,28 @@ class Features_Accessor(object):
         self.times = times
         self.features = features
 
+        # TODO a dirty fix to deal with python3 incompatibility,
+        # would be better to handle it in h5features directly
+        if sys.version_info.major >= 3:
+            try:
+                self.times = {
+                    k.decode('utf8'): v for k, v in self.times.items()}
+                self.features = {
+                    k.decode('utf8'): v for k, v in self.features.items()}
+            except AttributeError:
+                pass
+
     def get_features_from_raw(self, items):
         features = {}
-        for ix, f, on, off in zip(items.index, items['file'],
-                                  items['onset'], items['offset']):
-            f=str(f)
-            t = np.where(np.logical_and(self.times[f] >= on,
-                                        self.times[f] <= off))[0]
+        for ix, f, on, off in zip(
+                items.index, items['file'],
+                items['onset'], items['offset']):
+            f = str(f)
+
+            t = np.where(np.logical_and(
+                self.times[f] >= on,
+                self.times[f] <= off))[0]
+
             # if len(t) == 0:
             #     raise IOError('No features found for file {}, at '
             #                   'time {}-{}'.format(f, on, off))
