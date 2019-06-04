@@ -1,19 +1,17 @@
-"""This test script contains tests for the basic parameters of score.py
-"""
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+"""Command-line program to run the complete ABX pipeline"""
 
+import argparse
+import json
 import os
 import sys
-package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
+
 import ABXpy.task
 import ABXpy.distances.distances as distances
 import ABXpy.distances.metrics.cosine as cosine
 import ABXpy.distances.metrics.dtw as dtw
 import ABXpy.score as score
 import ABXpy.analyze as analyze
-import json
 
 
 def get_name(filename):
@@ -38,21 +36,26 @@ def test_analyze(itemfile, featurefile, args, taskfile=None, distance=None,
     on = get_arg('on', args)
     assert on, ("The 'on' argument was not found, this argument is mandatory"
                 "for the task")
-    across = get_arg('across')
-    by = get_arg('by')
-    filters = get_arg('filters')
-    reg = get_arg('reg')
+
+    across = get_arg('across', args)
+    by = get_arg('by', args)
+    filters = get_arg('filters', args)
+    reg = get_arg('reg', args)
 
     if not filename:
-        filename = '_'.join(filter(None, [get_name(itemfile),
-                                          get_name(featurefile),
-                                          str(on),
-                                          str(across),
-                                          str(by)]))
+        filename = '_'.join(
+            filter(None, [get_name(itemfile),
+                          get_name(featurefile),
+                          str(on),
+                          str(across),
+                          str(by)]))
+
     if not distancefile:
         distancefile = filename + '.distance'
+
     if not scorefile:
         scorefile = filename + '.score'
+
     if not analyzefile:
         analyzefile = filename + '.csv'
 
@@ -64,7 +67,9 @@ def test_analyze(itemfile, featurefile, args, taskfile=None, distance=None,
         distance = dtw_cosine_distance
     distances.compute_distances(featurefile, '/features/', taskfile,
                                 distancefile, distance)
+
     score.score(taskfile, distancefile, scorefile)
+
     analyze.analyze(scorefile, taskfile, analyzefile)
 
 
@@ -72,76 +77,82 @@ def parse_args():
     parser = argparse.ArgumentParser(
         prog='ABXrun.py',
         # formatter_class=argparse.RawDescriptionHelpFormatter,
-        description='Run the complete ABXpy pipeline.',
-        epilog="""Example usage:
+        description='Run the complete ABX pipeline.',
+        epilog='Example usage: ./ABXrun.py data.item data.feature data.conf')
 
-$ python ABXrun data.item data.feature data.conf
-""")
     parser.add_argument(
         'itemfile', metavar='itemfile',
         help='Input item file in item format, e.g. data.item')
+
     parser.add_argument(
         'featurefile', metavar='featurefile',
         help='Input feature file in h5features format, e.g. data.features')
+
     parser.add_argument(
         'config', metavar='configfile',
         help='Input config file in json format, e.g. data.conf.\n'
              'This file should at least contain the task parameters. '
              'You can also include the filenames you want to use and the saga'
              ' parameters.')
+
     parser.add_argument(
         '--taskfile', metavar='taskfile',
         required=False,
         help='Output task file where the task information will be stored, e.g.'
              ' data.abx.')
+
     parser.add_argument(
         '--distancefile', metavar='distancefile',
         required=False,
         help='Output distance file where the distances between pairs will be '
              'stored, e.g. data.distance')
+
     parser.add_argument(
         '--analyzefile', metavar='analyzefile',
         required=False,
         help='Output analyze file where the collapsed results will be stored, '
              'e.g. data.csv')
+
     parser.add_argument(
         '--scorefile', metavar='scorefile',
         required=False,
         help='Output score file where the score of the triplets will be stored'
              ', e.g. data.score')
+
     parser.add_argument(
         '--distance', metavar='distance',
         required=False,
         help='Callable distance function to be used for distance calculation,'
              ' by default the dynamic time warping cosine distance will be '
              'used')
+
     parser.add_argument(
         '--name', metavar='filename',
         required=False,
         help='If you specify a filename, all the files generated will have '
              'the same basename and a standard extension. For instance, the '
              'task file will be named filename.abx')
+
     return vars(parser.parse_args())
 
 
-if __name__ == '__main__':
-
-    import argparse
-
+def main():
     args = parse_args()
 
     # mandatory args
     itemfile = args['itemfile']
     assert os.path.exists(itemfile)
-    featurefile = args('featurefile')
+
+    featurefile = args['featurefile']
     assert os.path.exists(featurefile)
-    configfile = args('configfile')
+
+    configfile = args['configfile']
     assert os.path.exists(configfile)
+
     try:
-        with open(configfile, 'r') as fid:
-            config = json.load(fid)
+        config = json.load(open(configfile, 'r'))
     except IOError:
-        print 'No such file: ', configfile
+        print('No such file: {}'.format(configfile))
         exit()
     assert get_arg('on', config)
 
@@ -149,22 +160,30 @@ if __name__ == '__main__':
     taskfile = get_arg('taskfile', args)
     if not taskfile:
         taskfile = get_arg('taskfile', config)
+
     distancefile = get_arg('distancefile', args)
     if not distancefile:
         distancefile = get_arg('distancefile', config)
+
     scorefile = get_arg('scorefile', args)
     if not scorefile:
         scorefile = get_arg('scorefile', config)
+
     analyzefile = get_arg('analyzefile', args)
     if not analyzefile:
         analyzefile = get_arg('analyzefile', config)
+
     distance = get_arg('distance', args)
     if not distance:
         distance = get_arg('distance', config)
+
     filename = get_arg('filename', args)
     if not filename:
         filename = get_arg('filename', config)
 
     test_analyze(itemfile, featurefile, config, taskfile, distance,
-                 distancefile, scorefile, analyzefile,
-                 filename)
+                 distancefile, scorefile, analyzefile, filename)
+
+
+if __name__ == '__main__':
+    main()
