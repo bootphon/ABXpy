@@ -2,23 +2,14 @@ from __future__ import print_function
 
 """This test script contains the tests for the sampling module and its use
 with task.py"""
-# -*- coding: utf-8 -*-
 
-import os
-import sys
 import random
 import warnings
 
 from scipy.stats import chisquare as chisquare
 import numpy as np
 
-package_path = os.path.dirname(os.path.dirname(
-    os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
-import ABXpy.task
 import ABXpy.sampling as sampling
-import ABXpy.misc.items as items
 
 
 # FIXME problems when K > N/2 (not important ?)

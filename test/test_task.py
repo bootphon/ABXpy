@@ -1,25 +1,18 @@
-"""This test script contains tests for the basic parameters of task.py
-"""
-# -*- coding: utf-8 -*-
+"""This test script contains tests for the basic parameters of task.py"""
 
-import os
-import sys
-import warnings
-
-package_path = os.path.dirname(os.path.dirname(
-    os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
-import ABXpy.task
 import h5py
 import numpy as np
+import os
+import warnings
+
+import ABXpy.task
 import ABXpy.misc.items as items
 
 error_pairs = "pairs incorrectly generated"
 error_triplets = "triplets incorrectly generated"
 
 
-# not optimise, but unimportant
+# not optimized, but unimportant
 def tables_equivalent(t1, t2):
     assert t1.shape == t2.shape
     for a1 in t1:
@@ -76,7 +69,7 @@ def test_basic():
         try:
             os.remove('data.abx')
             os.remove('data.item')
-        except:
+        except OSError:
             pass
 
 
@@ -104,7 +97,7 @@ def test_multiple_across():
         try:
             os.remove('data.abx')
             os.remove('data.item')
-        except:
+        except OSError:
             pass
 
 
@@ -122,7 +115,7 @@ def test_no_across():
         try:
             os.remove('data.abx')
             os.remove('data.item')
-        except:
+        except OSError:
             pass
 
 
@@ -142,7 +135,7 @@ def test_multiple_bys():
         try:
             os.remove('data.abx')
             os.remove('data.item')
-        except:
+        except OSError:
             pass
 
 
@@ -172,7 +165,7 @@ def test_filter():
         try:
             os.remove('data.abx')
             os.remove('data.item')
-        except:
+        except OSError:
             pass
 
 
@@ -195,7 +188,7 @@ def test_filter_on_A():
         try:
             os.remove('data.abx')
             os.remove('data.item')
-        except:
+        except OSError:
             pass
 
 
@@ -218,7 +211,7 @@ def test_filter_on_B():
         try:
             os.remove('data.abx')
             os.remove('data.item')
-        except:
+        except OSError:
             pass
 
 
@@ -242,15 +235,5 @@ def test_filter_on_C():
         try:
             os.remove('data.abx')
             os.remove('data.item')
-        except:
+        except OSError:
             pass
-
-
-# test_basic()
-# test_multiple_across()
-# test_no_across()
-# test_multiple_bys()
-# test_filter()
-# test_filter_on_A()
-# test_filter_on_B()
-# test_filter_on_C()

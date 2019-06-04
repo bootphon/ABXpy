@@ -14,6 +14,7 @@ def test_complete_run(ext):
     assert os.path.isfile(script), script
 
     try:
+        shutil.rmtree('./example_items', ignore_errors=True)
         subprocess.check_call([script])
     finally:
         shutil.rmtree('./example_items', ignore_errors=True)
