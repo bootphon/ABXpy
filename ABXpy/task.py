@@ -76,11 +76,6 @@ import pandas as pd
 import tables
 import warnings
 
-# make sure the rest of the ABXpy package is accessible
-# package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-# if not(package_path in sys.path):
-#     sys.path.append(package_path)
-
 import ABXpy.database.database as database
 import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.h5tools.h52np as h52np

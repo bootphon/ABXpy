@@ -9,18 +9,14 @@ They must contains 2 arrays:
  the 'time' dimension along the lines
 
 """
-# -*- coding: utf-8 -*-
-"""
-Created on Fri May  2 09:33:20 2014
 
-@author: Thomas Schatz
-"""
 import h5features
 import os
 import numpy as np
 
 
-def any_to_h5features(path, files, h5_filename, h5_groupname, batch_size=500, load=np.load):
+def any_to_h5features(path, files, h5_filename, h5_groupname,
+                      batch_size=500, load=np.load):
     """Append a list of npz files to a h5features file.
 
     Files must have a relative name to a directory precised by the 'path'
@@ -39,6 +35,7 @@ def any_to_h5features(path, files, h5_filename, h5_groupname, batch_size=500, lo
         for h5features files)
     batch_size : int
         Size of the writing buffer (in number of npz files). By default 500.
+
     """
     features = []
     times = []
@@ -73,17 +70,17 @@ def convert(folder, h5_filename='./features.features', load=np.load):
     h5_filename : filename
         The output h5features file.
     load : callable
-        Python function that take a filepath as input and return a dictionary
-        {'time': times, 'features': features}, (times and features being array-like
-        containing respectively the centered times of the frames and the features)
+        Python function that take a filepath as input and return a
+        dictionary {'time': times, 'features': features}, (times and
+        features being array-like containing respectively the centered
+        times of the frames and the features)
+
     """
     files = os.listdir(folder)
     any_to_h5features(folder, files, h5_filename, '/features/', load=load)
 
 
-# detects whether the script was called from command-line
 if __name__ == '__main__':
-
     import argparse
 
     parser = argparse.ArgumentParser()

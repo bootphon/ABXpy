@@ -11,11 +11,6 @@
 - providing methods to actually carry out these side-operations at the
   point in the execution flow to which they were attributed
 
-
-Created on Tue Nov 12 06:39:40 2013
-
-:author: Thomas Schatz
-
 """
 
 import copy
@@ -23,9 +18,7 @@ import numpy as np
 
 
 class SideOperationsManager(object):
-
     def __init__(self, db_hierarchy, on, across, by):
-
         # all columns
         self.extensions = ['', '_A', '_B', '_X', '_AB', '_AX', '_1', '_2']
         self.all_cols = {

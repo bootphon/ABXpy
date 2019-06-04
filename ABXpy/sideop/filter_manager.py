@@ -1,17 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Dec 16 05:00:10 2013
-
-@author: Thomas Schatz
-"""
-
 # make sure the rest of the ABXpy package is accessible
-import os
-import sys
-package_path = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
 
 import ABXpy.sideop.side_operations_manager as side_operations_manager
 import ABXpy.dbfun.dbfun_compute as dbfun_compute
@@ -39,7 +26,7 @@ class FilterManager(side_operations_manager.SideOperationsManager):
         # extended), the name of lookup file, the name of a script, a script
         # under the form of a string (that doesnt end by .dbfun...)
         for filt in filters:
-             # instantiate appropriate dbfun
+            # instantiate appropriate dbfun
             if filt in self.extended_cols:  # column already in db
                 db_fun = dbfun_column.DBfun_Column(filt, indexed=False)
                 # evaluate context is wasteful in this case... not even
@@ -94,7 +81,6 @@ class FilterManager(side_operations_manager.SideOperationsManager):
         # the returned result contains indices with respect to triplets
         indices = np.arange(len(triplets))
         return vectorial_filter(lambda context: self.evaluate_ABX(on_across_by_values, db, triplets, context), indices)
-
 
 
 def singleton_filter(generator):

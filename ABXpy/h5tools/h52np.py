@@ -1,19 +1,15 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Oct 25 16:30:23 2013
+"""Read efficiently h5 files
 
-@author: Thomas Schatz
-"""
+Includes functions useful for merging sorted datasets.
 
+Some code is shared by H52NP and NP2H5: could have a superclass:
+optionally_h5_context_manager who would consist in implementing
+__init__, __enter__, __exit__ where a filename or a file handle can be
+passed and the file should be handled by the context manager only if a
+filename is passed.
 
-"""
-Class for reading efficiently h5 files, with functions useful for merging sorted datasets. 
-
-Some code is shared by H52NP and NP2H5: could have a superclass: optionally_h5_context_manager 
-who would consist in implementing __init__, __enter__, __exit__ where a filename or a file handle can be passed
-and the file should be handled by the context manager only if a filename is passed.
-
-Also the functionalities specific to sorted datasets could be put in a subclass.
+Also the functionalities specific to sorted datasets could be put in a
+subclass.
 
 """
 
@@ -23,8 +19,8 @@ import h5py
 from past.builtins import basestring
 from builtins import object
 
-class H52NP(object):
 
+class H52NP(object):
     # sink is the name of the HDF5 file to which to write, buffer size is in
     # kilobytes
 
@@ -60,7 +56,8 @@ class H52NP(object):
                 else:
                     raise
 
-    def add_dataset(self, group, dataset, buf_size=100, minimum_occupied_portion=0.25):
+    def add_dataset(self, group, dataset, buf_size=100,
+                    minimum_occupied_portion=0.25):
         if self.file_open:
             buf = H52NPbuffer(
                 self, group, dataset, buf_size, minimum_occupied_portion)
@@ -68,23 +65,26 @@ class H52NP(object):
             return buf
         else:
             raise IOError(
-                "Method add_dataset of class H52NP can only be used within a 'with' statement!")
+                "Method add_dataset of class H52NP can only be used "
+                "within a 'with' statement!")
 
-    def add_subdataset(self, group, dataset, buf_size=100, minimum_occupied_portion=0.25, indexes=None):
+    def add_subdataset(self, group, dataset, buf_size=100,
+                       minimum_occupied_portion=0.25, indexes=None):
         if self.file_open:
             buf = H5dataset2NPbuffer(
-                self, group, dataset, buf_size, minimum_occupied_portion, indexes=indexes)
+                self, group, dataset, buf_size, minimum_occupied_portion,
+                indexes=indexes)
             self.buffers.append(buf)
             return buf
         else:
             raise IOError(
-                "Method add_dataset of class H52NP can only be used within a 'with' statement!")
-
+                "Method add_dataset of class H52NP can only be used "
+                "within a 'with' statement!")
 
 
 class H52NPbuffer(object):
-
-    def __init__(self, parent, group, dataset, buf_size, minimum_occupied_portion):
+    def __init__(self, parent, group, dataset, buf_size,
+                 minimum_occupied_portion):
 
         assert parent.file_open
 
@@ -123,7 +123,7 @@ class H52NPbuffer(object):
 
         if not(amount is None) and amount <= 0:
             raise ValueError(
-                'The amount to be read in h52np.read must be strictly positive')
+                'The amount to read in h52np.read must be strictly positive')
 
         if amount is None:
             amount = self.buf_len - self.buf_ix
@@ -139,10 +139,14 @@ class H52NPbuffer(object):
             if amount_in_buffer > needed:  # enough data in buffer
                 next_buf_ix = self.buf_ix + needed
                 amount_found = amount
-            else:							# not enough data in buffer (or just enough)
+            else:
+                # not enough data in buffer (or just enough)
                 next_buf_ix = self.buf_len
                 amount_found = amount_found + amount_in_buffer
-            data.append(np.copy(self.buf[self.buf_ix:next_buf_ix, :])) # the np.copy is absolutely necessary here to avoid ugly side effects...
+
+            # the np.copy is absolutely necessary here to avoid ugly
+            # side effects...
+            data.append(np.copy(self.buf[self.buf_ix:next_buf_ix, :]))
             self.buf_ix = next_buf_ix
             # fill buffer or not, according to refill policy and current buffer
             # state
@@ -209,8 +213,8 @@ class H52NPbuffer(object):
 class H5dataset2NPbuffer(H52NPbuffer):
     """Augmentation of the H%2NPbuffer, proposing to use a subdataset
     selected by index"""
-
-    def __init__(self, parent, group, dataset, buf_size, minimum_occupied_portion, indexes=None):
+    def __init__(self, parent, group, dataset, buf_size,
+                 minimum_occupied_portion, indexes=None):
         assert parent.file_open
 
         # super(H5dataset2NPbuffer, self).__init__(
@@ -232,7 +236,7 @@ class H5dataset2NPbuffer(H52NPbuffer):
             assert len(indexes) == 2
             self.dataset_ix = indexes[0]
             self.dataset_end = indexes[1]
-        self.n_rows = self.dataset_end# - self.dataset_ix
+        self.n_rows = self.dataset_end  # - self.dataset_ix
         # could add checks: no more than 2 dims, etc.
 
         self.parent = parent
@@ -253,7 +257,6 @@ class H5dataset2NPbuffer(H52NPbuffer):
     # there is not enough data left, just send less than what was asked
     def read(self, amount=None):
         return super(H5dataset2NPbuffer, self).read(amount)
-
 
     def refill_buffer(self):
         if not(self.dataset_ix == self.dataset_end):
@@ -277,4 +280,3 @@ class H5dataset2NPbuffer(H52NPbuffer):
                 # update indices
                 self.buf_ix = next_buf_ix
                 self.dataset_ix = next_ix
-

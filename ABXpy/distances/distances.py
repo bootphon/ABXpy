@@ -1,28 +1,13 @@
-# -*- coding: utf-8 -*-
 from __future__ import print_function
-"""
-Created on Thu May  8 04:07:43 2014
-
-@author: Thomas Schatz
-"""
 
 import h5py
 import numpy as np
 import pandas
 import multiprocessing
 import os
-# import time
-import traceback
 import sys
 import warnings
-import pickle
-try:
-    import h5features
-except ImportError:
-    sys.path.insert(0, os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.realpath(__file__))))), 'h5features'))
-    import h5features
+import h5features
 
 # FIXME Enforce single process usage when using python compiled with OMP
 # enabled
@@ -38,13 +23,15 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
     Parameters:
     -----------
     pair_file: string
-        hdf5 task file, or at least an hdf5 file containing a 'unique_pairs' dataset
+        hdf5 task file, or at least an hdf5 file containing a
+        'unique_pairs' dataset
     distance_file: string
         hdf5 file taht will contain the distance datasets
     n_cpu:
         number of cpus tu use
     block_ceil_size: int
         maximum size in RAM of a block in Mb
+
     """
     # FIXME check (given an optional checking function)
     # that all features required in feat_dbs are indeed present in feature
@@ -79,9 +66,10 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
     # step 1
     by_n_pairs = np.int64(by_n_pairs)
     total_n_pairs = np.sum(by_n_pairs)
-    max_block_size = min(np.int64(np.ceil(total_n_pairs / np.float(n_cpu))),
-                         # buffer_max_size * 1000000 / np.dtype(by_n_pairs).itemsize)
-                         buffer_max_size * 1000000 / 8)
+    max_block_size = min(
+        np.int64(np.ceil(total_n_pairs / np.float(n_cpu))),
+        # buffer_max_size * 1000000 / np.dtype(by_n_pairs).itemsize)
+        buffer_max_size * 1000000 / 8)
     by = []
     start = []
     stop = []
@@ -127,27 +115,24 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
         jobs.append(job)
     return jobs
 
-"""
-If there are very large by blocks, two additional
-things could help optimization:
-    1. doing co-clustering inside of the large by blocks
-        at the beginning to get two types of blocks:
-        sparse and dense distances (could help if i/o is a problem
-        but a bit delicate)
-    2. rewriting the features to accomodate the co-clusters
-If there are very small by blocks and i/o become too slow
-could group them into intermediate size h5features files
-"""
 
-"""
-This function can be used concurrently by several processes.
-When it is the case synchronization of the writing operations in
-the target distance_file is required by HDF5.
-The current solution uses a global lock for the whole file.
-Since each job is writing in different places, it should in principle be
-possible to do all the write concurrently if ever necessary, using parallel
-HDF5 (based on MPI-IO).
-"""
+# If there are very large by blocks, two additional
+# things could help optimization:
+#     1. doing co-clustering inside of the large by blocks
+#         at the beginning to get two types of blocks:
+#         sparse and dense distances (could help if i/o is a problem
+#         but a bit delicate)
+#     2. rewriting the features to accomodate the co-clusters
+# If there are very small by blocks and i/o become too slow
+# could group them into intermediate size h5features files
+#
+# This function can be used concurrently by several processes.
+# When it is the case synchronization of the writing operations in
+# the target distance_file is required by HDF5.
+# The current solution uses a global lock for the whole file.
+# Since each job is writing in different places, it should in principle be
+# possible to do all the write concurrently if ever necessary, using parallel
+# HDF5 (based on MPI-IO).
 
 def run_distance_job(job_description, distance_file, distance,
                      feature_files, feature_groups, splitted_features,
@@ -237,16 +222,16 @@ def run_distance_job(job_description, distance_file, distance,
                                       items['offset'][pairs[i, 1]]),
                               UserWarning)
             try:
-                if normalize is not None : 
-                    if normalize==1:
-                        normalize=True
-                    elif normalize==0:
-                        normalize=False
+                if normalize is not None:
+                    if normalize == 1:
+                        normalize = True
+                    elif normalize == 0:
+                        normalize = False
                     else:
                         print('normalized parameter neither 1 nor 0,'
-                        'using normalization')
-                        normalize=True
-                    dis[i,0] = distance(dataA, dataB, normalized=normalize)
+                              'using normalization')
+                        normalize = True
+                    dis[i, 0] = distance(dataA, dataB, normalized=normalize)
                 else:
                     dis[i, 0] = distance(dataA, dataB)
             except:
@@ -359,14 +344,15 @@ class Features_Accessor(object):
 # if this ever proves too slow: could use co-clustering on the big by blocks,
 # use it for the job creation and adopt smarter loading schemes
 
+
 if __name__ == '__main__':
 
     import argparse
     import metrics.cosine as cosine
     import metrics.dtw as dtw
 
-    def dtw_cosine_distance(x, y,normalized):
-        return dtw.dtw(x, y, cosine.cosine_distance,normalized)
+    def dtw_cosine_distance(x, y, normalized):
+        return dtw.dtw(x, y, cosine.cosine_distance, normalized)
 
     # parser (the usage string is specified explicitly because the default
     # does not show that the mandatory arguments must come before the
@@ -392,5 +378,7 @@ if __name__ == '__main__':
         'specifies if the distance is computed with a sum (-no 0) or '
         'with normalization (-no 1) ')
     args = parser.parse_args()
+
     compute_distances(args.features, '/features/', args.task,
-                      args.output, dtw_cosine_distance, normalized=args.normalized, n_cpu=args.ncpu)
+                      args.output, dtw_cosine_distance,
+                      normalized=args.normalized, n_cpu=args.ncpu)

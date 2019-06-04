@@ -1,16 +1,8 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Oct 29 00:29:00 2013
-
-:author: Thomas Schatz
-"""
-
 import numpy as np
 
 
 def fit_integer_type(n, is_signed=True):
-    """Determine the minimal space needed to store integers of maximal value n
-    """
+    """Returns the minimal space needed to store integers of maximal value n"""
 
     if is_signed:
         m = 1
@@ -28,5 +20,5 @@ def fit_integer_type(n, is_signed=True):
     elif n < 2 ** (64 - m):
         return types[3]
     else:
-        raise ValueError('Values are too big to be represented by 64 bits \
-            integers!')
+        raise ValueError(
+            'Values are too big to be represented by 64 bits integers!')

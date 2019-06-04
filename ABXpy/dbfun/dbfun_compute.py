@@ -9,18 +9,16 @@ database.
 Implements the DBfun API
 """
 
-
 import ast
-import sys
 
 # Only solution I found for circular
 # imports in both Python 2 and 3
 from . import *
 from . import dbfun
 
+
 # FIXME remove dbfun prefix from dbfun_lookuptable and dbfun_connector ?
 class DBfun_Compute(dbfun.DBfun):
-
     def __init__(self, definition, columns):
 
         self.columns = set(columns)
@@ -193,7 +191,6 @@ class DBfun_Compute(dbfun.DBfun):
 # visitor class for getting the list of the names of the variables in expr
 # (minus the import statements)
 class nameVisitor(ast.NodeVisitor):
-
     def __init__(self, *args, **kwargs):
         ast.NodeVisitor.__init__(self, *args, **kwargs)
         self.names = []

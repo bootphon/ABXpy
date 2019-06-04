@@ -1,17 +1,11 @@
-# -*- coding: utf-8 -*-
+"""Abstract API for getting functions of data in a database
+
+API define one attribute (input_names) and one method (evaluate)
+
 """
-Created on Mon Oct 14 16:59:27 2013
-
-@author: Thomas Schatz
-"""
-
-
-""" Abstract API for getting functions of data in a database """
-# API define one attribute (input_names) and one method (evaluate)
 
 
 class DBfun(object):
-
     def __init__(self, input_names):
         self.input_names = input_names
 

@@ -1,29 +1,13 @@
 from __future__ import print_function
-# -*- coding: utf-8 -*-
-"""Generate test files for the test functions
-"""
-"""
-Created on Thu Apr 24 18:05:41 2014
-
-@author: thiolliere
-"""
+"""Generate test files for the test functions"""
 
 import numpy as np
-import sys
 import os
 import filecmp
 import subprocess
 from past.builtins import xrange
-# import h5py
-# import numpy as np
-# from ys.mods import load
-try:
-    import h5features
-except ImportError:
-    sys.path.insert(0, os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.realpath(__file__)))), 'h5features'))
-    import h5features
+
+import h5features
 
 
 def generate_testitems(base, n, repeats=0, name='data.item'):
