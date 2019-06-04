@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-
-"""This test contains a full run of the ABX pipeline with randomly
-created database and features.
-
-"""
+"""Full run of ABX pipeline with randomly created database and features"""
 
 import os
 
