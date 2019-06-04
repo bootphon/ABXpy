@@ -57,20 +57,24 @@ The structure is as follow:
 data.abx
 
 - triplets
-	- by0: (3 x ?)-array referencing all the possible triplets
-          sharing a 'by' value of by0
-	- by1
-	- etc.
+
+  - by0: (3 x ?)-array referencing all the possible triplets
+    sharing a 'by' value of by0
+  - by1
+  - etc.
+
 - unique_pairs (All the pairs AX and BX, useful to calculate the
   distances. Note that a pair is designated by a single number due to
   a special encoding)
-	- by0: 1D-array referencing all the pairs sharing a 'by' value
-          of by0. Note that this is only 1D instead of 2D due to a
-          special encoding of the pairs. Let 'n' be the number of
-          items in the block, 'a' be the index of the first item of
-          the pair and 'b' the index of the second item: the index of
-          the pair 'p' = n*a + b
-	- etc.
+
+  - by0: 1D-array referencing all the pairs sharing a 'by' value
+    of by0. Note that this is only 1D instead of 2D due to a
+    special encoding of the pairs. Let 'n' be the number of
+    items in the block, 'a' be the index of the first item of
+    the pair and 'b' the index of the second item: the index of
+    the pair 'p' = n*a + b
+  - etc.
+
 - regressors (infos of the item file in a computer efficient format)
 - feat_dbs (infos of the item file in a computer efficient format)
 

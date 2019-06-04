@@ -20,8 +20,8 @@ import h5features
 def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
     """Divide the work load into smaller blocks to be passed to the cpus
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     pair_file: string
         hdf5 task file, or at least an hdf5 file containing a
         'unique_pairs' dataset
