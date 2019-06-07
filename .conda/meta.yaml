@@ -1,39 +1,73 @@
+# Build the shennong conda package. Run with "conda build . -c coml"
+
+{% set name = 'abx' %}
+{% set data = load_setup_py_data() %}
+
 package:
-  name: abxpy
-  version: "0.1.1"
+  name: {{ name }}
+  version: {{ data.get('version') }}
 
 source:
-  path: . 
+  path: ..
+
+build:
+  entry_points:
+  {% for entry in data.get('entry_points')['console_scripts'] %}
+    - {{ entry }}
+  {% endfor %}
+  script:
+    - python setup.py install
 
 requirements:
     build:
-      - python
-      - setuptools
-      - cython
-      - numpy
-      - scipy
-      - h5py
-      - pandas
-      - future
-      - pytest
-      - pytables
-      - matplotlib
-    
-    entry_points:
-      - abx-task = ABXpy.task:main
-      - abx-distance = ABXpy.distance:main
-      - abx-analyze = ABXpy.analyze:main
-      - abx-score = ABXpy.score:main
-  
-    run:
-      - python
+      - python {{ python }}
       - cython
       - h5features
       - h5py>=2.2.1
-      - numpy>=1.8.0
+      - mock
+      - numpy>=1.8.1
       - pandas>=0.13.1
-      - scipy>=0.13.0
-      - h5py
+      - pip
       - pytables
-      - matplotlib
+      - pytest
+      - pytest-runner
+      - scipy>=0.13.0
+      - scipy>=0.14.0
+      - setuptools
       - future
+
+    run:
+      - python {{ python }}
+      - cython
+      - h5features
+      - h5py>=2.2.1
+      - mock
+      - numpy>=1.8.1
+      - pandas>=0.13.1
+      - pip
+      - pytables
+      - pytest
+      - pytest-runner
+      - scipy>=0.13.0
+      - scipy>=0.14.0
+      - setuptools
+      - future
+
+test:
+  imports:
+    - ABXpy
+  requires:
+    - pytest>=2.6
+    - pytest-cov
+  source_files:
+    - test
+  commands:
+    - abx-task -h
+    - abx-score -h
+    - abx-distance -h
+    - pytest -vx
+
+about:
+  home: {{ data.get('url') }}
+  license: {{ data.get('license') }}
+  summary: {{ data.get('description') }}

@@ -41,7 +41,7 @@ def fullrun():
     task.generate_triplets(taskfilename)
 
     distances.compute_distances(
-        feature_file, '/features/', taskfilename,
+        feature_file, 'features', taskfilename,
         distance_file, dtw_cosine_distance,
         normalized=True, n_cpu=1)
 
