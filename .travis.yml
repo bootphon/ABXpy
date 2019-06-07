@@ -1,26 +1,33 @@
 language: python
 python:
     - "2.7"
+    - "3.6"
+    - "3.7"
 
 before_install:
-  # Setup anaconda, inspired by
-  # https://conda.io/docs/user-guide/tasks/use-conda-with-travis-ci.html
+  # Setup anaconda
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+      export PYTHON_MAJOR=2
     else
-      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+      export PYTHON_MAJOR=3
     fi
+  - wget https://repo.continuum.io/miniconda/Miniconda${PYTHON_MAJOR}-latest-Linux-x86_64.sh -O miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda update -q --yes conda
+
   # Useful for debugging any issues with conda
   - conda info -a
+
   # The next line fix a crash with multiprocessing on Travis
   # and are not specific to using Miniconda
   - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
 
 install:
-  - conda create -n test-environment --yes python=$TRAVIS_PYTHON_VERSION cython numpy scipy h5py pandas pytest pytables matplotlib
+  - if [[ "$PYTHON_MAJOR" == 2 ]]; then
+      sed -i -r 's/python.+/python=2.7/' environment.yml
+    fi
+  - conda env create -n test-environment --yes -f environment.yml
   - source activate test-environment
   - make install
 

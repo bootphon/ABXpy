@@ -12,13 +12,6 @@ class build_ext(setuptools.command.build_ext.build_ext):
         self.include_dirs.append(numpy.get_include())
 
 
-extension = setuptools.Extension(
-    'ABXpy.distances.metrics.dtw',
-    sources=['ABXpy/distances/metrics/dtw/dtw.pyx'],
-    extra_compile_args=['-O3'],
-)
-
-
 setuptools.setup(
     name='ABXpy',
     version=ABXpy.version,
@@ -52,7 +45,10 @@ setuptools.setup(
         'pytest-cov'
     ],
 
-    ext_modules=[extension],
+    ext_modules=[setuptools.Extension(
+        'ABXpy.distances.metrics.dtw',
+        sources=['ABXpy/distances/metrics/dtw/dtw.pyx'],
+        extra_compile_args=['-O3'])],
 
     cmdclass={'build_ext': build_ext},
 
