@@ -30,3 +30,4 @@ clean:
 	find . -name __pycache__ -exec rm -rf {} +
 	rm -rf .eggs *.egg-info
 	rm -rf ABXpy/distances/metrics/dtw/*.c
+	rm -rf build dist htmlcov .coverage*

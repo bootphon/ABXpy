@@ -23,6 +23,10 @@ setuptools.setup(
 
     packages=setuptools.find_packages(exclude='test'),
 
+    # needed for cython/setuptools, see
+    # http://docs.cython.org/en/latest/src/quickstart/build.html
+    zip_safe=False,
+
     setup_requires=[
         'cython',
         'setuptools>=18.0',

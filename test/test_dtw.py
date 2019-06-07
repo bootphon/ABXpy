@@ -7,6 +7,7 @@ import numpy as np
 def test_small():
     res = dtw._dtw(1, 1, np.ones((1, 1)), normalized=False)
     assert res == 1
+
     res = dtw._dtw(1, 1, np.ones((1, 1)), normalized=True)
     assert res == 1
 
