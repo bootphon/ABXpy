@@ -1,7 +1,11 @@
 .. image:: https://travis-ci.org/bootphon/ABXpy.svg?branch=master
     :target: https://travis-ci.org/bootphon/ABXpy
+.. image:: https://codecov.io/gh/bootphon/ABXpy/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/bootphon/ABXpy
+.. image:: https://anaconda.org/coml/abx/badges/version.svg
+    :target: https://anaconda.org/coml/abx
 .. image:: https://zenodo.org/badge/23788452.svg
-   :target: https://zenodo.org/badge/latestdoi/23788452
+    :target: https://zenodo.org/badge/latestdoi/23788452
 
 ABX discrimination test
 =======================
@@ -97,43 +101,31 @@ Example of use
 See ``examples/complete_run.sh`` for a command line run and
 ``examples/complete_run.py`` for a Python utilisation.
 
+
 Installation
 ------------
 
-The recommended installation is using `conda
-<https://docs.conda.io/en/latest/miniconda.html>`_ and the provided
-``environment.yml`` file.
+The recommended installation on linux and macos is using `conda
+<https://docs.conda.io/en/latest/miniconda.html>`_::
 
-First clone this repository and go to its root directory. Then ::
+  conda install -c coml abx
 
-    conda env create -n ABXpy -f environment.yml
-    source activate ABXpy
+Alternatively you may want to install it from sources. First clone
+this repository and go to its root directory. Then ::
+
+    conda env create -n abx -f environment.yml
+    source activate abx
     make install
-
-The module should work out of the box. However, you may get some
-(unrelevant) warnings while running ``abx-task``.
+    make test
 
 
-Run the tests
--------------
+Build the documentation
+-----------------------
 
-::
+To build the documentation in the folder ``ABXpy/build/doc/html``,
+simply have a::
 
-  make test
-
-Generate the documentation
----------------------------
-
-Note that you will get warnings if you don't have the `h5features
-module <http://h5features.readthedocs.org/en/latest/h5features.html>`_
-in your path.
-
-::
-
-    cd docs
-    make html
-
-(you can also generate the doc in several other formats, see the Makefile)
+    make doc
 
 
 Citation
@@ -141,4 +133,6 @@ Citation
 
 If you use this software in your research, please cite:
 
-  ABX discriminability, Schatz T., Bach F. and Dupoux E., in preparation.
+  `ABX-discriminability measures and applications
+  <https://hal.archives-ouvertes.fr/tel-01407461/file/Schatz2016.pdf>`_,
+  Schatz T., Université Paris 6 (UPMC), 2016.
