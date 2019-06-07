@@ -3,7 +3,7 @@ build-linux:
   script:
     - module load anaconda/3
     - conda activate abx-ci
-    - conda env update -n shennong-ci -f environment.yml
+    - conda env update -n abx-ci -f environment.yml
     - python setup.py install
 
 test-linux:
@@ -11,6 +11,22 @@ test-linux:
   script:
     - module load anaconda/3
     - conda activate abx-ci
+    - python setup.py test
+
+build-linux-py2:
+  stage: build
+  script:
+    - module load anaconda/3
+    - sed 's|python>=3.6|python=2.7|' environment.yml > environment.py2.yml
+    - conda activate abx-py2-ci
+    - conda env update -n abx-py2-ci -f environment.py2.yml
+    - python setup.py install
+
+test-linux-py2:
+  stage: test
+  script:
+    - module load anaconda/3
+    - conda activate abx-py2-ci
     - python setup.py test
 
 build-osx:

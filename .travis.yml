@@ -4,6 +4,18 @@ python:
     - "3.6"
     - "3.7"
 
+notifications:
+  email: false
+
+# no need of git history
+git:
+  depth: 1
+
+# test only the master branch
+branches:
+  only:
+    - master
+
 before_install:
   # Setup anaconda
   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -29,7 +41,11 @@ install:
     fi
   - conda env create -n test-environment --yes -f environment.yml
   - source activate test-environment
+  - pip install codecov
   - make install
 
 script:
   - make test
+
+after_success:
+  - codecov
