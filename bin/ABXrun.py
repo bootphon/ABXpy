@@ -4,7 +4,6 @@
 import argparse
 import json
 import os
-import sys
 
 import ABXpy.task
 import ABXpy.distances.distances as distances
