@@ -19,7 +19,7 @@ stimulus (X). (Glottopedia)
 This package contains the operations necessary to initialize,
 calculate and analyse the results of an ABX discrimination task.
 
-Check out the full documentation at https://coml.lscp.ens.fr/abx.
+Check out the full documentation at https://coml.lscp.ens.fr/docs/abx.
 
 Organisation
 ------------

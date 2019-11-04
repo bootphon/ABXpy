@@ -61,7 +61,7 @@ deploy-oberon:
     - python setup.py install
     - python setup.py test
 
-# documentation is available on https://coml.lscp.ens.fr/abx
+# documentation is available on https://coml.lscp.ens.fr/docs/abx
 deploy-doc:
   stage: deploy
   only:
@@ -72,7 +72,7 @@ deploy-doc:
     - module load texlive/2018
     - conda activate abx-ci
     - sphinx-build doc build/doc
-    - scp -r build/doc/* coml.lscp.ens.fr:/var/www/html/abx
+    - scp -r build/doc/* coml.lscp.ens.fr:/var/www/html/docs/abx
 
 # abx package available on conda with "conda install -c coml
 # abx". Build and upload the package only on new git tags or
