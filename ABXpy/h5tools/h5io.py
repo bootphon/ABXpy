@@ -30,7 +30,7 @@ class H5IO(object):
         if fused is None:
             fused = {}
         if datasets is not None:
-            if isinstance(datasets, collections.Mapping):
+            if isinstance(datasets, collections.abc.Mapping):
                 indexed_datasets = [
                     key for key, value in iteritems(datasets) if not(value is None)]
                 indexed_datasets_indexes = [
@@ -218,7 +218,7 @@ class H5IO(object):
             self.__write__(data, indexed)
 
     def __parse_input_data__(self, data):
-        if not(isinstance(data, collections.Mapping)):
+        if not(isinstance(data, collections.abc.Mapping)):
             data_dict = {}
             for dataset, d in zip(self.managed_datasets, data):
                 data_dict[dataset] = d
