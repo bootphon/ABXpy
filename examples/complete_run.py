@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-
-"""This test contains a full run of the ABX pipeline with randomly
-created database and features.
-
-"""
+"""Full run of ABX pipeline with randomly created database and features"""
 
 import os
 
@@ -45,7 +41,7 @@ def fullrun():
     task.generate_triplets(taskfilename)
 
     distances.compute_distances(
-        feature_file, '/features/', taskfilename,
+        feature_file, 'features', taskfilename,
         distance_file, dtw_cosine_distance,
         normalized=True, n_cpu=1)
 

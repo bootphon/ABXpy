@@ -1,28 +1,12 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sun Jan 19 17:06:15 2014
-
-@author: Thomas Schatz
-"""
-
-# make sure the rest of the ABXpy package is accessible
 import os
-import sys
 from six import iteritems
 import collections
-import os
 from past.builtins import basestring
 
 import h5py
 import numpy as np
 
-
-package_path = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
 import ABXpy.misc.type_fitting as type_fitting
-# FIXME should remove above dependency on rest of ABX...
 
 from . import np2h5
 

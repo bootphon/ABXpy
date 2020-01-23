@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jan  7 18:11:16 2014
-
-:author: Thomas Schatz
-
-This class is used to display the progress during the computing.
-"""
+"""Displays the progress during the computing."""
 
 import os
 import sys
@@ -13,7 +6,6 @@ import collections
 
 
 class ProgressDisplay(object):
-
     def __init__(self):
         self.message = collections.OrderedDict()
         self.total = collections.OrderedDict()

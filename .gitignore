@@ -37,10 +37,10 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 .tox/
-.coverage
+.coverage*
+coverage.xml
 .cache
 nosetests.xml
-coverage.xml
 
 # Translations
 *.mo
@@ -56,9 +56,6 @@ coverage.xml
 # Django stuff:
 *.log
 *.pot
-
-# Sphinx documentation
-docs/_build/
 
 # pyTest cache
 test/__pycache__

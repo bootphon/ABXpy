@@ -11,7 +11,6 @@ from . import dbfun
 
 
 class DBfun_Column(dbfun.DBfun):
-
     def __init__(self, name, db=None, column=None, indexed=True):
         self.input_names = [name]
         self.n_outputs = 1

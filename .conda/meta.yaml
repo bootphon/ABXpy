@@ -1,0 +1,73 @@
+# Build the shennong conda package. Run with "conda build . -c coml"
+
+{% set name = 'abx' %}
+{% set data = load_setup_py_data() %}
+
+package:
+  name: {{ name }}
+  version: {{ data.get('version') }}
+
+source:
+  path: ..
+
+build:
+  entry_points:
+  {% for entry in data.get('entry_points')['console_scripts'] %}
+    - {{ entry }}
+  {% endfor %}
+  script:
+    - python setup.py install
+
+requirements:
+    build:
+      - python {{ python }}
+      - cython
+      - future
+      - h5features
+      - h5py>=2.2.1
+      - mock
+      - numpy>=1.8.1
+      - pandas>=0.13.1
+      - pip
+      - pytables
+      - pytest
+      - pytest-cov
+      - pytest-runner
+      - scipy>=0.14.0
+      - setuptools
+
+    run:
+      - python {{ python }}
+      - cython
+      - future
+      - h5features
+      - h5py>=2.2.1
+      - mock
+      - numpy>=1.8.1
+      - pandas>=0.13.1
+      - pip
+      - pytables
+      - pytest
+      - pytest-cov
+      - pytest-runner
+      - scipy>=0.14.0
+      - setuptools
+
+test:
+  imports:
+    - ABXpy
+  requires:
+    - pytest>=2.6
+    - pytest-cov
+  source_files:
+    - test
+  commands:
+    - abx-task -h
+    - abx-score -h
+    - abx-distance -h
+    - pytest -vx
+
+about:
+  home: {{ data.get('url') }}
+  license: {{ data.get('license') }}
+  summary: {{ data.get('description') }}

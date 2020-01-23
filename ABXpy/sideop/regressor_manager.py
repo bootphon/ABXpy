@@ -1,19 +1,5 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Dec 16 05:01:53 2013
-
-:author: Thomas Schatz
-"""
-
 # make sure the rest of the ABXpy package is accessible
-import os
-import sys
 from six import iteritems
-
-package_path = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
 
 import ABXpy.sideop.side_operations_manager as side_operations_manager
 import ABXpy.dbfun.dbfun_compute as dbfun_compute

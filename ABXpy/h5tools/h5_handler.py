@@ -1,12 +1,4 @@
-# -*- coding: utf-8 -*-
 from __future__ import print_function
-"""
-Created on Tue Oct 15 09:48:31 2013
-
-@author: Thomas Schatz
-"""
-
-
 """Sort rows of a several two dimenional numeric dataset (possibly
 with just one column) according to numeric key in two-dimensional key
 dataset with just one column (the first dimension of all datasets

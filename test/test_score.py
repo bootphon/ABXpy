@@ -1,15 +1,8 @@
-"""This test script contains tests for the basic parameters of score.py
-"""
-# -*- coding: utf-8 -*-
+"""This test script contains tests for the basic parameters of score.py"""
 
 import os
 import shutil
-import sys
 
-package_path = os.path.dirname(os.path.dirname(
-    os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
 import ABXpy.task
 import ABXpy.distances.distances as distances
 import ABXpy.distances.metrics.cosine as cosine
@@ -37,15 +30,7 @@ def test_score():
         distances.compute_distances(
             feature_file, '/features/', taskfilename,
             distance_file, dtw_cosine_distance,
-            normalized = True, n_cpu=3)
+            normalized=True, n_cpu=3)
         score.score(taskfilename, distance_file, scorefilename)
     finally:
-        try:
-            shutil.rmtree('test_items')
-            # os.remove(item_file)
-            # os.remove(feature_file)
-            # os.remove(taskfilename)
-            # os.remove(distance_file)
-            # os.remove(scorefilename)
-        except:
-            pass
+        shutil.rmtree('test_items', ignore_errors=True)

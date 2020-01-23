@@ -76,11 +76,6 @@ import pandas as pd
 import tables
 import warnings
 
-# make sure the rest of the ABXpy package is accessible
-# package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-# if not(package_path in sys.path):
-#     sys.path.append(package_path)
-
 import ABXpy.database.database as database
 import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.h5tools.h52np as h52np
@@ -419,7 +414,7 @@ class Task(object):
                     display.display()
 
                 block = self.on_across_blocks[by].groups[block_key]
-                on_across_by_values = dict(db.ix[block[0]])
+                on_across_by_values = dict(db.iloc[block[0]])
 
                 # retrieve the on and across keys (as they are stored
                 # in the panda object)
@@ -825,7 +820,7 @@ class Task(object):
 
             # allow to get on, across, by values as well as values of
             # other variables that are determined by these
-            on_across_by_values = dict(db.ix[block[0]])
+            on_across_by_values = dict(db.iloc[block[0]])
             if self.filters.on_across_by_filter(on_across_by_values):
                 # instantiate on_across_by regressors here
                 self.regressors.set_on_across_by_regressors(

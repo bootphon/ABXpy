@@ -38,27 +38,14 @@ In python:
     # calculate the scores:
     ABXpy.score('data.abx', 'myDistance.???', 'data.score')
 
-
-
-Created on Mon Oct 14 12:28:05 2013
-
-@author: Thomas Schatz
 """
 
 import argparse
-import os
-import sys
-
 import h5py
 import numpy as np
-
-# make sure the rest of the ABXpy package is accessible
-package_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
+import os
 
 import ABXpy.h5tools.h52np as h52np
-import ABXpy.h5tools.np2h5 as np2h5
 import ABXpy.misc.type_fitting as type_fitting
 
 
@@ -87,7 +74,7 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
     assert not os.path.exists(score_file), ('score file already exist ' +
                                             score_file)
     # with h5py.File(task_file) as t:
-    #bys = [by for by in t['triplets']]
+    #     bys = [by for by in t['triplets']]
     # FIXME skip empty by datasets, this should not be necessary anymore when
     # empty datasets are filtered at the task file generation level
     with h5py.File(task_file) as t:
@@ -158,7 +145,5 @@ def main():
     score(args.task, args.distance, args.score)
 
 
-# FIXME write command-line interface
-# detects whether the script was called from command-line
 if __name__ == '__main__':
     main()

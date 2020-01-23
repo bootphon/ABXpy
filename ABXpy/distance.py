@@ -1,13 +1,13 @@
+import argparse
+import numpy as np
+import editdistance
+import os
 import sys
+import warnings
+
 from ABXpy.distances import distances
 import ABXpy.distances.metrics.dtw as dtw
 import ABXpy.distances.metrics.cosine as cosine
-import argparse
-import editdistance
-import os
-import numpy as np
-import warnings
-
 
 def default_distance(x, y, normalized):
     """ Dynamic time warping cosine distance

@@ -1,50 +1,52 @@
-# -*- coding: utf-8 -*-
 from __future__ import print_function
-"""
-Created on Thu May  8 04:07:43 2014
-
-@author: Thomas Schatz
-"""
 
 import h5py
 import numpy as np
 import pandas
 import multiprocessing
 import os
-# import time
-import traceback
 import sys
 import warnings
-import pickle
-try:
-    import h5features
-except ImportError:
-    sys.path.insert(0, os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.realpath(__file__))))), 'h5features'))
-    import h5features
+import h5features
 
 # FIXME Enforce single process usage when using python compiled with OMP
 # enabled
 
 # FIXME detect when multiprocessed jobs crashed
+
 # FIXME do a separate functions: generic load_balancing
+
 # FIXME write distances in a separate file
+
+# FIXME write split_feature_file, such that it create the appropriate
+# files + check that no filename conflict can occur in: (f + '_' +
+# str(on) + '_' + str(off)) -> mem -> mem_by_cpu if not enough
+# mem_by_cpu to load whole dataset: rewrite files of size matching
+# mem_by_cpu using the structure of the jobs do not rewrite items of a
+# by block if not used in considered job only way this can fail is if
+# some (sub-)by blocks contain too many items for being stored in
+# mem_by_cpu do not treat this case for now, but detect it and if it
+# ever happens: divide items in (items_1, items_2,....)  read items_1,
+# then items_1, items_2, then items_1, items_3...  if this ever proves
+# too slow: could use co-clustering on the big by blocks, use it for
+# the job creation and adopt smarter loading schemes
 
 
 def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
     """Divide the work load into smaller blocks to be passed to the cpus
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     pair_file: string
-        hdf5 task file, or at least an hdf5 file containing a 'unique_pairs' dataset
+        hdf5 task file, or at least an hdf5 file containing a
+        'unique_pairs' dataset
     distance_file: string
         hdf5 file taht will contain the distance datasets
     n_cpu:
         number of cpus tu use
     block_ceil_size: int
         maximum size in RAM of a block in Mb
+
     """
     # FIXME check (given an optional checking function)
     # that all features required in feat_dbs are indeed present in feature
@@ -79,9 +81,10 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
     # step 1
     by_n_pairs = np.int64(by_n_pairs)
     total_n_pairs = np.sum(by_n_pairs)
-    max_block_size = min(np.int64(np.ceil(total_n_pairs / np.float(n_cpu))),
-                         # buffer_max_size * 1000000 / np.dtype(by_n_pairs).itemsize)
-                         buffer_max_size * 1000000 / 8)
+    max_block_size = min(
+        np.int64(np.ceil(total_n_pairs / np.float(n_cpu))),
+        # buffer_max_size * 1000000 / np.dtype(by_n_pairs).itemsize)
+        buffer_max_size * 1000000 / 8)
     by = []
     start = []
     stop = []
@@ -127,27 +130,24 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
         jobs.append(job)
     return jobs
 
-"""
-If there are very large by blocks, two additional
-things could help optimization:
-    1. doing co-clustering inside of the large by blocks
-        at the beginning to get two types of blocks:
-        sparse and dense distances (could help if i/o is a problem
-        but a bit delicate)
-    2. rewriting the features to accomodate the co-clusters
-If there are very small by blocks and i/o become too slow
-could group them into intermediate size h5features files
-"""
 
-"""
-This function can be used concurrently by several processes.
-When it is the case synchronization of the writing operations in
-the target distance_file is required by HDF5.
-The current solution uses a global lock for the whole file.
-Since each job is writing in different places, it should in principle be
-possible to do all the write concurrently if ever necessary, using parallel
-HDF5 (based on MPI-IO).
-"""
+# If there are very large by blocks, two additional
+# things could help optimization:
+#     1. doing co-clustering inside of the large by blocks
+#         at the beginning to get two types of blocks:
+#         sparse and dense distances (could help if i/o is a problem
+#         but a bit delicate)
+#     2. rewriting the features to accomodate the co-clusters
+# If there are very small by blocks and i/o become too slow
+# could group them into intermediate size h5features files
+#
+# This function can be used concurrently by several processes.
+# When it is the case synchronization of the writing operations in
+# the target distance_file is required by HDF5.
+# The current solution uses a global lock for the whole file.
+# Since each job is writing in different places, it should in principle be
+# possible to do all the write concurrently if ever necessary, using parallel
+# HDF5 (based on MPI-IO).
 
 def run_distance_job(job_description, distance_file, distance,
                      feature_files, feature_groups, splitted_features,
@@ -237,16 +237,16 @@ def run_distance_job(job_description, distance_file, distance,
                                       items['offset'][pairs[i, 1]]),
                               UserWarning)
             try:
-                if normalize is not None : 
-                    if normalize==1:
-                        normalize=True
-                    elif normalize==0:
-                        normalize=False
+                if normalize is not None:
+                    if normalize == 1:
+                        normalize = True
+                    elif normalize == 0:
+                        normalize = False
                     else:
                         print('normalized parameter neither 1 nor 0,'
-                        'using normalization')
-                        normalize=True
-                    dis[i,0] = distance(dataA, dataB, normalized=normalize)
+                              'using normalization')
+                        normalize = True
+                    dis[i, 0] = distance(dataA, dataB, normalized=normalize)
                 else:
                     dis[i, 0] = distance(dataA, dataB)
             except:
@@ -287,16 +287,20 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
     else:
         feature_files = feature_file
         feature_groups = feature_group
+
     # FIXME if there are other datasets in feature_file this is not accurate
     mem_needed = 0
     for feature_file in feature_files:
         feature_size = os.path.getsize(feature_file) / float(2 ** 20)
         mem_needed = feature_size * n_cpu + mem_needed
+
     splitted_features = False
-    #splitted_features = mem_needed > mem
+    # splitted_features = mem_needed > mem
     # if splitted_features:
     #    split_feature_file(feature_file, feature_group, pair_file)
+
     jobs = create_distance_jobs(pair_file, distance_file, n_cpu)
+
     # results = []
     if n_cpu > 1:
         # use of a manager seems necessary because we're using a Pool...
@@ -307,8 +311,9 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
                 for i, job in enumerate(jobs)]
         pool.map(worker, args)
     else:
-        run_distance_job(jobs[0], distance_file, distance,
-                         feature_files, feature_groups, splitted_features, 1, normalized)
+        run_distance_job(
+            jobs[0], distance_file, distance,
+            feature_files, feature_groups, splitted_features, 1, normalized)
         with h5py.File(distance_file) as fh:
             fh.attrs.modify('done', True)
 
@@ -324,13 +329,28 @@ class Features_Accessor(object):
         self.times = times
         self.features = features
 
+        # FIXME a dirty fix to deal with python3 incompatibility,
+        # would be better to handle it in h5features directly
+        if sys.version_info.major >= 3:
+            try:
+                self.times = {
+                    k.decode('utf8'): v for k, v in self.times.items()}
+                self.features = {
+                    k.decode('utf8'): v for k, v in self.features.items()}
+            except AttributeError:
+                pass
+
     def get_features_from_raw(self, items):
         features = {}
-        for ix, f, on, off in zip(items.index, items['file'],
-                                  items['onset'], items['offset']):
-            f=str(f)
-            t = np.where(np.logical_and(self.times[f] >= on,
-                                        self.times[f] <= off))[0]
+        for ix, f, on, off in zip(
+                items.index, items['file'],
+                items['onset'], items['offset']):
+            f = str(f)
+
+            t = np.where(np.logical_and(
+                self.times[f] >= on,
+                self.times[f] <= off))[0]
+
             # if len(t) == 0:
             #     raise IOError('No features found for file {}, at '
             #                   'time {}-{}'.format(f, on, off))
@@ -343,54 +363,3 @@ class Features_Accessor(object):
                                   items['onset'], items['offset']):
             features[ix] = self.features[f + '_' + str(on) + '_' + str(off)]
         return features
-
-# write split_feature_file, such that it create the appropriate files
-# + check that no filename conflict can occur in:
-# (f + '_' + str(on) + '_' + str(off))
-# -> mem -> mem_by_cpu
-# if not enough mem_by_cpu to load whole dataset:
-# rewrite files of size matching mem_by_cpu using the structure of the jobs
-# do not rewrite items of a by block if not used in considered job
-# only way this can fail is if some (sub-)by blocks contain too many items for
-# being stored in mem_by_cpu
-# do not treat this case for now, but detect it and if it ever happens:
-#   divide items in (items_1, items_2,....)
-#   read items_1, then items_1, items_2, then items_1, items_3...
-# if this ever proves too slow: could use co-clustering on the big by blocks,
-# use it for the job creation and adopt smarter loading schemes
-
-if __name__ == '__main__':
-
-    import argparse
-    import metrics.cosine as cosine
-    import metrics.dtw as dtw
-
-    def dtw_cosine_distance(x, y,normalized):
-        return dtw.dtw(x, y, cosine.cosine_distance,normalized)
-
-    # parser (the usage string is specified explicitly because the default
-    # does not show that the mandatory arguments must come before the
-    # mandatory ones; otherwise parsing is not possible beacause optional
-    # arguments can have various numbers of inputs)
-    parser = argparse.ArgumentParser(usage="%(prog)s features task [distance]"
-                                           " [-o output]",
-                                     description='ABX distance computation')
-    # I/O files
-    g1 = parser.add_argument_group('I/O files')
-    g1.add_argument('features', help='feature file')
-    g1.add_argument('task', help='task file generated by the task module, \
-        containing the triplets and the pairs associated to the task \
-        specification')
-    g1.add_argument('distance', nargs='?', default=None,
-                    help='optional, callable: distance to use')
-    g1.add_argument(
-        '-o', '--output', help='optional: output distance file')
-    g1.add_argument(
-        '-n', '--ncpu', default=None, help='optional: number of cpus to use')
-    g1.add_argument(
-        '-no', '--normalized', help='optional: if dtw distance selected,'
-        'specifies if the distance is computed with a sum (-no 0) or '
-        'with normalization (-no 1) ')
-    args = parser.parse_args()
-    compute_distances(args.features, '/features/', args.task,
-                      args.output, dtw_cosine_distance, normalized=args.normalized, n_cpu=args.ncpu)

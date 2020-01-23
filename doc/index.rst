@@ -6,7 +6,14 @@
 Welcome to ABXpy's documentation!
 =================================
 
-Contents:
+.. note::
+
+   For installation instructions please see the `README
+   <https://github.com/bootphon/ABXpy#installation>`_.
+
+
+Contents
+--------
 
 .. toctree::
    :maxdepth: 3
@@ -16,9 +23,8 @@ Contents:
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

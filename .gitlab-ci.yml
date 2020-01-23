@@ -1,0 +1,103 @@
+build-linux:
+  stage: build
+  script:
+    - module load anaconda/3
+    - conda activate abx-ci
+    - conda env update -n abx-ci -f environment.yml
+    - python setup.py install
+
+test-linux:
+  stage: test
+  script:
+    - module load anaconda/3
+    - conda activate abx-ci
+    - python setup.py test
+
+build-linux-py2:
+  stage: build
+  script:
+    - module load anaconda/3
+    - sed 's|python>=3.6|python=2.7|' environment.yml > environment.py2.yml
+    - conda activate abx-py2-ci
+    - conda env update -n abx-py2-ci -f environment.py2.yml
+    - python setup.py install
+
+test-linux-py2:
+  stage: test
+  script:
+    - module load anaconda/3
+    - conda activate abx-py2-ci
+    - python setup.py test
+
+build-osx:
+  tags:
+    - macos
+  stage: build
+  script:
+    - conda activate abx
+    - conda env update -n abx -f environment.yml
+    - python setup.py install
+
+test-osx:
+  tags:
+    - macos
+  stage: test
+  script:
+    - conda activate abx
+    - python setup.py test
+
+# abx package is available on oberon with "conda activate abx"
+deploy-oberon:
+  stage: deploy
+  only:
+    refs:
+      - master
+  script:
+    - module load anaconda/3
+    - cd /shared/apps/ABXpy
+    - git pull origin master
+    - conda env update -n abx -f environment.yml
+    - conda activate abx
+    - python setup.py install
+    - python setup.py test
+
+# documentation is available on https://coml.lscp.ens.fr/docs/abx
+deploy-doc:
+  stage: deploy
+  only:
+    refs:
+      - master
+  script:
+    - module load anaconda/3
+    - module load texlive/2018
+    - conda activate abx-ci
+    - sphinx-build doc build/doc
+    - scp -r build/doc/* coml.lscp.ens.fr:/var/www/html/docs/abx
+
+# abx package available on conda with "conda install -c coml
+# abx". Build and upload the package only on new git tags or
+# manual triggers.
+deploy-conda-linux:
+  stage: deploy
+  only:
+    - tags
+    - triggers
+  script:
+    - module load anaconda/3
+    - conda activate abx-ci
+    - cd .conda
+    - conda build -c coml --user coml --token $CONDA_TOKEN --skip-existing .
+    - conda build purge
+
+deploy-conda-osx:
+  tags:
+    - macos
+  stage: deploy
+  only:
+    - tags
+    - triggers
+  script:
+    - conda activate abx
+    - cd .conda
+    - conda build -c coml --user coml --token $CONDA_TOKEN --skip-existing .
+    - conda build purge

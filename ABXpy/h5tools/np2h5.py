@@ -1,19 +1,19 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Sep 19 13:46:18 2013
+"""Class for efficiently writing to disk (in a dataset of a HDF5 file)
 
-@author: Thomas Schatz
+Simple two-dimensional numpy arrays that are incrementally generated
+along the first dimension.  It uses buffers to avoid small I/O.
 
-Class for efficiently writing to disk (in a specified dataset of a HDF5 file)
-simple two-dimensional numpy arrays that are incrementally generated along the first dimension.
-It uses buffers to avoid small I/O.
+It needs to be used within a 'with' statement, so as to handle buffer
+flushing and opening and closing of the underlying HDF5 file smoothly.
 
-It needs to be used within a 'with' statement, so as to handle buffer flushing and opening and closing of the underlying HDF5 file smoothly.
+Buffer size should be chosen according to speed/memory trade-off. Due
+to cache issues there is probably an optimal size.
 
-Buffer size should be chosen according to speed/memory trade-off. Due to cache issues there is probably an optimal size.
+The size of the dataset to be written must be known in advance,
+excepted when overwriting an existing dataset.  Not writing exactly
+the expected amount of data causes an Exception to be thrown excepted
+is the fixed_size option was set to False when adding the dataset.
 
-The size of the dataset to be written must be known in advance, excepted when overwriting an existing dataset. 
-Not writing exactly the expected amount of data causes an Exception to be thrown excepted is the fixed_size option was set to False when adding the dataset.
 """
 from past.builtins import basestring
 
@@ -22,7 +22,6 @@ import h5py
 
 
 class NP2H5(object):
-
     # sink is the name of the HDF5 file to which to write, buffer size is in
     # kilobytes
 

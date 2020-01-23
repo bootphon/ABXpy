@@ -1,29 +1,12 @@
-from __future__ import print_function
-# -*- coding: utf-8 -*-
-"""Generate test files for the test functions
-"""
-"""
-Created on Thu Apr 24 18:05:41 2014
+"""Generate test files for the test functions"""
 
-@author: thiolliere
-"""
-
-import numpy as np
-import sys
-import os
 import filecmp
+import h5features
+import numpy as np
+import os
+import pandas
 import subprocess
 from past.builtins import xrange
-# import h5py
-# import numpy as np
-# from ys.mods import load
-try:
-    import h5features
-except ImportError:
-    sys.path.insert(0, os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(
-            os.path.realpath(__file__)))), 'h5features'))
-    import h5features
 
 
 def generate_testitems(base, n, repeats=0, name='data.item'):
@@ -111,17 +94,22 @@ def h5cmp(f1, f2):
         out = subprocess.check_output(['h5diff', f1, f2])
     except subprocess.CalledProcessError:
         return False
-    # print out
     if out:
         return False
     else:
         return True
 
 
-def csv_cmp(f1, f2):
-    with open(f1) as f1in, open(f2) as f2in:
-        f1_content = f1in.readlines()
-        f2_content = f2in.readlines()
-    f1_content.sort()
-    f2_content.sort()
-    return np.all(f1_content == f2_content)
+def csv_cmp(f1, f2, sep='\t'):
+    """Returns True if the 2 CSV files are equals
+
+    The comparison is not sensitive to the columns order.
+
+    """
+    csv1 = pandas.read_csv(f1, sep=sep)
+    csv1 = csv1.reindex(sorted(csv1.columns), axis=1)
+
+    csv2 = pandas.read_csv(f2, sep=sep)
+    csv2 = csv2.reindex(sorted(csv2.columns), axis=1)
+
+    return csv1.to_csv().split('\n').sort() == csv2.to_csv().split('\n').sort()

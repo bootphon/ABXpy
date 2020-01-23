@@ -1,20 +1,16 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Nov 12 02:25:17 2013
-
-@author: Thomas Schatz
 """
 
-"""
-AST visitor class for finding calls to lookup table (.dbfun) files in a script
-and make the script ready for execution.
+AST visitor class for finding calls to lookup table (.dbfun) files in
+a script and make the script ready for execution.
 
-There is a restriction: when in a lookup table calling node, check that the
-node.code_nodes concatened of the children is empty: i.e. hierarchical calls
-to auxiliary h5 file are not allowed with a depth larger than 1. We could
-allow deeper calls, but would there be any practical benefit ? Probably not
-because the input to a lookup table call can only be of the type of a column
-of the database (at least with the current system).
+There is a restriction: when in a lookup table calling node, check
+that the node.code_nodes concatened of the children is empty:
+i.e. hierarchical calls to auxiliary h5 file are not allowed with a
+depth larger than 1. We could allow deeper calls, but would there be
+any practical benefit ? Probably not because the input to a lookup
+table call can only be of the type of a column of the database (at
+least with the current system).
+
 """
 
 import ast
@@ -22,7 +18,6 @@ import uuid
 
 
 class LookupTableConnector(ast.NodeTransformer):
-
     def __init__(self, script, aux_functions, aliases, *args, **kwargs):
         ast.NodeTransformer.__init__(self, *args, **kwargs)
         self.aux_functions = aux_functions
@@ -34,20 +29,21 @@ class LookupTableConnector(ast.NodeTransformer):
                node.kwargs is None and node.starargs is None):
             raise ValueError(
                 'Call to function %s defined in an auxiliary h5 file is not '
-                'correct in script: %s' % (
-                node.func.id, self.script))
+                'correct in script: %s' % (node.func.id, self.script))
 
     def check_Subscript(self, node, func_name):
         error = ValueError(
             'Call to function %s defined in an auxiliary h5 file is not '
-            'correct in script: %s' % (
-            func_name, self.script))
+            'correct in script: %s' % (func_name, self.script))
+
         if not(isinstance(node.slice, ast.Index) and
                isinstance(node.ctx, ast.Load)):
             raise error
+
         if not(isinstance(node.slice.value, ast.Tuple) and
                isinstance(node.slice.value.ctx, ast.Load)):
             raise error
+
         # output column must appear explicitly as strings
         if not(all([isinstance(e, ast.Str) for e in node.slice.value.elts])):
             raise error

@@ -5,10 +5,6 @@ Incremental meaning that you don't have to draw the whole sample at
 once, instead at any given time you can get a piece of the sample of a
 size you specify. This is useful for very large sample sizes.
 
-Created on Mon Nov 18 03:14:53 2013
-
-@author: Thomas Schatz
-
 """
 
 import numpy as np
@@ -253,54 +249,51 @@ def rejection_sampling(n, N, dtype=np.int64):
     return sample
 
 
-"""
-Profiling hypergeometric sampling + sampling without replacement together:
+# Profiling hypergeometric sampling + sampling without replacement together:
 
-ChunkSize
-10**2:
-    hyper: 46s
-    sample: 32s
-10**3:
-    hyper : 4.5s
-    sample 6s
-10**4:
-    hyper 0.5s
-    sample 4.5s
-10**5:
-    hyper 0.05s
-    sample 4s
-10**6:
-    hyper 0.007s
-    sample 5.7s
-10**7:
-    hyper 0.001s
-    sample 10.33s
-+ memory increase with chunk size
+# ChunkSize
+# 10**2:
+#     hyper: 46s
+#     sample: 32s
+# 10**3:
+#     hyper : 4.5s
+#     sample 6s
+# 10**4:
+#     hyper 0.5s
+#     sample 4.5s
+# 10**5:
+#     hyper 0.05s
+#     sample 4s
+# 10**6:
+#     hyper 0.007s
+#     sample 5.7s
+# 10**7:
+#     hyper 0.001s
+#     sample 10.33s
+# + memory increase with chunk size
 
-Should aim at having samples with around 100 000 elements.
-This means sampling in 10**5 * sampled_proportion chunks.
+# Should aim at having samples with around 100 000 elements.
+# This means sampling in 10**5 * sampled_proportion chunks.
 
-profiling code:
+# profiling code:
 
-import time
-tt=[]
-ra = range(8, 9)
-for block_size in ra:
-    t = time.clock()
-    progress = 0
-    b = 10**block_size
-    for i in range(10**12//(10**3*b)):
-        r = s.sample(10**3*b)
-        progress = progress+100*(len(r)/10.**9)
-        print(progress)
-        if progress > 3:
-            break
-    tt.append(time.clock()-t)
-for e, b in zip(tt, ra):
-    print(b)
-    print(e)
-
-"""
+# import time
+# tt=[]
+# ra = range(8, 9)
+# for block_size in ra:
+#     t = time.clock()
+#     progress = 0
+#     b = 10**block_size
+#     for i in range(10**12//(10**3*b)):
+#         r = s.sample(10**3*b)
+#         progress = progress+100*(len(r)/10.**9)
+#         print(progress)
+#         if progress > 3:
+#             break
+#     tt.append(time.clock()-t)
+# for e, b in zip(tt, ra):
+#     print(b)
+#     print(e)
 
 # ## Profiling rejection sampling and Knuth sampling ###
 # could create an automatic test for finding the turning point and offset

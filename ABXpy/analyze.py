@@ -26,11 +26,6 @@ In python:
     # Prerequisite: calculate a task data.abx, and a score data.score
     ABXpy.analyze.analyze(data.score, data.abx, data.csv)
 
-
-Created on Mon Oct 14 12:28:22 2013
-
-@author: Thomas Schatz
-
 """
 
 import h5py
@@ -39,7 +34,6 @@ import argparse
 import os.path as path
 import os
 import warnings
-import sys
 
 from ABXpy.misc.type_fitting import fit_integer_type
 

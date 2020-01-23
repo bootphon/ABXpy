@@ -14,25 +14,18 @@ Do not implement variable length outputs and requires that the entire lookup
 table fits in RAM memory.
 """
 
-# make sure the rest of the ABXpy package is accessible
-import os
-import sys
 import operator
 import collections
 from past.builtins import basestring
 import h5py
 import numpy
 
-package_path = os.path.dirname(
-    os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
 import ABXpy.misc.type_fitting as type_fitting
-# FIXME should remove above dependency on rest of ABX...
 
 # Only solution I found for circular
 # imports in both Python 2 and 3
 from . import *
+
 
 # FIXME when data is missing: potentially use DB_column ?
 # FIXME make sure extension for other kind of input/output is easy: maybe use

@@ -1,15 +1,8 @@
-"""This test script contains tests for analyze.py
-"""
-# -*- coding: utf-8 -*-
+"""This test script contains tests for analyze.py"""
 
 import os
 import shutil
-import sys
 
-package_path = os.path.dirname(os.path.dirname(
-    os.path.dirname(os.path.realpath(__file__))))
-if not(package_path in sys.path):
-    sys.path.append(package_path)
 import ABXpy.task
 import ABXpy.distances.distances as distances
 import ABXpy.distances.metrics.cosine as cosine
@@ -20,8 +13,8 @@ import ABXpy.analyze as analyze
 import numpy as np
 
 
-frozen_folder = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                             'frozen_files')
+frozen_folder = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), 'frozen_files')
 
 
 def frozen_file(ext):
@@ -46,22 +39,14 @@ def test_analyze():
         items.generate_db_and_feat(3, 3, 1, item_file, 2, 3, feature_file)
         task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
         task.generate_triplets(taskfilename)
-        distances.compute_distances(feature_file, '/features/', taskfilename,
-                                    distance_file, dtw_cosine_distance,
-                                    normalized = True, n_cpu=1)
+        distances.compute_distances(
+            feature_file, '/features/', taskfilename,
+            distance_file, dtw_cosine_distance,
+            normalized=True, n_cpu=1)
         score.score(taskfilename, distance_file, scorefilename)
         analyze.analyze(taskfilename, scorefilename, analyzefilename)
     finally:
-        try:
-            shutil.rmtree('test_items')
-            # os.remove(item_file)
-            # os.remove(feature_file)
-            # os.remove(taskfilename)
-            # os.remove(distance_file)
-            # os.remove(scorefilename)
-            # os.remove(analyzefilename)
-        except:
-            pass
+        shutil.rmtree('test_items', ignore_errors=True)
 
 
 def test_threshold_analyze():
@@ -82,23 +67,14 @@ def test_threshold_analyze():
         distances.compute_distances(
             feature_file, '/features/', taskfilename,
             distance_file, dtw_cosine_distance,
-            normalized = True, n_cpu=1)
+            normalized=True, n_cpu=1)
         score.score(taskfilename, distance_file, scorefilename)
         analyze.analyze(taskfilename, scorefilename, analyzefilename)
         number_triplets = np.loadtxt(analyzefilename, dtype=int,
                                      delimiter='\t', skiprows=1, usecols=[-1])
         assert np.all(number_triplets == threshold)
     finally:
-        try:
-            shutil.rmtree('test_items')
-            # os.remove(item_file)
-            # os.remove(feature_file)
-            # os.remove(taskfilename)
-            # os.remove(distance_file)
-            # os.remove(scorefilename)
-            # os.remove(analyzefilename)
-        except:
-            pass
+        shutil.rmtree('test_items', ignore_errors=True)
 
 
 def test_frozen_analyze():
@@ -117,9 +93,10 @@ def test_frozen_analyze():
 
         task = ABXpy.task.Task(item_file, 'c0', 'c1', 'c2')
         task.generate_triplets(taskfilename)
-        distances.compute_distances(feature_file, '/features/', taskfilename,
-                                    distance_file, dtw_cosine_distance,
-                                    normalized = True, n_cpu=1)
+        distances.compute_distances(
+            feature_file, '/features/', taskfilename,
+            distance_file, dtw_cosine_distance,
+            normalized=True, n_cpu=1)
         score.score(taskfilename, distance_file, scorefilename)
         analyze.analyze(taskfilename, scorefilename, analyzefilename)
 
@@ -129,11 +106,4 @@ def test_frozen_analyze():
         assert items.csv_cmp(analyzefilename, frozen_file('csv'))
 
     finally:
-        try:
-            shutil.rmtree('test_items')
-            # os.remove(taskfilename)
-            # os.remove(distance_file)
-            # os.remove(scorefilename)
-            # os.remove(analyzefilename)
-        except:
-            pass
+        shutil.rmtree('test_items', ignore_errors=True)
