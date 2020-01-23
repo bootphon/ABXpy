@@ -1,4 +1,3 @@
-from __future__ import print_function
 """Sort rows of a several two dimenional numeric dataset (possibly
 with just one column) according to numeric key in two-dimensional key
 dataset with just one column (the first dimension of all datasets

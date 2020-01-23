@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 """This module is used for creating a new task and preprocessing.
 
 This module contains the functions to specify and initialise a new ABX
@@ -68,7 +67,6 @@ import sys
 import tempfile
 
 from six import iteritems, itervalues
-from past.builtins import basestring
 
 import h5py
 import numpy as np
@@ -193,7 +191,7 @@ class Task(object):
             raise AssertionError('item file {} not found'.format(db_name))
 
         # check 'on' is a string
-        if not isinstance(on, basestring):
+        if not isinstance(on, str):
             raise AssertionError('ON attribute must be specified by a string')
 
         # parse input arguments
@@ -252,7 +250,7 @@ class Task(object):
         """Helper method to load an argument as a list"""
         if arg is None:
             return []
-        elif isinstance(arg, basestring):
+        elif isinstance(arg, str):
             return [arg]
         else:
             return arg

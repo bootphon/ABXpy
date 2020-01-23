@@ -1,4 +1,3 @@
-from __future__ import print_function
 """This script is used to verify the consistency of your input files.
 
 Usage

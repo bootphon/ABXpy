@@ -1,7 +1,6 @@
 import os
 from six import iteritems
 import collections
-from past.builtins import basestring
 
 import h5py
 import numpy as np
@@ -350,7 +349,7 @@ class H5IO(object):
 def get_dtype(data):
     str_dtype = h5py.special_dtype(vlen=str)
     # allow for the use of strings
-    if isinstance(data[0], basestring):
+    if isinstance(data[0], str):
         dtype = str_dtype
     # could add some checks that the dtype is one of those supported by h5 ?
     elif hasattr(data, 'dtype'):
@@ -360,7 +359,7 @@ def get_dtype(data):
     return dtype
 
 def get_array(data):
-    if isinstance(data[0], basestring):
+    if isinstance(data[0], str):
         return np.array(data, dtype='S')
     return data
 

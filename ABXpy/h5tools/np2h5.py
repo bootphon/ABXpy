@@ -15,8 +15,6 @@ the expected amount of data causes an Exception to be thrown excepted
 is the fixed_size option was set to False when adding the dataset.
 
 """
-from past.builtins import basestring
-
 import numpy as np
 import h5py
 
@@ -27,7 +25,7 @@ class NP2H5(object):
 
     def __init__(self, h5file):
         # set up output file and buffer list
-        if isinstance(h5file, basestring):
+        if isinstance(h5file, str):
             self.manage_file = True
             self.filename = h5file
             self.file_open = False
