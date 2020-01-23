@@ -1,7 +1,3 @@
-language: python
-python:
-    - "3.8"
-
 notifications:
   email: false
 
@@ -26,13 +22,14 @@ install:
   - conda info -a
   # install ABXpy environment
   - conda env create -n test-environment -f environment.yml
-  - source activate test-environment
+  - conda activate test-environment
   - pip install codecov
   # install ABXpy
-  - make install
+  - python setup.py build
+  - python setup.py install
 
 script:
-  - make test
+  - pytest
 
 after_success:
   - codecov
