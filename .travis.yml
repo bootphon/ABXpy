@@ -1,11 +1,6 @@
-dist: xenial  # required for python-3.7
-
 language: python
-
 python:
-    - "2.7"
-    - "3.6"
-    - "3.7"
+    - "3.8"
 
 notifications:
   email: false
@@ -19,48 +14,31 @@ branches:
   only:
     - master
 
-# conda installation is cached to avoid redowloading again and again
-# miniconda and Python dependencies
-cache:
-  directories:
-    - $HOME/miniconda
-
-# exclude some directories from cache (packaged archives and temp
-# directories)
-before_cache:
-  - rm -rf $HOME/miniconda/locks
-  - rm -rf $HOME/miniconda/pkgs
-  - rm -rf $HOME/miniconda/var
-  - rm -rf $HOME/miniconda/conda-meta/history
-
-before_install:
-  # setup Python version
-  - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
-      export PYTHON_MAJOR=2;
-    else
-      export PYTHON_MAJOR=3;
-    fi
-  # setup conda (if not already cached)
-  - if test -e $HOME/miniconda/bin; then
-      echo "miniconda already installed.";
-    else
-      wget https://repo.continuum.io/miniconda/Miniconda${PYTHON_MAJOR}-latest-Linux-x86_64.sh -O miniconda.sh;
-      bash miniconda.sh -b -u -p $HOME/miniconda;
-    fi
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - conda update -q --yes conda
-
 install:
-  - if [[ "$PYTHON_MAJOR" == 2 ]]; then
-      sed -i -r 's/python.+/python=2.7/' environment.yml;
-    fi
-  - conda env create -n test -f environment.yml
-  - source activate test
+  # Setup anaconda
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - source "$HOME/miniconda/etc/profile.d/conda.sh"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  # Useful for debugging any issues with conda
+  - conda info -a
+
+  # The next line fix a crash with multiprocessing on Travis
+  # and are not specific to using Miniconda
+  - sudo rm -rf /dev/shm && sudo ln -s /run/shm /dev/shm
+
+  # install ABXpy environment
+  - conda env create -n test-environment --yes -f environment.yml
+  - source activate test-environment
   - pip install codecov
-  - python setup.py install
+
+  # install ABXpy
+  - make install
 
 script:
-  - python setup.py test
+  - make test
 
 after_success:
   - codecov
