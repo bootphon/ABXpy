@@ -1,9 +1,8 @@
 # simple makefile to simplify repetitive build env management tasks under posix
 
 PYTHON ?= python
-PYTEST ?= pytest
 
-.PHONY: build install develop doc test xtest clean
+.PHONY: build install develop doc test clean
 
 build:
 	$(PYTHON) setup.py build
@@ -18,10 +17,7 @@ doc: build
 	$(PYTHON) setup.py build_sphinx
 
 test: build
-	$(PYTEST)
-
-xtest: build # fails on first error
-	$(PYTEST) -x
+	$(PYTHON) setup.py test
 
 clean:
 	$(PYTHON) setup.py clean
