@@ -1,7 +1,6 @@
 import os
 from six import iteritems
 import collections
-from past.builtins import basestring
 
 import h5py
 import numpy as np
@@ -30,7 +29,7 @@ class H5IO(object):
         if fused is None:
             fused = {}
         if datasets is not None:
-            if isinstance(datasets, collections.Mapping):
+            if isinstance(datasets, collections.abc.Mapping):
                 indexed_datasets = [
                     key for key, value in iteritems(datasets) if not(value is None)]
                 indexed_datasets_indexes = [
@@ -218,7 +217,7 @@ class H5IO(object):
             self.__write__(data, indexed)
 
     def __parse_input_data__(self, data):
-        if not(isinstance(data, collections.Mapping)):
+        if not(isinstance(data, collections.abc.Mapping)):
             data_dict = {}
             for dataset, d in zip(self.managed_datasets, data):
                 data_dict[dataset] = d
@@ -350,7 +349,7 @@ class H5IO(object):
 def get_dtype(data):
     str_dtype = h5py.special_dtype(vlen=str)
     # allow for the use of strings
-    if isinstance(data[0], basestring):
+    if isinstance(data[0], str):
         dtype = str_dtype
     # could add some checks that the dtype is one of those supported by h5 ?
     elif hasattr(data, 'dtype'):
@@ -360,7 +359,7 @@ def get_dtype(data):
     return dtype
 
 def get_array(data):
-    if isinstance(data[0], basestring):
+    if isinstance(data[0], str):
         return np.array(data, dtype='S')
     return data
 

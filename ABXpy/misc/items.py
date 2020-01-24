@@ -6,7 +6,6 @@ import numpy as np
 import os
 import pandas
 import subprocess
-from past.builtins import xrange
 
 
 def generate_testitems(base, n, repeats=0, name='data.item'):
@@ -67,7 +66,7 @@ def generate_features(n_files, n_feat=2, max_frames=3, name='data.features'):
     features = []
     times = []
     files = []
-    for i in xrange(n_files):
+    for i in range(n_files):
         n_frames = np.random.randint(max_frames) + 1
         features.append(np.random.randn(n_frames, n_feat))
         times.append(np.linspace(0, 1, n_frames))

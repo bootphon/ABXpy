@@ -16,8 +16,6 @@ subclass.
 import numpy as np
 import bisect
 import h5py
-from past.builtins import basestring
-from builtins import object
 
 
 class H52NP(object):
@@ -26,7 +24,7 @@ class H52NP(object):
 
     def __init__(self, h5file):
         # set up output file and buffer list
-        if isinstance(h5file, basestring):
+        if isinstance(h5file, str):
             self.manage_file = True
             self.filename = h5file
             self.file_open = False

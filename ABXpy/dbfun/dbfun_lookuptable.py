@@ -16,7 +16,6 @@ table fits in RAM memory.
 
 import operator
 import collections
-from past.builtins import basestring
 import h5py
 import numpy
 
@@ -417,7 +416,7 @@ class DBfun_LookupTable(dbfun.DBfun):
 def get_dtype(data):
     str_dtype = h5py.special_dtype(vlen=unicode)
     # allow for the use of strings
-    if isinstance(data[0], basestring):
+    if isinstance(data[0], str):
         dtype = str_dtype
     # could add some checks that the dtype is one of those supported by h5 ?
     elif hasattr(data, 'dtype'):

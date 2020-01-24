@@ -1,5 +1,3 @@
-from __future__ import division, print_function, unicode_literals
-
 """This module is used to analyse the results of an ABX discrimination task
 
 It collapses the result and give the mean score for each block of triplets
