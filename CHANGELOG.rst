@@ -2,6 +2,20 @@
 ChangeLog
 =========
 
+ABXpy-0.4.3
+===========
+
+* no more compatibility with **python2** (and removed dependency to future/past).
+
+* new feature: add *editdistance* as available distance.
+
+* bugfix with python-3.8 and *ast.Module*.
+
+* fixed a lot of deprecation warnings.
+
+* documentation moved to https://coml.lscp.ens.fr/docs/abx
+
+
 ABXpy-0.4.2
 ===========
 
