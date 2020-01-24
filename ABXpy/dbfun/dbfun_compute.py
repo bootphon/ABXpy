@@ -10,6 +10,7 @@ Implements the DBfun API
 """
 
 import ast
+import sys
 
 # Only solution I found for circular
 # imports in both Python 2 and 3
@@ -48,10 +49,16 @@ class DBfun_Compute(dbfun.DBfun):
             stat, (ast.ImportFrom, ast.Import))]
         rest = [stat for stat in tree.body if not(
             isinstance(stat, (ast.ImportFrom, ast.Import)))]
+
         # store ast with import statements
         # can be executed later using: exec(self.import_bytecode)
-        self.import_bytecode = compile(ast.Module(imports), '', mode='exec')
-        tree = ast.Module(rest)
+        if sys.version_info >= (3, 8):  # ast.Module spec changed in python-3.8
+            self.import_bytecode = compile(ast.Module(imports, []), '', mode='exec')
+            tree = ast.Module(rest, [])
+        else:
+            self.import_bytecode = compile(ast.Module(imports), '', mode='exec')
+            tree = ast.Module(rest)
+
         # look for a with statement with a string, store context info and
         # remove with statement
         tree = self.process_with(tree)
