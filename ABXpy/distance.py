@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import editdistance
 import os
 import sys
 import warnings
@@ -7,7 +8,6 @@ import warnings
 from ABXpy.distances import distances
 import ABXpy.distances.metrics.dtw as dtw
 import ABXpy.distances.metrics.cosine as cosine
-
 
 def default_distance(x, y, normalized):
     """ Dynamic time warping cosine distance
@@ -27,17 +27,43 @@ def default_distance(x, y, normalized):
         d = np.inf
     return d
 
+def edit_distance(x, y):
+    """Levenshtein Distance
+
+    The "feature" dimension is along the columns and the "time" dimension
+    along the lines of arrays x and y
+    """
+    # convert arrays to tuple, to evaluate w/ editdistance
+    def totuple(a):
+        try:
+            return tuple(totuple(i) for i in a)
+        except TypeError:
+            return a
+
+    if x.shape[0] > 0 and y.shape[0] > 0:
+        # x and y are not empty
+        d = editdistance.eval(totuple(x), totuple(y))
+    elif x.shape[0] == y.shape[0]:
+        # both x and y are empty
+        d = 0
+    else:
+        # x or y is empty
+        d = np.inf
+    return d
 
 def run(features, task, output, normalized,
         distance=None, njobs=1, group='features'):
     njobs = int(njobs)
     if distance:
-        distancepair = distance.split('.')
-        distancemodule = distancepair[0]
-        distancefunction = distancepair[1]
-        path, mod = os.path.split(distancemodule)
-        sys.path.insert(0, path)
-        distancefun = getattr(__import__(mod), distancefunction)
+        if distance=="levenshtein":
+            distancefun = edit_distance
+        else:
+            distancepair = distance.split('.')
+            distancemodule = distancepair[0]
+            distancefunction = distancepair[1]
+            path, mod = os.path.split(distancemodule)
+            sys.path.insert(0, path)
+            distancefun = getattr(__import__(mod), distancefunction)
     else:
         distancefun = default_distance
 
@@ -66,8 +92,12 @@ def main():
 
     parser.add_argument(
         '-d', '--distance', metavar='distancemodule.distancefunction',
-        help='distance module to use (distancemodule.distancefunction, '
-        'default to dtw cosine distance')
+        help='''Define distance module to use.\n\n'''
+             '''Use "-d levenshtein" to use the Levenshtein distance'''
+             ''' instead of DTW.\n\n'''
+             '''Use -d distancemodule.distancefunction to use you own'''
+             ''' distance\n\n'''
+             '''If not set, it defaults to dtw cosine distance''')
 
     parser.add_argument(
         '-j', '--njobs', type=int, default=1,
