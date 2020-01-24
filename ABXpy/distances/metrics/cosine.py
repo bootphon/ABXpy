@@ -5,7 +5,6 @@ Created on Wed Jan 22 01:47:42 2014
 @author: Thomas Schatz
 """
 import numpy as np
-import scipy
 
 # FIXME change name to just distance ou distance_matrix?  compute
 # cosine distances between all possible pairs of lines in the x and y
@@ -23,10 +22,10 @@ def cosine_distance(x, y):
     d = np.dot(x, y.T) / (np.outer(x2, y2))
     # DPX: to prevent the stupid scipy to collapse the array into scalar
     if d.shape == (1, 1):
-        d = np.array([[np.float64(scipy.arccos(d[0, 0]) / np.pi)]])
+        d = np.array([[np.float64(np.lib.scimath.arccos(d[0, 0]) / np.pi)]])
     else:
         # costly in time (half of the time), so check if really useful for dtw
-        d = np.float64(scipy.arccos(d) / np.pi)
+        d = np.float64(np.lib.scimath.arccos(d) / np.pi)
 
     d[ix, :] = 1.
     d[:, iy] = 1.

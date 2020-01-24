@@ -75,14 +75,14 @@ def score(task_file, distance_file, score_file=None, score_group='scores'):
     #     bys = [by for by in t['triplets']]
     # FIXME skip empty by datasets, this should not be necessary anymore when
     # empty datasets are filtered at the task file generation level
-    with h5py.File(task_file) as t:
+    with h5py.File(task_file, 'r') as t:
         bys = t['bys'][...]
         # bys = t['feat_dbs'].keys()
         n_triplets = t['triplets']['data'].shape[0]
-    with h5py.File(score_file) as s:
+    with h5py.File(score_file, 'w') as s:
         s.create_dataset('scores', (n_triplets, 1), dtype=np.int8)
         for n_by, by in enumerate(bys):
-            with h5py.File(task_file) as t, h5py.File(distance_file) as d:
+            with h5py.File(task_file, 'r') as t, h5py.File(distance_file, 'r') as d:
                 trip_attrs = t['triplets']['by_index'][n_by]
                 pair_attrs = t['unique_pairs'].attrs[by]
                 # FIXME here we make the assumption

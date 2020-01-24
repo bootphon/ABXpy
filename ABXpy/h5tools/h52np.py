@@ -37,7 +37,7 @@ class H52NP(object):
 
     def __enter__(self):
         if not(self.file_open):
-            self.file = h5py.File(self.filename)
+            self.file = h5py.File(self.filename, 'r+')
             self.file_open = True
         return self
 

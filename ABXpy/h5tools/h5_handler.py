@@ -62,7 +62,7 @@ class H5Handler(object):
         # FIXME if no backup is mad cannot recover from exceptions ...
         try:
             with H5TMP(tmpdir=tmpdir) as tmp:
-                with h5py.File(self.file) as f:
+                with h5py.File(self.file, 'a') as f:
 
                     # check file structure
                     for g, d in self.sources:
@@ -246,7 +246,7 @@ class H5TMP(object):
         self.tmpfile = os.path.join(self.tmpdir, 'tmp.h5')
 
     def __enter__(self):
-        self.tmp = h5py.File(self.tmpfile)
+        self.tmp = h5py.File(self.tmpfile, 'a')
         return self.tmp
 
     def __exit__(self, eType, eValue, eTrace):

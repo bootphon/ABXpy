@@ -64,8 +64,8 @@ def collapse(scorefile, taskfile, fid):
 
     """
     # We make the assumption that everything fits in memory...
-    scorefid = h5py.File(scorefile)
-    taskfid = h5py.File(taskfile)
+    scorefid = h5py.File(scorefile, 'r+')
+    taskfid = h5py.File(taskfile, 'r')
     bys = taskfid['bys'][...]
     for by_idx, by in enumerate(bys):
         # print 'collapsing {0}/{1}'.format(by_idx + 1, len(bys))
@@ -153,7 +153,7 @@ def analyze(task_file, score_file, result_file):
 
     """
     with open(result_file, 'w+') as fid:
-        taskfid = h5py.File(task_file)
+        taskfid = h5py.File(task_file, 'r')
         aux = taskfid['regressors']
         tfrk = aux[list(aux)[0]]
         regs = tfrk['indexed_datasets']

@@ -51,7 +51,7 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
     # files
 
     # getting 'by' datasets characteristics
-    with h5py.File(pair_file) as fh:
+    with h5py.File(pair_file, 'r') as fh:
         # by_dsets = [by_dset for by_dset in fh['feat_dbs']]
         by_dsets = fh['bys'][...]
         by_n_pairs = []  # number of distances to be computed for each by db
@@ -60,7 +60,7 @@ def create_distance_jobs(pair_file, distance_file, n_cpu, buffer_max_size=100):
             by_n_pairs.append(attrs[2] - attrs[1])
             total_n_pairs = fh['unique_pairs/data'].shape[0]
     # initializing output datasets
-    with h5py.File(distance_file) as fh:
+    with h5py.File(distance_file, 'a') as fh:
         fh.attrs.create('done', False)
         g = fh.create_group('distances')
         g.create_dataset('data', shape=(total_n_pairs, 1), dtype=np.float)
@@ -198,7 +198,7 @@ def run_distance_job(job_description, distance_file, distance,
         store.close()
         # load pairs to be computed
         # indexed relatively to the above dataframe
-        with h5py.File(pair_file) as fh:
+        with h5py.File(pair_file, 'r') as fh:
             attrs = fh['unique_pairs'].attrs[by]
             pair_list = fh['unique_pairs/data'][attrs[1]+start:attrs[1]+stop, 0]
             base = attrs[0]
@@ -261,7 +261,7 @@ def run_distance_job(job_description, distance_file, distance,
                 raise
         if synchronize:
             distance_file_lock.acquire()
-        with h5py.File(distance_file) as fh:
+        with h5py.File(distance_file, 'a') as fh:
             fh['distances/data'][attrs[1]+start:attrs[1]+stop, :] = dis
         if synchronize:
             distance_file_lock.release()
@@ -312,7 +312,7 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
         run_distance_job(
             jobs[0], distance_file, distance,
             feature_files, feature_groups, splitted_features, 1, normalized)
-        with h5py.File(distance_file) as fh:
+        with h5py.File(distance_file, 'a') as fh:
             fh.attrs.modify('done', True)
 
 

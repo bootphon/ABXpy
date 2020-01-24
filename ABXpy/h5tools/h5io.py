@@ -57,7 +57,7 @@ class H5IO(object):
             with open(filename):
                 if not(datasets is None):
                     raise IOError('File %s already exists' % filename)
-            with h5py.File(filename) as f:
+            with h5py.File(filename, 'a') as f:
                 try:
                     f[group]
                 except KeyError:
@@ -66,7 +66,7 @@ class H5IO(object):
         except IOError:  # if file doesn't exist create it
             if datasets is None:
                 raise IOError("File %s doesn't exist" % filename)
-            with h5py.File(filename) as f:
+            with h5py.File(filename, 'a') as f:
                 if not(group in f):  # handler error here ...
                     g = f.create_group(group)
                 else:
@@ -122,7 +122,7 @@ class H5IO(object):
         # datasets can be held in memory without problems
 
     def __load_metadata__(self):
-        with h5py.File(self.filename) as f:
+        with h5py.File(self.filename, 'a') as f:
             g = f[self.group]
             self.is_empty = g.attrs['empty']
             self.is_sorted = g.attrs['sorted']
@@ -201,7 +201,7 @@ class H5IO(object):
                 raise ValueError(
                     "Current implementation does not allow to complete non-empty datasets")
         # set flags
-        with h5py.File(self.filename) as f:
+        with h5py.File(self.filename, 'a') as f:
             if self.is_empty:
                 self.is_empty = False
                 f[self.group].attrs['empty'] = False
@@ -268,7 +268,7 @@ class H5IO(object):
             # FIXME at some point should become super.add_dataset(...)
             self.out['indexed'] = self.np2h5.add_dataset(
                 self.group, 'indexed_data', n_columns=dim, item_type=d_type, fixed_size=False)
-            with h5py.File(self.filename) as f:
+            with h5py.File(self.filename, 'a') as f:
                 # necessary to access the part of the data corresponding to a
                 # particular dataset
                 f[self.group].create_dataset(
@@ -292,7 +292,7 @@ class H5IO(object):
                 n, dtype=d_type) * np.ones(d, dtype=d_type) for n, d in zip(self.nb_levels[fused_dset], fused_dims)])
             self.key_weights[fused_dset] = np.concatenate(
                 [np.array([1], dtype=d_type), np.cumprod(d_type(nb_levels_with_multiplicity))[:-1]])
-            with h5py.File(self.filename) as f:
+            with h5py.File(self.filename, 'a') as f:
                 f[self.group]['fused'][fused_dset].create_dataset(
                     'key_weights', data=self.key_weights[fused_dset], dtype=d_type)
 

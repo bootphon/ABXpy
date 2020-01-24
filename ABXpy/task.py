@@ -861,7 +861,7 @@ class Task(object):
             for n_by, (by, db) in enumerate(iteritems(self.by_dbs)):
                 if self.verbose > 0:
                     print("Writing AX/BX pairs to task file...")
-                with h5py.File(output) as fh:
+                with h5py.File(output, 'a') as fh:
                     triplets_attrs = fh['/triplets']['by_index'][n_by][...]
                 max_ind = np.max(db.index.values)
                 max_ind_dict[by] = max_ind
@@ -975,7 +975,7 @@ class Task(object):
                         for pairs in inp:
                             out_unique_pairs.write(pairs)
 
-                    with h5py.File(output) as fh:
+                    with h5py.File(output, 'a') as fh:
                         fh['/unique_pairs'].attrs[str(by)] = (
                             max_ind_dict[by] + 1,
                             by_index, by_index + n_pairs_dict[by])
@@ -1218,7 +1218,7 @@ def sort_pairs(abx_file, by, memory=1000, tmpdir=None):
 
     """
     # estimate of the amount of data to be sorted
-    with h5py.File(abx_file) as fh:
+    with h5py.File(abx_file, 'a') as fh:
         n = fh['/pairs/' + str(by)].shape[0]
         i = fh['/pairs/' + str(by)].dtype.itemsize
 

@@ -39,7 +39,7 @@ class NP2H5(object):
     # open HDF5 file in 'with' statement
     def __enter__(self):
         if not(self.file_open):
-            self.file = h5py.File(self.filename)
+            self.file = h5py.File(self.filename, 'a')
             self.file_open = True
         return self
 
@@ -57,7 +57,7 @@ class NP2H5(object):
             # the datasets
             if eValue is not None:
                 if not(self.file_open):
-                    self.file = h5py.File(self.filename)
+                    self.file = h5py.File(self.filename, 'a')
                     self.file_open = True
                 for buf in self.buffers:
                     buf.delete()
