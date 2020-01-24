@@ -1,4 +1,4 @@
-name: ABXpy19_merge2
+name: ABXpy
 channels:
   - coml
   - conda-forge
