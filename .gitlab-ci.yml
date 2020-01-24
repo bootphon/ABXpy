@@ -70,7 +70,7 @@ deploy-conda-linux:
     - module load anaconda/3
     - conda activate abx-ci
     - cd .conda
-    - conda build -c coml --user coml --token $CONDA_TOKEN --skip-existing .
+    - conda build -c coml -c conda-forge --user coml --token $CONDA_TOKEN --skip-existing .
     - conda build purge
 
 deploy-conda-osx:
@@ -83,5 +83,5 @@ deploy-conda-osx:
   script:
     - conda activate abx
     - cd .conda
-    - conda build -c coml --user coml --token $CONDA_TOKEN --skip-existing .
+    - conda build -c coml -c conda-forge --user coml --token $CONDA_TOKEN --skip-existing .
     - conda build purge

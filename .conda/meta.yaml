@@ -22,7 +22,7 @@ requirements:
     build:
       - python {{ python }}
       - cython
-      - future
+      - editdistance
       - h5features
       - h5py>=2.2.1
       - mock
@@ -39,7 +39,7 @@ requirements:
     run:
       - python {{ python }}
       - cython
-      - future
+      - editdistance
       - h5features
       - h5py>=2.2.1
       - mock
