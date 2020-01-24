@@ -28,6 +28,7 @@ setuptools.setup(
     zip_safe=False,
 
     setup_requires=[
+        'editdistance',
         'cython',
         'setuptools>=18.0',
         'numpy>=1.9.0',
