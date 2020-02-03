@@ -16,14 +16,14 @@ build:
     - {{ entry }}
   {% endfor %}
   script:
+    - conda install -c conda-forge editdistance -y
+    - conda install -c coml h5features -y
     - python setup.py install
 
 requirements:
     build:
       - python {{ python }}
       - cython
-      - editdistance
-      - h5features
       - h5py>=2.2.1
       - mock
       - numpy>=1.8.1
@@ -39,8 +39,6 @@ requirements:
     run:
       - python {{ python }}
       - cython
-      - editdistance
-      - h5features
       - h5py>=2.2.1
       - mock
       - numpy>=1.8.1
