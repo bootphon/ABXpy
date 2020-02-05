@@ -7,6 +7,7 @@ import warnings
 
 from ABXpy.distances import distances
 import ABXpy.distances.metrics.dtw as dtw
+import ABXpy.distances.metrics.kullback_leibler as kl
 import ABXpy.distances.metrics.cosine as cosine
 
 def default_distance(x, y, normalized):
@@ -18,6 +19,24 @@ def default_distance(x, y, normalized):
     if x.shape[0] > 0 and y.shape[0] > 0:
         # x and y are not empty
         d = dtw.dtw(x, y, cosine.cosine_distance,
+                    normalized=normalized)
+    elif x.shape[0] == y.shape[0]:
+        # both x and y are empty
+        d = 0
+    else:
+        # x or y is empty
+        d = np.inf
+    return d
+
+def dtw_kl_distance(x, y, normalized=True):
+    """ Dynamic time warping cosine distance
+
+    The "feature" dimension is along the columns and the "time" dimension
+    along the lines of arrays x and y
+    """
+    if x.shape[0] > 0 and y.shape[0] > 0:
+        # x and y are not empty
+        d = dtw.dtw(x, y, kl.kl_divergence,
                     normalized=normalized)
     elif x.shape[0] == y.shape[0]:
         # both x and y are empty
@@ -57,6 +76,8 @@ def run(features, task, output, normalized,
     if distance:
         if distance=="levenshtein":
             distancefun = edit_distance
+        elif distance=="dtw_kl":
+            distancefun = dtw_kl_distance
         else:
             distancepair = distance.split('.')
             distancemodule = distancepair[0]
@@ -94,7 +115,9 @@ def main():
         '-d', '--distance', metavar='distancemodule.distancefunction',
         help='''Define distance module to use.\n\n'''
              '''Use "-d levenshtein" to use the Levenshtein distance'''
-             ''' instead of DTW.\n\n'''
+             ''' instead of DTW.\n'''
+             '''Use "-d dtw_kl" to use the Kullback Leibler divergence'''
+             ''' with the DTW, instead of the default cosine distance.\n\n'''
              '''Use -d distancemodule.distancefunction to use you own'''
              ''' distance\n\n'''
              '''If not set, it defaults to dtw cosine distance''')
