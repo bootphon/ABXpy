@@ -303,11 +303,15 @@ def compute_distances(feature_file, feature_group, pair_file, distance_file,
     if n_cpu > 1:
         # use of a manager seems necessary because we're using a Pool...
         distance_file_lock = multiprocessing.Manager().Lock()
-        pool = multiprocessing.Pool(n_cpu)
-        args = [(job, distance_file, distance, feature_files, feature_groups,
-                 splitted_features, i, normalized, distance_file_lock)
-                for i, job in enumerate(jobs)]
-        pool.map(worker, args)
+        try:
+            pool = multiprocessing.Pool(n_cpu)
+            args = [(job, distance_file, distance, feature_files, feature_groups,
+                     splitted_features, i, normalized, distance_file_lock)
+                    for i, job in enumerate(jobs)]
+            pool.map(worker, args)
+        finally:
+            pool.close()
+            pool.join()
     else:
         run_distance_job(
             jobs[0], distance_file, distance,
