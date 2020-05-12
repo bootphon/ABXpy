@@ -13,22 +13,22 @@ test-linux:
     - conda activate abx-ci
     - python setup.py test
 
-build-osx:
-  tags:
-    - macos
-  stage: build
-  script:
-    - conda activate abx
-    - conda env update -n abx -f environment.yml
-    - python setup.py install
+# build-osx:
+#   tags:
+#     - macos
+#   stage: build
+#   script:
+#     - conda activate abx
+#     - conda env update -n abx -f environment.yml
+#     - python setup.py install
 
-test-osx:
-  tags:
-    - macos
-  stage: test
-  script:
-    - conda activate abx
-    - python setup.py test
+# test-osx:
+#   tags:
+#     - macos
+#   stage: test
+#   script:
+#     - conda activate abx
+#     - python setup.py test
 
 # abx package is available on oberon with "conda activate abx"
 deploy-oberon:
@@ -56,7 +56,7 @@ deploy-doc:
     - module load texlive/2018
     - conda activate abx-ci
     - sphinx-build doc build/doc
-    - scp -r build/doc/* coml.lscp.ens.fr:/var/www/html/docs/abx
+    - scp -r build/doc/* syntheticlearner.net:/var/www/docs.syntheticlearner.net/ABXpy
 
 # abx package available on conda with "conda install -c coml
 # abx". Build and upload the package only on new git tags or
