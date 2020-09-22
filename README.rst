@@ -19,7 +19,7 @@ stimulus (X). (Glottopedia)
 This package contains the operations necessary to initialize,
 calculate and analyse the results of an ABX discrimination task.
 
-Check out the full documentation at https://docs.syntheticlearner.net/ABXpy.
+Check out the full documentation at https://docs.cognitive-ml.fr/ABXpy.
 
 Organisation
 ------------
@@ -27,27 +27,27 @@ Organisation
 It is composed of 3 main modules and other submodules.
 
 - `task module
-  <https://docs.syntheticlearner.net/ABXpy/ABXpy.html#task-module>`_ is
+  <https://docs.cognitive-ml.fr/ABXpy/ABXpy.html#task-module>`_ is
   used for creating a new task and preprocessing.
 
 - `distances package
-  <https://docs.syntheticlearner.net/ABXpy/ABXpy.distances.html>`_ is
+  <https://docs.cognitive-ml.fr/ABXpy/ABXpy.distances.html>`_ is
   used for calculating the distances necessary for the score
   calculation.
 
 - `score module
-  <https://docs.syntheticlearner.net/ABXpy/ABXpy.html#score-module>`_
+  <https://docs.cognitive-ml.fr/ABXpy/ABXpy.html#score-module>`_
   is used for computing the score of a task.
 
 - `analyze module
-  <https://docs.syntheticlearner.net/ABXpy/ABXpy.html#analyze-module>`_
+  <https://docs.cognitive-ml.fr/ABXpy/ABXpy.html#analyze-module>`_
   is used for analysing the results.
 
 The features can be calculated in numpy via external tools, and made
 compatible with this package with the `h5features module
 <http://h5features.readthedocs.org/en/latest/h5features.html>`_, or
 directly calculated with one of our tools like `shennong
-<http://h5features.readthedocs.org/en/latest/h5features.html#module-npz2h5features>`_.
+<https://docs.cognitive-ml.fr/shennong>`_.
 
 
 The pipeline
@@ -71,7 +71,7 @@ The pipeline
 +-------------------+----------+-----------------+
 
 See `Files Format
-<https://docs.syntheticlearner.net/ABXpy/FilesFormat.html>`_ for a
+<https://docs.cognitive-ml.fr/ABXpy/FilesFormat.html>`_ for a
 description of the files used as input and output.
 
 
