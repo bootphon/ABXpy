@@ -158,7 +158,11 @@ def run_distance_job(job_description, distance_file, distance,
         times = {}
         features = {}
         for feature_file, feature_group in zip(feature_files, feature_groups):
-            t, f = h5features.read(feature_file, feature_group)
+            # with recent versions of h5features, files can contain
+            # properties (as data[3])
+            data = h5features.read(feature_file, feature_group)
+            t = data[0]
+            f = data[1]
             assert not(set(times.keys()).intersection(
                 t.keys())), ("The same file is indexed by (at least) two "
                              "different feature files")
@@ -182,7 +186,11 @@ def run_distance_job(job_description, distance_file, distance,
             features = {}
             for feature_file, feature_group in zip(feature_files,
                                                    feature_groups):
-                t, f = h5features.read(feature_file, feature_group)
+                # with recent versions of h5features, files can contain
+                # properties (as data[3])
+                data = h5features.read(feature_file, feature_group)
+                t = data[0]
+                f = data[1]
                 assert not(set(times.keys()).intersection(
                     t.keys())), ("The same file is indexed by (at least) two "
                                  "different feature files")
