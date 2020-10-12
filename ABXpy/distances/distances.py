@@ -159,7 +159,7 @@ def run_distance_job(job_description, distance_file, distance,
         features = {}
         for feature_file, feature_group in zip(feature_files, feature_groups):
             # with recent versions of h5features, files can contain
-            # properties (as data[3])
+            # properties (as data[2])
             data = h5features.read(feature_file, feature_group)
             t = data[0]
             f = data[1]
@@ -187,7 +187,7 @@ def run_distance_job(job_description, distance_file, distance,
             for feature_file, feature_group in zip(feature_files,
                                                    feature_groups):
                 # with recent versions of h5features, files can contain
-                # properties (as data[3])
+                # properties (as data[2])
                 data = h5features.read(feature_file, feature_group)
                 t = data[0]
                 f = data[1]
