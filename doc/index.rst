@@ -20,6 +20,7 @@ Contents
 
    ABXpy
    FilesFormat
+   NumberOfCores
 
 
 Indices and tables
