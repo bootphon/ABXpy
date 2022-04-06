@@ -20,6 +20,8 @@ def cosine_distance(x, y):
     ix = x2 == 0.
     iy = y2 == 0.
     d = np.dot(x, y.T) / (np.outer(x2, y2))
+    # Rounding of floating point numbers can give values outside the range [-1, 1]
+    d = np.clip(d, -1, 1)
     # DPX: to prevent the stupid scipy to collapse the array into scalar
     if d.shape == (1, 1):
         d = np.array([[np.float64(np.lib.scimath.arccos(d[0, 0]) / np.pi)]]).reshape((1, 1))
